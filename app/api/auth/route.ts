@@ -1,0 +1,1 @@
+export async function POST() { return new Response('Use Supabase auth magic links on client', { status: 400 }) }

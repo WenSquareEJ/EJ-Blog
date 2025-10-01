@@ -1,0 +1,1 @@
+export async function POST() { return new Response('Use client-side Supabase storage upload in ImageUploader', { status: 400 }) }
