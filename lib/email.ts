@@ -24,7 +24,7 @@ export async function sendDailyDigest(to: string[], html: string) {
   const resend = getResend()
   if (!resend) return // no-op if key not set
   await resend.emails.send({
-    from: 'KidSite <noreply@your-domain>',
+    from: 'KidSite <nboarding@resend.dev>',
     to,
     subject: 'Daily digest',
     html
