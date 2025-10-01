@@ -1,8 +1,17 @@
+// lib/email.ts
 import { Resend } from 'resend'
-const resend = new Resend(process.env.RESEND_API_KEY)
+
+let _resend: Resend | null = null
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY
+  if (!key) return null
+  if (!_resend) _resend = new Resend(key)
+  return _resend
+}
 
 export async function sendReviewEmail(to: string[], reviewUrl: string, title: string) {
-  if (!process.env.RESEND_API_KEY) return
+  const resend = getResend()
+  if (!resend) return // no-op if key not set
   await resend.emails.send({
     from: 'KidSite <noreply@your-domain>',
     to,
@@ -12,6 +21,12 @@ export async function sendReviewEmail(to: string[], reviewUrl: string, title: st
 }
 
 export async function sendDailyDigest(to: string[], html: string) {
-  if (!process.env.RESEND_API_KEY) return
-  await resend.emails.send({ from: 'KidSite <noreply@your-domain>', to, subject: 'Daily digest', html })
+  const resend = getResend()
+  if (!resend) return // no-op if key not set
+  await resend.emails.send({
+    from: 'KidSite <noreply@your-domain>',
+    to,
+    subject: 'Daily digest',
+    html
+  })
 }
