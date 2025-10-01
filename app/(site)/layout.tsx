@@ -2,6 +2,7 @@ import '../globals.css'
 import LogoPlaceholder from '@/components/LogoPlaceholder'
 import BannerPlaceholder from '@/components/BannerPlaceholder'
 import Link from 'next/link'
+import AuthStatus from '@/components/AuthStatus'   // <-- add this
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/calendar">Calendar</Link>
               <Link href="/badges">Badges</Link>
               <Link href="/about">About</Link>
+              <AuthStatus /> {/* <-- add this */}
             </nav>
           </div>
           <div className="max-w-4xl mx-auto px-4"><BannerPlaceholder /></div>
