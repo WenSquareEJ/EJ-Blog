@@ -13,7 +13,7 @@ export async function sendReviewEmail(to: string[], reviewUrl: string, title: st
   const resend = getResend()
   if (!resend) return // no-op if key not set
   await resend.emails.send({
-    from: 'KidSite <noreply@your-domain>',
+    from: 'KidSite <nboarding@resend.dev>',
     to,
     subject: `Review post: ${title}`,
     html: `<p>A new post is waiting for approval.</p><p><a href="${reviewUrl}">Open review</a></p>`
