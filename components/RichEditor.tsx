@@ -1,11 +1,10 @@
 'use client'
 import dynamic from 'next/dynamic'
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
 // ReactQuill must load client-side
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
-// basic snow theme css (ReactQuill bundles it)
 import 'react-quill/dist/quill.snow.css'
 
 type Props = {
@@ -15,8 +14,6 @@ type Props = {
 }
 
 export default function RichEditor({ value, onChange, placeholder }: Props) {
-  const quillRef = useRef<any>(null)
-
   const modules = useMemo(() => {
     return {
       toolbar: {
@@ -29,8 +26,9 @@ export default function RichEditor({ value, onChange, placeholder }: Props) {
           ['link', 'image'],
           ['clean'],
         ],
+        // IMPORTANT: use function () { ... } so `this.quill` is available.
         handlers: {
-          image: async () => {
+          image: function (this: any) {
             const input = document.createElement('input')
             input.type = 'file'
             input.accept = 'image/*'
@@ -38,52 +36,56 @@ export default function RichEditor({ value, onChange, placeholder }: Props) {
               const file = input.files?.[0]
               if (!file) return
               try {
-                // unique key
                 const key = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`
-
-                // upload to bucket 'images'
                 const { error: upErr } = await supabase.storage
                   .from('images')
                   .upload(key, file, { upsert: false })
-
                 if (upErr) throw upErr
 
-                // public URL
                 const base = process.env.NEXT_PUBLIC_SUPABASE_URL!
                 const url = `${base}/storage/v1/object/public/images/${key}`
 
-                // insert into editor at cursor
-                const quill = quillRef.current?.getEditor?.()
+                // Insert at cursor using Quill from the toolbar context
+                const quill = this.quill as any
                 const range = quill.getSelection(true)
                 quill.insertEmbed(range.index, 'image', url, 'user')
                 quill.setSelection(range.index + 1, 0)
               } catch (e) {
-                alert('Upload failed. Make sure the "images" bucket exists and policies allow upload.')
+                alert('Upload failed. Check that the "images" bucket exists and policies allow upload.')
                 console.error(e)
               }
             }
             input.click()
-          }
-        }
+          },
+        },
       },
       clipboard: { matchVisual: false },
-      history: { delay: 500, maxStack: 100, userOnly: true }
+      history: { delay: 500, maxStack: 100, userOnly: true },
     }
   }, [])
 
-  const formats = useMemo(() => [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'color', 'background',
-    'align',
-    'list', 'bullet',
-    'link', 'image',
-  ], [])
+  const formats = useMemo(
+    () => [
+      'header',
+      'bold',
+      'italic',
+      'underline',
+      'strike',
+      'color',
+      'background',
+      'align',
+      'list',
+      'bullet',
+      'link',
+      'image',
+    ],
+    []
+  )
 
   return (
     <div className="rounded-block border overflow-hidden bg-white">
       <ReactQuill
-        ref={quillRef}
+        /* no ref needed */
         theme="snow"
         value={value}
         onChange={onChange}
