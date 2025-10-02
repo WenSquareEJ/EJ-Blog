@@ -2,13 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========== THEME: MINECRAFT ========== */
+
 /* Use pixel font when skin=minecraft */
 [data-skin="minecraft"] * {
   font-family: var(--font-mc, 'Pixelify Sans', system-ui, sans-serif);
   letter-spacing: .2px;
 }
 
-/* Subtle pixel sky background */
+/* --- Site backgrounds --- */
+
+/* NEW: Grass block green background (subtle checker to feel "blocky") */
+body.bg-mc-grass {
+  background:
+    linear-gradient(transparent 23px, rgba(0,0,0,.04) 24px),
+    linear-gradient(90deg, transparent 23px, rgba(0,0,0,.04) 24px),
+    #6aa84f; /* Minecraft grass green */
+  background-size: 24px 24px, 24px 24px, auto;
+}
+
+/* (Old sky style kept for reference if you switch back) */
 body.bg-mc-sky {
   background:
     linear-gradient(transparent 23px, rgba(0,0,0,.03) 24px),
@@ -27,15 +40,69 @@ body.bg-mc-sky {
   background-position: 0 0, 8px 4px;
 }
 
-/* Blocky card + button helpers */
+/* --- Cards & borders --- */
+
+/* Stronger outline so white cards stand out on green */
 .card-block {
-  @apply rounded-block border border-mc-stone/30 bg-white shadow-block;
+  @apply rounded-block border bg-white shadow-block;
+  border-color: rgba(0,0,0,.18);
 }
+
+/* Prose content (post page) images and text */
+.prose img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.75rem auto;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.12);
+}
+
+/* --- Buttons --- */
+
+/* Primary: dark stone with white text, hovers to creeper green */
 .btn-block {
-  @apply inline-flex items-center justify-center rounded-block px-4 py-2 font-semibold text-white bg-mc-grass shadow-block transition active:translate-y-1;
+  @apply inline-flex items-center justify-center rounded-block px-4 py-2 font-semibold text-white transition active:translate-y-1;
+  background-color: #2d2d2d; /* stone */
+  box-shadow: 0 6px 0 0 #1f1f1f, 0 6px 12px rgba(0,0,0,.15);
 }
-.btn-block:hover { background-color: #36A139; } /* slightly darker grass */
+.btn-block:hover { background-color: #3CAB3A; } /* Minecraft green */
+.btn-block:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Secondary: dirt brown */
 .btn-block.secondary {
-  @apply bg-mc-dirt;
+  background-color: #7A4E1D; /* dirt */
+  box-shadow: 0 6px 0 0 #5C3A15, 0 6px 12px rgba(0,0,0,.15);
 }
 .btn-block.secondary:hover { background-color: #6a4419; }
+
+/* --- Header/nav tweaks --- */
+
+/* Make sticky header slightly more opaque on green so white links read well */
+.header-surface {
+  backdrop-filter: blur(6px);
+  background: rgba(255,255,255,0.85);
+  border-bottom: 1px solid rgba(0,0,0,.12);
+}
+
+/* Links inside the header/nav */
+.header-surface a {
+  color: #1f2937; /* gray-800 */
+}
+.header-surface a:hover {
+  color: #0f172a; /* slate-900 */
+  text-decoration: underline;
+}
+
+/* Divider line color on the header */
+.header-divider {
+  background: rgba(0,0,0,.2);
+}
+
+/* --- Quill editor polish to match cards --- */
+.ql-container.ql-snow {
+  border: none !important;
+}
+.ql-toolbar.ql-snow {
+  border-bottom: 1px solid rgba(0,0,0,.1) !important;
+}
