@@ -1,42 +1,32 @@
-import '../globals.css'
-import LogoPlaceholder from '@/components/LogoPlaceholder'
-import BannerPlaceholder from '@/components/BannerPlaceholder'
 import Link from 'next/link'
-import AuthStatus from '@/components/AuthStatus'
+// @ts-expect-error Server Component
+import AuthButtons from '@/components/AuthButtons'
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-skin="minecraft">
-      <head>
-        {/* Pixel font from Google Fonts */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="bg-mc-grass">
-        <header className="sticky top-0 z-50 backdrop-blur bg-mc-sky/80 border-b border-mc-stone/30">
-          <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-            <LogoPlaceholder />
-            <nav className="flex items-center gap-6 text-sm flex-wrap">
-              <Link href="/">Home</Link>
-              <Link href="/calendar">Calendar</Link>
-              <Link href="/tags">Tags</Link>
-              <Link href="/about">About</Link>
-              <div className="w-px h-5 bg-mc-stone/40" />
-              <AuthStatus />
-            </nav>
+    <div className="min-h-screen bg-mc-grass">
+      <header className="sticky top-0 z-50 bg-mc-leaves/90 backdrop-blur border-b border-mc-stem">
+        <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-4">
+          <Link href="/" className="shrink-0 font-mc text-xl">EJ Blog</Link>
+
+          {/* Nav never clips; it wraps if needed */}
+          <nav className="min-w-0 flex-1">
+            <ul className="flex flex-wrap items-center gap-4 text-sm">
+              <li><Link href="/">Home</Link></li>
+              <li><Link href="/calendar">Calendar</Link></li>
+              <li><Link href="/tags">Tags</Link></li>
+              <li><Link href="/about">About</Link></li>
+            </ul>
+          </nav>
+
+          {/* Auth area stays visible; no overflow/ellipsis */}
+          <div className="flex-none">
+            <AuthButtons />
           </div>
-          <div className="max-w-6xl mx-auto px-6">
-            <BannerPlaceholder />
-          </div>
-        </header>
-        <main className="max-w-4xl mx-auto px-4 py-6">{children}</main>
-        <div className="pixel-divider mt-10" />
-        <footer className="max-w-4xl mx-auto px-4 py-6 text-xs text-mc-stone">
-          © {new Date().getFullYear()} EJ’s Blog
-        </footer>
-      </body>
-    </html>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+    </div>
   )
 }
