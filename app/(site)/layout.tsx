@@ -15,6 +15,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <div className="flex gap-4 text-sm">
               <Link href="/">Home</Link>
               <Link href="/tags">Tags</Link>
+              <Link href="/calendar" className="hover:underline">Calendar</Link>
               <Link href="/moderation">Moderation</Link>
               <Link href="/login">Login</Link>
             </div>
