@@ -2,57 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-/* --- Minecraft Theme Colors --- */
+/* -------------------------------
+   Minecraft Theme Variables
+---------------------------------*/
 @layer base {
   :root {
-    --mc-grass: #55aa55;
-    --mc-sky: #6dcff6;
-    --mc-stone: #7c7c7c;
-    --mc-ink: #222;
+    --mc-grass: #6aa84f;   /* Grass green */
+    --mc-sky:   #3d85c6;   /* Sky blue */
+    --mc-stone: #999999;   /* Stone gray */
+    --mc-ink:   #111111;   /* Default text */
+    --mc-sand:  #ffe599;   /* Sand yellow */
+  }
+
+  body {
+    @apply text-mc-ink;
+    background-color: var(--mc-grass);
+
+    /* Minecraft blocky grid overlay */
+    background-image:
+      linear-gradient(to right, rgba(0,0,0,.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0,0,0,.05) 1px, transparent 1px);
+    background-size: 32px 32px;
   }
 }
 
+/* -------------------------------
+   Minecraft Font Utility
+---------------------------------*/
 @layer utilities {
-  .bg-mc-grass { background-color: var(--mc-grass); }
-  .bg-mc-sky   { background-color: var(--mc-sky); }
-  .text-mc-stone { color: var(--mc-stone); }
-  .text-mc-ink   { color: var(--mc-ink); }
-
-  /* add transparency variants manually */
-  .border-mc-stone\/30 { border-color: rgb(124 124 124 / 0.3); }
-
-  /* Shadows */
-  .shadow-block {
-    box-shadow: 4px 4px 0 #00000055;
+  .font-mc { 
+    font-family: var(--font-mc), 'Press Start 2P', monospace; 
+    letter-spacing: -0.5px;
   }
+}
 
-  /* Rounded “blocky” corners */
-  .rounded-block {
-    border-radius: 4px;
-  }
-
-  /* Card + Button helpers */
+/* -------------------------------
+   Blocky Cards & Buttons
+---------------------------------*/
+@layer components {
   .card-block {
-    @apply rounded-block border border-mc-stone/30 bg-white shadow-block;
-  }
-  .btn-block {
-    @apply rounded-block border px-3 py-1 bg-white hover:bg-gray-50 shadow-block;
+    @apply rounded-md border border-mc-stone/50 bg-white shadow-md p-4;
   }
 
-  /* Minecrafty button styles */
   .btn-mc {
-    @apply px-3 py-1 rounded-block bg-mc-grass text-white shadow-block hover:brightness-110;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 0.75rem;
+    @apply font-mc bg-mc-sky text-white px-3 py-1 rounded-md border-2 border-black shadow hover:bg-blue-500 transition;
   }
+
   .btn-mc-secondary {
-    @apply px-3 py-1 rounded-block bg-mc-sky text-black shadow-block hover:brightness-110;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 0.75rem;
+    @apply font-mc bg-mc-sand text-black px-3 py-1 rounded-md border-2 border-black shadow hover:bg-yellow-400 transition;
   }
+
   .btn-mc-danger {
-    @apply px-3 py-1 rounded-block bg-red-600 text-white shadow-block hover:bg-red-700;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 0.75rem;
+    @apply font-mc bg-red-600 text-white px-3 py-1 rounded-md border-2 border-black shadow hover:bg-red-700 transition;
   }
+
+  .btn-block {
+    @apply font-mc bg-mc-grass text-white px-3 py-2 rounded-md border-2 border-black shadow hover:bg-green-600 transition;
+  }
+}
+
+/* -------------------------------
+   Nav Specific Styling
+---------------------------------*/
+header {
+  @apply bg-mc-sky/80 backdrop-blur border-b border-black;
+}
+
+nav ul li a {
+  @apply font-mc;
 }
