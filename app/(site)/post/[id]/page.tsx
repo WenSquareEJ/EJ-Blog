@@ -1,106 +1,99 @@
 // app/(site)/post/[id]/page.tsx
-import { supabaseServer } from '@/lib/supabaseServer'
-import DOMPurify from 'isomorphic-dompurify'
-import CommentList from '@/components/CommentList'
-import CommentForm from '@/components/CommentForm'
-import ReactionBar from '@/components/ReactionBar'
-import DeletePostButton from '@/components/DeletePostButton'
+export const dynamic = "force-dynamic"; // ensure this route is rendered at request time
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const dynamicParams = true;
+import { notFound } from "next/navigation";
+import { supabaseServer } from "@/lib/supabaseServer";
+import DOMPurify from "isomorphic-dompurify";
 
-type PageProps = {
-  params: { id: string }
-  searchParams?: Record<string, string | string[] | undefined>
-}
+import CommentList from "@/components/CommentList";
+import CommentForm from "@/components/CommentForm";
+import ReactionBar from "@/components/ReactionBar";
+import DeletePostButton from "../DeletePostButton"; // file at app/(site)/post/DeletePostButton.tsx
 
-export default async function PostPage({ params, searchParams }: PageProps) {
-  const postId = params.id
-  const sb = supabaseServer()
+type PageProps = { params: { id: string } };
 
-  // Load the post
-  const { data: posts, error: postErr } = await sb
-    .from('posts')
-    .select('*')
-    .eq('id', postId)
-    .limit(1)
+export default async function PostPage({ params }: PageProps) {
+  const postId = params.id;
+  const sb = supabaseServer();
+
+  // 1) Load the post
+  const { data: post, error: postErr } = await sb
+    .from("posts")
+    .select("*")
+    .eq("id", postId)
+    .maybeSingle();
 
   if (postErr) {
-    return <p>Error loading post.</p>
+    // If the query failed, show a basic error (you can customize)
+    return <div className="p-4 text-red-600">Error loading post.</div>;
   }
-  const post = posts?.[0]
-  if (!post) return <p>Not found</p>
+  if (!post) {
+    // If not found, render the 404 page
+    notFound();
+  }
 
-  // ---- Who is viewing? ----
-  // Correct way to read the user with @supabase/auth-helpers-nextjs
-  const {
-    data: { user },
-  } = await sb.auth.getUser()
-  const viewerId = user?.id ?? null
+  // 2) Who is viewing?
+  const { data: ures } = await sb.auth.getUser();
+  const viewerId = ures?.user?.id ?? null;
 
-  // Look up the viewer's role (parent/child) from profiles
-  let viewerRole: 'parent' | 'child' | null = null
+  // 3) Determine role (parent / child) and author match
+  let viewerRole: "parent" | "child" | null = null;
   if (viewerId) {
     const { data: prof } = await sb
-      .from('profiles')
-      .select('role')
-      .eq('id', viewerId)
-      .maybeSingle()
-    viewerRole = (prof?.role as 'parent' | 'child' | null) ?? null
+      .from("profiles")
+      .select("role")
+      .eq("id", viewerId)
+      .maybeSingle();
+    viewerRole = (prof?.role as "parent" | "child") ?? null;
   }
 
-  const isAuthor = !!viewerId && post.author === viewerId
-  const canDelete = isAuthor || viewerRole === 'parent'
+  const isAuthor = !!viewerId && post.author === viewerId;
+  const canDelete = viewerRole === "parent" || isAuthor;
 
-  // Approved comments for this post
+  // 4) Load approved comments
   const { data: comments } = await sb
-    .from('comments')
-    .select('*')
-    .eq('post_id', postId)
-    .eq('status', 'approved')
-    .order('created_at', { ascending: true })
+    .from("comments")
+    .select("*")
+    .eq("post_id", postId)
+    .eq("status", "approved")
+    .order("created_at", { ascending: true });
 
-  // Safe HTML render for rich content
-  const safeHtml = DOMPurify.sanitize(post.content || '', {
+  // 5) Safe HTML render (for rich editor content)
+  const safeHtml = DOMPurify.sanitize(post.content || "", {
     USE_PROFILES: { html: true },
-  })
+  });
 
-  const showDebug =
-    typeof searchParams?.debug === 'string' && searchParams?.debug === '1'
-
+  // 6) Render
   return (
-    <article className="prose max-w-none">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1>{post.title}</h1>
-          <p className="text-sm text-mc-stone">
-            {new Date(post.published_at || post.created_at).toLocaleString()}
-          </p>
+    <main className="mx-auto max-w-3xl p-4">
+      <article className="prose max-w-none">
+        <header className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h1 className="mb-1">{post.title || "(untitled)"}</h1>
+            <p className="text-sm text-neutral-500">
+              {new Date(post.published_at || post.created_at).toLocaleString()}
+            </p>
+          </div>
+
+          {/* Delete button only for parent or author */}
+          {canDelete && <DeletePostButton postId={postId} />}
+        </header>
+
+        {/* Rich content from editor */}
+        <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
+
+        <div className="my-4">
+          <ReactionBar targetType="post" targetId={postId} />
         </div>
 
-        {canDelete && <DeletePostButton postId={postId} />}
-      </div>
-
-      {showDebug && (
-        <pre className="bg-yellow-50 border border-yellow-300 p-3 rounded mb-4 text-xs">
-{`DEBUG:
-viewerId: ${viewerId ?? 'null'}
-viewerRole: ${viewerRole ?? 'null'}
-postAuthor: ${post.author ?? 'null'}
-canDelete: ${String(canDelete)}`}
-        </pre>
-      )}
-
-      {/* Render HTML content, including inline images */}
-      <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
-
-      <div className="my-4">
-        <ReactionBar targetType="post" targetId={postId} />
-      </div>
-
-      <CommentList comments={comments || []} />
-      <CommentForm postId={postId} />
-    </article>
-  )
+        <section className="mt-8">
+          <h2 className="mb-3 text-xl font-semibold">Comments</h2>
+          <CommentList comments={comments || []} />
+          <div className="mt-4">
+            <CommentForm postId={postId} />
+          </div>
+        </section>
+      </article>
+    </main>
+  );
 }
