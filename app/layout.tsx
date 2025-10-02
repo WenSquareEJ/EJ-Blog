@@ -1,8 +1,7 @@
 // /app/layout.tsx
 import './globals.css'
-import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
+export const metadata = {
   title: 'EJ Blog',
   description: 'Family blog',
 }
@@ -10,8 +9,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      {/* Safari/iOS overflow fix lives in globals.css, but we keep a predictable structure here */}
-      <body className="min-h-screen bg-mc-grass/20 text-mc-charcoal antialiased">
+      <body className="min-h-screen bg-mc-grass/10 text-mc-ink antialiased">
         {children}
       </body>
     </html>
