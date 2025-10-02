@@ -1,15 +1,13 @@
 // /app/(site)/layout.tsx
+import './globals.css'
 import Link from 'next/link'
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen grid grid-rows-[auto_auto_1fr]">
-      {/* Banner placeholder (keep empty for now or put an image/text later) */}
+      {/* Banner placeholder */}
       <div className="w-full border-b bg-mc-grass/40 backdrop-blur-sm">
-        <div className="mx-auto max-w-5xl px-4 py-3 text-center">
-          {/* Put your banner text/image here if you like */}
-          {/* <span className="font-mc text-lg">Welcome to EJ Blog!</span> */}
-        </div>
+        <div className="mx-auto max-w-5xl px-4 py-3 text-center" />
       </div>
 
       {/* Top Nav */}
@@ -19,7 +17,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             EJ Blog
           </Link>
 
-          {/* keep the center nav scrollable to avoid the “…” overflow issue */}
           <nav className="flex-1 overflow-x-auto">
             <ul className="flex items-center gap-2 whitespace-nowrap pr-2">
               <li><Link className="btn-mc" href="/">Home</Link></li>
@@ -31,19 +28,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             </ul>
           </nav>
 
-          {/* Right side auth shortcuts (simple links so we don’t depend on any component) */}
           <div className="flex items-center gap-2">
             <Link className="btn-mc-secondary" href="/login">Log in</Link>
-            {/* If you have a sign-out route/action, keep this. Otherwise remove it. */}
-            {/* <form action="/logout" method="post"><button className="btn-mc-danger">Log out</button></form> */}
           </div>
         </div>
       </header>
 
-      {/* Page content */}
-      <main className="mx-auto max-w-5xl w-full px-4 py-6">
-        {children}
-      </main>
+      <main className="mx-auto max-w-5xl w-full px-4 py-6">{children}</main>
     </div>
   )
 }
