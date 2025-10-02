@@ -2,9 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { --skin: normal; }
-[data-skin="minecraft"] h1, [data-skin="minecraft"] h2, [data-skin="minecraft"] h3 {
-  font-family: var(--font-minecraft, 'Trebuchet MS', system-ui, sans-serif);
-  letter-spacing: 0.5px;
+/* Use pixel font when skin=minecraft */
+[data-skin="minecraft"] * {
+  font-family: var(--font-mc, 'Pixelify Sans', system-ui, sans-serif);
+  letter-spacing: .2px;
 }
-.pixel-divider { height: 8px; background-image: linear-gradient(90deg, #333 25%, transparent 25%), linear-gradient(90deg, #333 25%, transparent 25%); background-size: 16px 8px; background-position: 0 0, 8px 4px; }
+
+/* Subtle pixel sky background */
+body.bg-mc-sky {
+  background:
+    linear-gradient(transparent 23px, rgba(0,0,0,.03) 24px),
+    linear-gradient(90deg, transparent 23px, rgba(0,0,0,.03) 24px),
+    #E8F5FF;
+  background-size: 24px 24px, 24px 24px;
+}
+
+/* Pixel divider */
+.pixel-divider {
+  height: 8px;
+  background-image:
+    linear-gradient(90deg, #333 25%, transparent 25%),
+    linear-gradient(90deg, #333 25%, transparent 25%);
+  background-size: 16px 8px;
+  background-position: 0 0, 8px 4px;
+}
+
+/* Blocky card + button helpers */
+.card-block {
+  @apply rounded-block border border-mc-stone/30 bg-white shadow-block;
+}
+.btn-block {
+  @apply inline-flex items-center justify-center rounded-block px-4 py-2 font-semibold text-white bg-mc-grass shadow-block transition active:translate-y-1;
+}
+.btn-block:hover { background-color: #36A139; } /* slightly darker grass */
+.btn-block.secondary {
+  @apply bg-mc-dirt;
+}
+.btn-block.secondary:hover { background-color: #6a4419; }
