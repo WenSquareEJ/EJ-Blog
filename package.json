@@ -28,3 +28,9 @@
     "typescript": "^5.5.4"
   }
 }
+{
+  "dependencies": {
+    "react-quill": "^2.0.0",
+    "isomorphic-dompurify": "^2.13.0"
+  }
+}
