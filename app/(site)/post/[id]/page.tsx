@@ -16,7 +16,7 @@ export default async function PostPage({
   const debug = searchParams?.debug === '1'
   const sb = supabaseServer()
 
-  // Load post
+  // 1) Load the post
   const { data: posts, error: postErr } = await sb
     .from('posts')
     .select('*')
@@ -24,16 +24,16 @@ export default async function PostPage({
     .limit(1)
 
   if (postErr) {
-  return (
-    <pre className="text-xs p-2 rounded bg-red-50 border border-red-200 whitespace-pre-wrap">
-      Post load error: {postErr.message}
-    </pre>
-  );
-}
+    return (
+      <pre className="text-xs p-2 rounded bg-red-50 border border-red-200 whitespace-pre-wrap">
+        Post load error: {postErr.message}
+      </pre>
+    )
+  }
   const post = posts?.[0]
   if (!post) return <p>Not found</p>
 
-  // Who is viewing?
+  // 2) WHO IS VIEWING?  ← this is the part you were looking for
   const { data: ures } = await sb.auth.getUser()
   const viewerId = ures?.user?.id ?? null
 
@@ -44,14 +44,22 @@ export default async function PostPage({
       .select('role')
       .eq('id', viewerId)
       .maybeSingle()
-    viewerRole = (prof?.role as any) ?? null
+
+    const raw = (prof?.role ?? '') as string
+    const normalized = raw.trim().toLowerCase()
+    viewerRole =
+      normalized === 'parent' || normalized === 'guardian'
+        ? 'parent'
+        : normalized === 'child'
+        ? 'child'
+        : null
   }
 
   const isParent = viewerRole === 'parent'
   const isAuthor = !!viewerId && post.author === viewerId
   const canDelete = isParent || isAuthor
 
-  // Comments (approved only)
+  // 3) Comments (approved only)
   const { data: comments } = await sb
     .from('comments')
     .select('*')
@@ -59,7 +67,7 @@ export default async function PostPage({
     .eq('status', 'approved')
     .order('created_at', { ascending: true })
 
-  // Render rich HTML
+  // 4) Safe HTML render for rich content
   const safeHtml = DOMPurify.sanitize(post.content || '', {
     USE_PROFILES: { html: true },
   })
@@ -73,12 +81,14 @@ export default async function PostPage({
             {new Date(post.published_at || post.created_at).toLocaleString()}
           </p>
         </div>
-        <DeletePostButton postId={postId} />
+
+        {/* Show Delete only for parent or author */}
+        {canDelete && <DeletePostButton postId={postId} />}
       </div>
 
-      {/* Debug – add ?debug=1 to the URL if needed */}
+      {/* Optional: visit /post/<id>?debug=1 to see this box */}
       {debug && (
-        <pre className="text-xs p-2 rounded bg-yellow-50 border border-yellow-200">
+        <pre className="text-xs p-2 rounded bg-yellow-50 border border-yellow-200 whitespace-pre-wrap">
 {`DEBUG:
 viewerId:  ${viewerId}
 viewerRole: ${viewerRole}
