@@ -44,3 +44,34 @@ html, body {
 
 /* Make prose not gigantic with Press Start 2P */
 .prose { font-size: 12px; line-height: 1.5; }
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  --mc-grass: #5dbb63;
+  --mc-stone: #7a7a7a;
+  --mc-water: #3ca9e2;
+  --mc-dirt: #8b5a2b;
+}
+
+body {
+  font-family: 'Press Start 2P', cursive;
+  background-color: var(--mc-grass);
+  color: #222;
+}
+
+.btn-block {
+  background-color: var(--mc-water);
+  border: 4px solid black;
+  padding: 0.5rem 1rem;
+  font-family: 'Press Start 2P', cursive;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.btn-block:hover {
+  background-color: var(--mc-dirt);
+  transform: translateY(-2px);
+}
