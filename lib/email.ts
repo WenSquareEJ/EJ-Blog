@@ -31,14 +31,28 @@ export async function sendReviewEmail(to: string[], reviewUrl: string, postTitle
   await sendResend({ apiKey, payload: { from, to, subject, html } })
 }
 
-// Also used by /api/digest
-export async function sendDailyDigest(to: string[], subject: string, html: string) {
+// 👇 Now accepts either 2 args (to, html) or 3 args (to, subject, html)
+export async function sendDailyDigest(to: string[], arg2: string, arg3?: string) {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey || !to?.length) {
     console.warn('Skipping daily digest: missing RESEND_API_KEY or empty recipients.')
     return
   }
+
   const from = 'KidSite <onboarding@resend.dev>'
+  let subject: string
+  let html: string
+
+  if (arg3) {
+    // called with (to, subject, html)
+    subject = arg2
+    html = arg3
+  } else {
+    // called with (to, html)
+    subject = 'Daily Digest'
+    html = arg2
+  }
+
   await sendResend({ apiKey, payload: { from, to, subject, html } })
 }
 
