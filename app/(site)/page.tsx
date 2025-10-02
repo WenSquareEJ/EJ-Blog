@@ -16,7 +16,7 @@ export default async function Home({
   const sb = supabaseServer()
 
   // newest first
-  const { data: posts = [], count } = await sb
+  const { data: posts, count } = await sb
     .from('posts')
     .select('*', { count: 'exact' })
     .eq('status', 'approved')
@@ -24,6 +24,7 @@ export default async function Home({
     .order('created_at', { ascending: false })
     .range(from, to)
 
+  const list = posts ?? [] // <- avoid null
   const totalPages = Math.max(1, Math.ceil((count || 0) / PAGE_SIZE))
 
   return (
@@ -38,8 +39,8 @@ export default async function Home({
 
       {/* posts */}
       <div className="space-y-5">
-        {posts.map((post) => {
-          // Build an HTML preview: keep basic formatting, strip media tags for compact cards
+        {list.map((post) => {
+          // HTML preview: keep basic formatting, strip media tags
           const safePreview = DOMPurify.sanitize(post.content || '', {
             USE_PROFILES: { html: true },
             FORBID_TAGS: ['img', 'video', 'iframe', 'audio'],
@@ -54,7 +55,6 @@ export default async function Home({
                 {new Date(post.published_at || post.created_at).toLocaleString()}
               </p>
 
-              {/* Render sanitized HTML preview */}
               <div
                 className="prose max-w-none overflow-hidden"
                 style={{ maxHeight: 220 }}
