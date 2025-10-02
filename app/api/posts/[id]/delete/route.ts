@@ -55,8 +55,8 @@ export async function DELETE(
   const { error: imgDelErr } = await admin.from('images').delete().eq('post_id', postId)
   if (imgDelErr) return new Response(imgDelErr.message, { status: 500 })
 
-  await admin.from('reactions').delete().eq('post_id', postId).maybeSingle().catch(()=>({}))
-  await admin.from('comments').delete().eq('post_id', postId).maybeSingle().catch(()=>({}))
+await admin.from('reactions').delete().eq('post_id', postId)
+await admin.from('comments').delete().eq('post_id', postId)
 
   const { error: postDelErr } = await admin.from('posts').delete().eq('id', postId)
   if (postDelErr) return new Response(postDelErr.message, { status: 500 })
