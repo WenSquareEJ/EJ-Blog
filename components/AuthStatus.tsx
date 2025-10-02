@@ -1,46 +1,42 @@
+// /components/AuthStatus.tsx
 'use client'
+
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
-
-type Profile = { id: string; role: 'child'|'parent'|'guest'|null }
+import { createClient } from '@/lib/supabaseClient'
 
 export default function AuthStatus() {
-  const [profile, setProfile] = useState<Profile|null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<null | { id: string; email?: string }>(null)
+  const supabase = createClient()
 
   useEffect(() => {
-    let mounted = true
+    let isMounted = true
 
-    async function load() {
-      setLoading(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { if (mounted) { setProfile(null); setLoading(false) } ; return }
-      // fetch own profile (RLS policy allows self read)
-      const { data } = await supabase.from('profiles').select('id, role').eq('id', session.user.id).maybeSingle()
-      if (mounted) {
-        setProfile(data ? { id: data.id, role: (data as any).role } : { id: session.user.id, role: null })
-        setLoading(false)
-      }
+    // Get current user once
+    supabase.auth.getUser().then(({ data }) => {
+      if (isMounted) setUser(data.user ?? null)
+    })
+
+    // Keep in sync with auth changes
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isMounted) setUser(session?.user ?? null)
+    })
+
+    return () => {
+      isMounted = false
+      sub.subscription.unsubscribe()
     }
+  }, [supabase])
 
-    load()
-    const { data: sub } = supabase.auth.onAuthStateChange((_e) => load())
-    return () => { mounted = false; sub?.subscription?.unsubscribe() }
-  }, [])
+  if (!user) {
+    return <Link className="btn-mc-secondary" href="/login">Log in</Link>
+  }
 
-  if (loading) return <div className="text-sm text-gray-500">…</div>
-
+  // If you have a /logout action route, this button will work.
+  // Otherwise swap this for a client onClick that calls supabase.auth.signOut()
   return (
-    <div className="flex items-center gap-3 text-sm">
-      {/* Links that depend on role */}
-      {profile?.role === 'child' && <Link className="underline" href="/post/new">New Post</Link>}
-      {profile?.role === 'parent' && <Link className="underline" href="/moderation">Moderation</Link>}
-
-      {/* Auth buttons */}
-      {profile
-        ? <button className="border rounded px-2 py-1" onClick={() => supabase.auth.signOut()}>Logout</button>
-        : <Link className="border rounded px-2 py-1" href="/login">Login</Link>}
-    </div>
+    <form action="/logout" method="post">
+      <button className="btn-mc-secondary" type="submit">Log out</button>
+    </form>
   )
 }
