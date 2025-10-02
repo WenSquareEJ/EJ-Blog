@@ -5,18 +5,11 @@ import CommentForm from '@/components/CommentForm'
 import ReactionBar from '@/components/ReactionBar'
 import DeletePostButton from '@/components/DeletePostButton'
 
-export default async function PostPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string }
-  searchParams?: { debug?: string }
-}) {
+export default async function PostPage({ params }: { params: { id: string } }) {
   const postId = params.id
-  const debug = searchParams?.debug === '1'
   const sb = supabaseServer()
 
-  // 1) Load the post
+  // 1) Load post (allow for both author / author_id shapes)
   const { data: posts, error: postErr } = await sb
     .from('posts')
     .select('*')
@@ -33,10 +26,11 @@ export default async function PostPage({
   const post = posts?.[0]
   if (!post) return <p>Not found</p>
 
-  // 2) WHO IS VIEWING?  ← this is the part you were looking for
+  // 2) Who is viewing?
   const { data: ures } = await sb.auth.getUser()
   const viewerId = ures?.user?.id ?? null
 
+  // Read role via profiles (RLS policy above allows this)
   let viewerRole: 'parent' | 'child' | null = null
   if (viewerId) {
     const { data: prof } = await sb
@@ -55,11 +49,15 @@ export default async function PostPage({
         : null
   }
 
+  // Support either column name
+  const postAuthorId: string | null =
+    (post as any).author_id ?? (post as any).author ?? null
+
   const isParent = viewerRole === 'parent'
-  const isAuthor = !!viewerId && post.author === viewerId
+  const isAuthor = !!viewerId && !!postAuthorId && viewerId === postAuthorId
   const canDelete = isParent || isAuthor
 
-  // 3) Comments (approved only)
+  // 3) Approved comments
   const { data: comments } = await sb
     .from('comments')
     .select('*')
@@ -67,7 +65,7 @@ export default async function PostPage({
     .eq('status', 'approved')
     .order('created_at', { ascending: true })
 
-  // 4) Safe HTML render for rich content
+  // 4) Render the rich content
   const safeHtml = DOMPurify.sanitize(post.content || '', {
     USE_PROFILES: { html: true },
   })
@@ -81,21 +79,17 @@ export default async function PostPage({
             {new Date(post.published_at || post.created_at).toLocaleString()}
           </p>
         </div>
-
-        {/* Show Delete only for parent or author */}
         {canDelete && <DeletePostButton postId={postId} />}
       </div>
 
-      {/* Optional: visit /post/<id>?debug=1 to see this box */}
-      {debug && (
-        <pre className="text-xs p-2 rounded bg-yellow-50 border border-yellow-200 whitespace-pre-wrap">
+      {/* TEMP debug — remove after confirming */}
+      <pre className="text-[10px] mt-2 p-2 rounded bg-yellow-50 border border-yellow-200 whitespace-pre-wrap">
 {`DEBUG:
-viewerId:  ${viewerId}
+viewerId:   ${viewerId}
 viewerRole: ${viewerRole}
-author:    ${post.author}
-canDelete: ${String(canDelete)}`}
-        </pre>
-      )}
+postAuthor: ${postAuthorId}
+canDelete:  ${String(canDelete)}`}
+      </pre>
 
       <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
 
