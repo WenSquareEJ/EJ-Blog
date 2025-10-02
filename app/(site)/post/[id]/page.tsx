@@ -27,8 +27,10 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   if (!post) return <p>Not found</p>
 
   // 2) Who is viewing?
-  const { data: ures } = await sb.auth.getUser()
-  const viewerId = ures?.user?.id ?? null
+const {
+  data: { user },
+} = await sb.auth.getUser()
+const userId = user?.id ?? null
 
   // Read role via profiles (RLS policy above allows this)
   let viewerRole: 'parent' | 'child' | null = null
