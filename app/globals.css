@@ -2,33 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Use pixel font when skin=minecraft */
-[data-skin="minecraft"] * {
-  font-family: var(--font-mc, 'Pixelify Sans', system-ui, sans-serif);
-  letter-spacing: .2px;
+/* ---- Site theme tokens ---- */
+:root {
+  --mc-grass: #6aaa34;
+  --mc-sky:   #8fd3ff;
+  --mc-stone: #5a5a5a;
+  --mc-dirt:  #8b6b4a;
 }
 
-/* Subtle pixel sky background */
-body.bg-mc-sky {
+/* Optional page background */
+html, body {
+  @apply min-h-screen;
   background:
-    linear-gradient(transparent 23px, rgba(0,0,0,.03) 24px),
-    linear-gradient(90deg, transparent 23px, rgba(0,0,0,.03) 24px),
-    #E8F5FF;
-  background-size: 24px 24px, 24px 24px;
+    linear-gradient(180deg, rgba(143,211,255,0.35), rgba(143,211,255,0.35)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.03) 0 2px,
+      transparent 2px 4px
+    );
 }
 
-/* Pixel divider already present; keep it */
-.pixel-divider { height: 8px; background-image: linear-gradient(90deg, #333 25%, transparent 25%), linear-gradient(90deg, #333 25%, transparent 25%); background-size: 16px 8px; background-position: 0 0, 8px 4px; }
+/* ---- Components & utilities we reference in JSX ---- */
+@layer utilities {
+  /* Colors as utility classes */
+  .bg-mc-grass { background-color: var(--mc-grass); }
+  .bg-mc-sky   { background-color: var(--mc-sky); }
+  .text-mc-stone { color: var(--mc-stone); }
+  .border-mc-stone { border-color: var(--mc-stone); }
 
-/* Blocky card + button helpers */
-.card-block {
-  @apply rounded-block border border-mc-stone/30 bg-white shadow-block;
+  /* Blocky rounding */
+  .rounded-block { @apply rounded-xl; }
+
+  /* Pixel-ish font helper (works even if custom font is missing) */
+  .font-mc { font-family: 'Press Start 2P', 'Minecraftia', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+  /* The missing one that caused the build to fail */
+  .shadow-block {
+    box-shadow:
+      0 2px 0 0 rgba(0,0,0,0.20),
+      inset 0 -2px 0 rgba(0,0,0,0.08);
+  }
+
+  /* Card & buttons used across the app */
+  .card-block {
+    @apply rounded-block border border-mc-stone/30 bg-white shadow-block;
+  }
+
+  .btn-block {
+    @apply inline-flex items-center gap-1 rounded-block border border-mc-stone/40 px-3 py-1.5 text-sm font-medium shadow-block;
+    background-image: linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(255,255,255,0.15));
+  }
+
+  .btn-mc {
+    @apply btn-block;
+    background-color: var(--mc-sky);
+  }
+
+  .btn-mc-secondary {
+    @apply btn-block;
+    background-color: #ffffff;
+  }
+
+  .btn-mc-danger {
+    @apply btn-block;
+    background-color: #e25b5b;
+    color: white;
+  }
 }
-.btn-block {
-  @apply inline-flex items-center justify-center rounded-block px-4 py-2 font-semibold text-white bg-mc-grass shadow-block transition active:translate-y-1;
-}
-.btn-block:hover { background-color: #36A139; } /* slightly darker grass */
-.btn-block.secondary {
-  @apply bg-mc-dirt;
-}
-.btn-block.secondary:hover { background-color: #6a4419; }
+
+/* Small helpers */
+.prose img { @apply max-w-full h-auto; }
