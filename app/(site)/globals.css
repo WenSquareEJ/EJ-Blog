@@ -1,38 +1,19 @@
-/* app/(site)/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root{
-  --mc-grass: #e0ffd1;
-  --mc-dirt: #c4a484;
+/* Prevent horizontal scroll on pages */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Optional “Minecraft-y” vibe: tweak as needed */
+:root {
+  --mc-green: #3c9d3c;
   --mc-stone: #6b7280;
-  --mc-emerald: #10b981;
-  --card: #ffffff;
-  --ink: #0f172a;
 }
-
-html, body { color: var(--ink); background: var(--mc-grass); }
-
-.bg-mc-grass { background: var(--mc-grass); }
-.bg-mc-dirt  { background: var(--mc-dirt); }
-.text-mc-stone { color: var(--mc-stone); }
-.text-mc-emerald { color: var(--mc-emerald); }
-
-.mc-card {
-  background: var(--card);
-  border: 3px solid #2d2d2d;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 4px 0 #2d2d2d;
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
 }
-
-.mc-banner {
-  background: var(--mc-emerald);
-  color: white;
-  border: 3px solid #2d2d2d;
-  border-radius: 12px;
-  padding: .75rem 1rem;
-}
-
-.prose { font-size: 12px; line-height: 1.5; }
