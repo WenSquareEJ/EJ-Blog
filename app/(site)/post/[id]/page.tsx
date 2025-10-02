@@ -6,6 +6,10 @@ import CommentForm from '@/components/CommentForm'
 import ReactionBar from '@/components/ReactionBar'
 import DeletePostButton from '@/components/DeletePostButton'
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const dynamicParams = true;
+
 type PageProps = {
   params: { id: string }
   searchParams?: Record<string, string | string[] | undefined>
