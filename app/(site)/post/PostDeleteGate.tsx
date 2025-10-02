@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import DeletePostButton from './DeletePostButton'
+import DeletePostButton from '@/components/DeletePostButton'
 import { createClient } from '@supabase/supabase-js'
 
 type Props = { postId: string; authorId: string }
