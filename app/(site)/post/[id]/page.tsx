@@ -9,7 +9,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   const postId = params.id
   const sb = supabaseServer()
 
-  // Load post
+  // 1) Load the post
   const { data: posts, error: postErr } = await sb
     .from('posts')
     .select('*')
@@ -20,7 +20,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   const post = posts?.[0]
   if (!post) return <p>Not found</p>
 
-  // Who is viewing?
+  // 2) Who is viewing?
   const { data: ures } = await sb.auth.getUser()
   const userId = ures?.user?.id ?? null
 
@@ -36,7 +36,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   const isAuthor = !!userId && post.author === userId
   const canDelete = isParent || isAuthor
 
-  // Comments (approved only)
+  // 3) Comments (approved only)
   const { data: comments } = await sb
     .from('comments')
     .select('*')
@@ -44,7 +44,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
     .eq('status', 'approved')
     .order('created_at', { ascending: true })
 
-  // Safe HTML render
+  // 4) Safe HTML render for rich content
   const safeHtml = DOMPurify.sanitize(post.content || '', {
     USE_PROFILES: { html: true },
   })
