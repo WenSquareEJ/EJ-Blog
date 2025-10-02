@@ -2,73 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---- Site theme tokens ---- */
-:root {
-  --mc-grass: #6aaa34;
-  --mc-sky:   #8fd3ff;
-  --mc-stone: #5a5a5a;
-  --mc-dirt:  #8b6b4a;
+/* --- Minecraft Theme Colors --- */
+@layer base {
+  :root {
+    --mc-grass: #55aa55;
+    --mc-sky: #6dcff6;
+    --mc-stone: #7c7c7c;
+    --mc-ink: #222;
+  }
 }
 
-/* Optional page background */
-html, body {
-  @apply min-h-screen;
-  background:
-    linear-gradient(180deg, rgba(143,211,255,0.35), rgba(143,211,255,0.35)),
-    repeating-linear-gradient(
-      0deg,
-      rgba(0,0,0,0.03) 0 2px,
-      transparent 2px 4px
-    );
-}
-
-/* ---- Components & utilities we reference in JSX ---- */
 @layer utilities {
-  /* Colors as utility classes */
   .bg-mc-grass { background-color: var(--mc-grass); }
   .bg-mc-sky   { background-color: var(--mc-sky); }
   .text-mc-stone { color: var(--mc-stone); }
-  .border-mc-stone { border-color: var(--mc-stone); }
+  .text-mc-ink   { color: var(--mc-ink); }
 
-  /* Blocky rounding */
-  .rounded-block { @apply rounded-xl; }
+  /* add transparency variants manually */
+  .border-mc-stone\/30 { border-color: rgb(124 124 124 / 0.3); }
 
-  /* Pixel-ish font helper (works even if custom font is missing) */
-  .font-mc { font-family: 'Press Start 2P', 'Minecraftia', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-
-  /* The missing one that caused the build to fail */
+  /* Shadows */
   .shadow-block {
-    box-shadow:
-      0 2px 0 0 rgba(0,0,0,0.20),
-      inset 0 -2px 0 rgba(0,0,0,0.08);
+    box-shadow: 4px 4px 0 #00000055;
   }
 
-  /* Card & buttons used across the app */
+  /* Rounded “blocky” corners */
+  .rounded-block {
+    border-radius: 4px;
+  }
+
+  /* Card + Button helpers */
   .card-block {
     @apply rounded-block border border-mc-stone/30 bg-white shadow-block;
   }
-
   .btn-block {
-    @apply inline-flex items-center gap-1 rounded-block border border-mc-stone/40 px-3 py-1.5 text-sm font-medium shadow-block;
-    background-image: linear-gradient(to bottom, rgba(255,255,255,0.6), rgba(255,255,255,0.15));
+    @apply rounded-block border px-3 py-1 bg-white hover:bg-gray-50 shadow-block;
   }
 
+  /* Minecrafty button styles */
   .btn-mc {
-    @apply btn-block;
-    background-color: var(--mc-sky);
+    @apply px-3 py-1 rounded-block bg-mc-grass text-white shadow-block hover:brightness-110;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
   }
-
   .btn-mc-secondary {
-    @apply btn-block;
-    background-color: #ffffff;
+    @apply px-3 py-1 rounded-block bg-mc-sky text-black shadow-block hover:brightness-110;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
   }
-
   .btn-mc-danger {
-    @apply btn-block;
-    background-color: #e25b5b;
-    color: white;
+    @apply px-3 py-1 rounded-block bg-red-600 text-white shadow-block hover:bg-red-700;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
   }
 }
-
-/* Small helpers */
-.prose img { @apply max-w-full h-auto; }
