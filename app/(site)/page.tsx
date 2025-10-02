@@ -6,18 +6,23 @@ import Hero from '@/components/Hero'
 
 export default async function HomePage() {
   const sb = supabaseServer()
-  const { data: posts } = await sb
+  const { data } = await sb
     .from('posts')
     .select('*')
-    .eq('status','approved')
-    .order('published_at', { ascending: false })
-    .limit(20)
+    .eq('status', 'approved')
+
+  // Sort newest first by published_at || created_at
+  const posts = (data || []).sort((a: any, b: any) => {
+    const da = new Date(a.published_at || a.created_at).getTime()
+    const db = new Date(b.published_at || b.created_at).getTime()
+    return db - da
+  })
 
   return (
     <div>
       <Hero />
       <div className="space-y-4">
-        {(posts||[]).map(p => <PostCard key={p.id} post={p} />)}
+        {posts.map((p:any) => <PostCard key={p.id} post={p} />)}
       </div>
     </div>
   )
