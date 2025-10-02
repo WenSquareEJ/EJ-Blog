@@ -5,6 +5,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Minecraft-ish palette
         mc: {
           grass: '#3CAB3A',
           grassDark: '#2F8E2F',
@@ -19,7 +20,6 @@ const config: Config = {
       },
       boxShadow: {
         block: '0 6px 0 0 #2F8E2F, 0 6px 12px rgba(0,0,0,.15)',
-        soft: '0 6px 24px rgba(0,0,0,.06)'
       },
       borderRadius: {
         block: '12px'
