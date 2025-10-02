@@ -2,91 +2,110 @@
 @tailwind components;
 @tailwind utilities;
 
-/* -------------------------------------------------
-   Minecraft theme tokens (no Tailwind config needed)
---------------------------------------------------*/
-@layer base {
-  :root {
-    --mc-grass: #6aa84f;  /* grass green */
-    --mc-sky:   #3d85c6;  /* sky blue   */
-    --mc-stone: #999999;  /* stone gray */
-    --mc-sand:  #ffe599;  /* sand       */
-    --mc-ink:   #111111;  /* text color */
-  }
-
-  body {
-    color: var(--mc-ink);
-    background-color: var(--mc-grass);
-    /* blocky grid */
-    background-image:
-      linear-gradient(to right, rgba(0,0,0,.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(0,0,0,.05) 1px, transparent 1px);
-    background-size: 32px 32px;
-  }
+/* ---------- Palette ---------- */
+:root{
+  --mc-grass:#4caf50;
+  --mc-sky:#4ea3c5;
+  --mc-stone:#6b7280;
+  --mc-ink:#111827;
+  --mc-sand:#fef3c7;
+  --mc-danger:#dd3333;
 }
 
-/* -------------------------------------------------
-   Utilities we’ll use in class names
---------------------------------------------------*/
-@layer utilities {
-  .font-mc { font-family: var(--font-mc), 'Press Start 2P', monospace; letter-spacing:-0.5px; }
-
-  .text-mc-ink   { color: var(--mc-ink); }
-  .bg-mc-sky     { background-color: var(--mc-sky); }
-  .bg-mc-grass   { background-color: var(--mc-grass); }
-  .bg-mc-sand    { background-color: var(--mc-sand); }
-  .border-mc-stone { border-color: var(--mc-stone); }
-
-  /* blocky helpers */
-  .rounded-block { border-radius: 8px; }
-  .shadow-block  { box-shadow: 0 2px 0 #000, 0 4px 0 rgba(0,0,0,.2); }
+/* ---------- Background grid ---------- */
+html,body{height:100%}
+body{
+  font-family:var(--font-pixel), monospace; /* readable pixel everywhere */
+  color:var(--mc-ink);
+  background:
+    linear-gradient(0deg, rgba(0,0,0,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.05) 1px, transparent 1px),
+    var(--mc-grass);
+  background-size:16px 16px,16px 16px,auto;
 }
 
-/* -------------------------------------------------
-   Components (cards, buttons, header)
---------------------------------------------------*/
-@layer components {
-  /* Card */
-  .card-block {
-    @apply rounded-block border bg-white p-4;
-    border-color: rgba(153,153,153,.3); /* var(--mc-stone) with 30% */
-    box-shadow: 0 1px 0 rgba(0,0,0,.2);
-  }
+/* Headings & nav = chunky pixel */
+.font-mc, h1,h2,h3,h4,h5,h6{ font-family:var(--font-mc), monospace; }
 
-  /* Buttons */
-  .btn-mc {
-    @apply font-mc text-white px-3 py-1 rounded-block border-2 shadow-block transition;
-    background-color: var(--mc-sky);
-    border-color: #000;
-  }
-  .btn-mc:hover { filter: brightness(1.05); }
+/* Smaller headings */
+h1{ @apply text-xl mb-2; }
+h2{ @apply text-lg mb-2; }
+h3{ @apply text-base mb-1.5; }
 
-  .btn-mc-secondary {
-    @apply font-mc px-3 py-1 rounded-block border-2 shadow-block transition;
-    color: #000;
-    background-color: var(--mc-sand);
-    border-color: #000;
-  }
-  .btn-mc-secondary:hover { filter: brightness(1.05); }
-
-  .btn-mc-danger {
-    @apply font-mc text-white px-3 py-1 rounded-block border-2 shadow-block transition;
-    background-color: #dc2626; /* red-600 */
-    border-color: #000;
-  }
-  .btn-mc-danger:hover { filter: brightness(0.95); }
-
-  .btn-block {
-    @apply font-mc text-white px-3 py-2 rounded-block border-2 shadow-block transition;
-    background-color: var(--mc-grass);
-    border-color: #000;
-  }
-
-  /* Header strip */
-  header {
-    @apply border-b;
-    background-color: color-mix(in oklab, var(--mc-sky) 80%, transparent);
-    border-color: #000;
-    backdrop-filter: blur(6px);
-  }
+/* ---------- Banner placeholder under the nav ---------- */
+.banner-placeholder{
+  border-bottom:2px solid rgba(0,0,0,.25);
+  background:
+    linear-gradient(0deg, rgba(0,0,0,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px),
+    #3fa94a;
+  background-size:18px 18px,18px 18px,auto;
+  height:72px;                 /* adjust banner height here */
 }
+
+/* ---------- Block helpers ---------- */
+.rounded-block{ border-radius:10px; }
+.shadow-block{
+  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 6px 0 rgba(0,0,0,.15);
+}
+.card-block{
+  background:#fff;
+  border:2px solid rgba(0,0,0,.2);
+  border-radius:10px;
+  padding:0.85rem;
+  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 6px 0 rgba(0,0,0,.15);
+}
+
+/* Post body text */
+.post-body{
+  font-family:var(--font-pixel), monospace;
+  font-size:0.95rem;
+  line-height:1.55;
+}
+
+/* ---------- Pixel Buttons (compact) ---------- */
+.btn-mc{
+  font-family:var(--font-mc), monospace;
+  font-size:0.72rem;
+  color:#fff;
+  background:var(--mc-sky);
+  padding:0.22rem 0.5rem;
+  border:2px solid #000;
+  border-radius:10px;
+  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 4px 0 rgba(0,0,0,.15);
+  transition:transform 120ms ease, filter 120ms ease;
+  display:inline-block;
+}
+.btn-mc:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+.btn-mc:active{ transform:translateY(0); }
+
+.btn-mc-secondary{
+  font-family:var(--font-mc), monospace;
+  font-size:0.72rem;
+  color:#111;
+  background:#ffe3a3;
+  padding:0.22rem 0.5rem;
+  border:2px solid #000;
+  border-radius:10px;
+  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 4px 0 rgba(0,0,0,.15);
+  transition:transform 120ms ease, filter 120ms ease;
+  display:inline-block;
+}
+.btn-mc-secondary:hover{ filter:brightness(1.03); transform:translateY(-1px); }
+
+.btn-mc-danger{
+  font-family:var(--font-mc), monospace;
+  font-size:0.72rem;
+  color:#fff;
+  background:var(--mc-danger);
+  padding:0.22rem 0.5rem;
+  border:2px solid #000;
+  border-radius:10px;
+  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 4px 0 rgba(0,0,0,.15);
+  transition:transform 120ms ease, filter 120ms ease;
+  display:inline-block;
+}
+.btn-mc-danger:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+
+/* Links like “Read more →” */
+a.link-underline{ text-decoration:underline; text-underline-offset:2px; }
