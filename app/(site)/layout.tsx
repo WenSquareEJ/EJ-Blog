@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="bg-mc-sky">
+      <body className="bg-mc-grass">
         <header className="sticky top-0 z-50 backdrop-blur bg-mc-sky/80 border-b border-mc-stone/30">
           <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
             <LogoPlaceholder />
