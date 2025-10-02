@@ -7,24 +7,23 @@ import Hero from '@/components/Hero'
 
 const PAGE_SIZE = 3
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams?: { page?: string }
-}) {
+export default async function HomePage({ searchParams }: { searchParams?: { page?: string } }) {
   const page = Math.max(1, Number(searchParams?.page || 1))
   const from = (page - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
   const sb = supabaseServer()
 
-  // Only approved posts; newest first
-  const { data: posts, count } = await sb
+  // Order by published_at DESC (NULLS LAST), then created_at DESC
+  const { data: posts, count, error } = await sb
     .from('posts')
     .select('*', { count: 'exact' })
     .eq('status', 'approved')
-    .order('published_at', { ascending: false })
+    .order('published_at', { ascending: false, nullsFirst: false }) // NULLS LAST
+    .order('created_at', { ascending: false })
     .range(from, to)
+
+  if (error) console.error(error)
 
   const total = count || 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
@@ -40,26 +39,17 @@ export default async function HomePage({
         )}
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between mt-6">
         {page > 1 ? (
-          <Link
-            href={`/?page=${page - 1}`}
-            className="px-3 py-2 rounded-block border hover:bg-gray-50"
-          >
+          <Link href={`/?page=${page - 1}`} className="px-3 py-2 rounded-block border hover:bg-gray-50">
             ← Newer
           </Link>
         ) : <span />}
 
-        <span className="text-sm text-mc-stone">
-          Page {page} of {totalPages}
-        </span>
+        <span className="text-sm text-mc-stone">Page {page} of {totalPages}</span>
 
         {page < totalPages ? (
-          <Link
-            href={`/?page=${page + 1}`}
-            className="px-3 py-2 rounded-block border hover:bg-gray-50"
-          >
+          <Link href={`/?page=${page + 1}`} className="px-3 py-2 rounded-block border hover:bg-gray-50">
             Older →
           </Link>
         ) : <span />}
