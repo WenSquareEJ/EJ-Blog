@@ -24,7 +24,7 @@ export default async function CalendarPage({ searchParams }:{
 
   const sb = supabaseServer()
 
-  // Count posts by CREATED time so the badge always shows
+  // Count posts by CREATED time (only approved) so the badge always shows
   const { data: postsInMonth } = await sb
     .from('posts')
     .select('id,title,created_at,status,published_at')
@@ -65,6 +65,7 @@ export default async function CalendarPage({ searchParams }:{
 
   return (
     <div className="space-y-6">
+      {/* Top bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href={`/calendar?year=${prev.y}&month=${prev.m}`} className="px-3 py-2 rounded-block border hover:bg-gray-50">← {monthLabel(prev.y, prev.m)}</Link>
@@ -83,10 +84,12 @@ export default async function CalendarPage({ searchParams }:{
         </form>
       </div>
 
+      {/* Weekday headings */}
       <div className="grid grid-cols-7 text-xs text-mc-stone">
         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} className="px-2 py-1">{d}</div>)}
       </div>
 
+      {/* Month grid */}
       <div className="grid grid-cols-7 gap-2">
         {cells.map((cell, idx) => {
           const d = cell.day
@@ -114,6 +117,7 @@ export default async function CalendarPage({ searchParams }:{
         })}
       </div>
 
+      {/* Selected day list */}
       {selectedDay && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold">Posts on {year}-{pad(month)}-{pad(selectedDay)}</h2>
