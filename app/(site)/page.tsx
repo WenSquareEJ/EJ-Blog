@@ -1,66 +1,94 @@
-export const dynamic = 'force-dynamic'
-
 import Link from 'next/link'
-import PostCard from '@/components/PostCard'
 import { supabaseServer } from '@/lib/supabaseServer'
-import Hero from '@/components/Hero'
+import DOMPurify from 'isomorphic-dompurify'
 
 const PAGE_SIZE = 3
 
-export default async function HomePage({
+export default async function Home({
   searchParams,
-}: { searchParams?: { page?: string } }) {
+}: {
+  searchParams?: { page?: string }
+}) {
   const page = Math.max(1, Number(searchParams?.page || 1))
   const from = (page - 1) * PAGE_SIZE
-  const to = from + PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
 
   const sb = supabaseServer()
 
-  // Get all approved posts (count included)
-  const { data: all, count } = await sb
+  // newest first
+  const { data: posts = [], count } = await sb
     .from('posts')
     .select('*', { count: 'exact' })
     .eq('status', 'approved')
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .range(from, to)
 
-  const list = (all || [])
-    // coalesce: published_at when present, else created_at
-    .sort((a: any, b: any) => {
-      const ta = new Date(a.published_at || a.created_at).getTime()
-      const tb = new Date(b.published_at || b.created_at).getTime()
-      return tb - ta // newest first
-    })
-
-  const pageItems = list.slice(from, to)
-  const total = count ?? list.length
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil((count || 0) / PAGE_SIZE))
 
   return (
-    <div>
-      <Hero />
+    <main className="max-w-3xl mx-auto px-4 pb-12">
+      {/* intro card */}
+      <section className="card-block p-6 mb-6">
+        <h2 className="text-2xl font-bold mb-2">Welcome to EJ’s Blog 👋</h2>
+        <p className="text-sm opacity-80">
+          Stories, builds, drawings, and adventures – all family-friendly and parent-approved.
+        </p>
+      </section>
 
-      <div className="space-y-4">
-        {pageItems.map((p: any) => <PostCard key={p.id} post={p} />)}
-        {pageItems.length === 0 && (
-          <p className="text-sm text-mc-stone">No posts yet.</p>
-        )}
+      {/* posts */}
+      <div className="space-y-5">
+        {posts.map((post) => {
+          // Build an HTML preview: keep basic formatting, strip media tags for compact cards
+          const safePreview = DOMPurify.sanitize(post.content || '', {
+            USE_PROFILES: { html: true },
+            FORBID_TAGS: ['img', 'video', 'iframe', 'audio'],
+          })
+
+          return (
+            <article key={post.id} className="card-block p-5">
+              <Link href={`/post/${post.id}`} className="no-underline">
+                <h3 className="text-xl font-bold mb-1">{post.title}</h3>
+              </Link>
+              <p className="text-xs text-mc-stone mb-3">
+                {new Date(post.published_at || post.created_at).toLocaleString()}
+              </p>
+
+              {/* Render sanitized HTML preview */}
+              <div
+                className="prose max-w-none overflow-hidden"
+                style={{ maxHeight: 220 }}
+                dangerouslySetInnerHTML={{ __html: safePreview }}
+              />
+
+              <div className="mt-4">
+                <Link href={`/post/${post.id}`} className="btn-block inline-flex">
+                  Read more
+                </Link>
+              </div>
+            </article>
+          )
+        })}
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between mt-6">
-        {page > 1 ? (
-          <Link href={`/?page=${page - 1}`} className="px-3 py-2 rounded-block border hover:bg-gray-50">
-            ← Newer
-          </Link>
-        ) : <span />}
-
-        <span className="text-sm text-mc-stone">Page {page} of {totalPages}</span>
-
-        {page < totalPages ? (
-          <Link href={`/?page=${page + 1}`} className="px-3 py-2 rounded-block border hover:bg-gray-50">
-            Older →
-          </Link>
-        ) : <span />}
+      {/* pagination */}
+      <div className="flex items-center justify-center gap-3 mt-8 text-sm">
+        <Link
+          href={page > 1 ? `/?page=${page - 1}` : '#'}
+          aria-disabled={page <= 1}
+          className="btn-block secondary disabled:opacity-50"
+        >
+          ← Newer
+        </Link>
+        <span className="px-2">Page {page} of {totalPages}</span>
+        <Link
+          href={page < totalPages ? `/?page=${page + 1}` : '#'}
+          aria-disabled={page >= totalPages}
+          className="btn-block secondary disabled:opacity-50"
+        >
+          Older →
+        </Link>
       </div>
-    </div>
+    </main>
   )
 }
