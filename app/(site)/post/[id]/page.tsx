@@ -5,8 +5,15 @@ import CommentForm from '@/components/CommentForm'
 import ReactionBar from '@/components/ReactionBar'
 import DeletePostButton from '@/components/DeletePostButton'
 
-export default async function PostPage({ params }: { params: { id: string } }) {
+export default async function PostPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string }
+  searchParams?: { debug?: string }
+}) {
   const postId = params.id
+  const debug = searchParams?.debug === '1'
   const sb = supabaseServer()
 
   // 1) Load the post
@@ -22,18 +29,20 @@ export default async function PostPage({ params }: { params: { id: string } }) {
 
   // 2) Who is viewing?
   const { data: ures } = await sb.auth.getUser()
-  const userId = ures?.user?.id ?? null
+  const viewerId = ures?.user?.id ?? null
 
-  let isParent = false
-  if (userId) {
+  let viewerRole: 'parent' | 'child' | null = null
+  if (viewerId) {
     const { data: prof } = await sb
       .from('profiles')
       .select('role')
-      .eq('id', userId)
+      .eq('id', viewerId)
       .maybeSingle()
-    isParent = prof?.role === 'parent'
+    viewerRole = (prof?.role as any) ?? null
   }
-  const isAuthor = !!userId && post.author === userId
+
+  const isParent = viewerRole === 'parent'
+  const isAuthor = !!viewerId && post.author === viewerId
   const canDelete = isParent || isAuthor
 
   // 3) Comments (approved only)
@@ -44,7 +53,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
     .eq('status', 'approved')
     .order('created_at', { ascending: true })
 
-  // 4) Safe HTML render for rich content
+  // 4) Safe HTML render
   const safeHtml = DOMPurify.sanitize(post.content || '', {
     USE_PROFILES: { html: true },
   })
@@ -60,6 +69,17 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         </div>
         {canDelete && <DeletePostButton postId={postId} />}
       </div>
+
+      {/* Optional debug info: add ?debug=1 to the URL */}
+      {debug && (
+        <pre className="text-xs p-2 rounded bg-yellow-50 border border-yellow-200">
+{`DEBUG:
+viewerId:  ${viewerId}
+viewerRole: ${viewerRole}
+author:    ${post.author}
+canDelete: ${String(canDelete)}`}
+        </pre>
+      )}
 
       {/* Render HTML content, including inline images */}
       <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
