@@ -1,36 +1,41 @@
-"use client";
+'use client'
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function DeletePostButton({ postId }: { postId: string }) {
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
-    setLoading(true);
+  const onDelete = async () => {
+    if (!confirm('Are you sure you want to delete this post?')) return
+    setLoading(true)
     try {
-      const res = await fetch(`/api/posts/${postId}/delete`, { method: "DELETE" });
+      const res = await fetch(`/api/posts/${postId}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
       if (!res.ok) {
-        const text = await res.text().catch(() => "Unknown error");
-        alert("Failed to delete: " + text);
-      } else {
-        router.push("/");
-        router.refresh();
+        const text = await res.text()
+        alert(`Delete failed: ${text || res.statusText}`)
+        return
       }
+      // Go home after successful delete
+      router.push('/')
+      router.refresh()
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <button
-      onClick={handleDelete}
+      onClick={onDelete}
       disabled={loading}
-      className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+      className="btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+      title="Delete this post"
     >
-      {loading ? "Deleting…" : "Delete"}
+      {loading ? 'Deleting…' : 'Delete'}
     </button>
-  );
+  )
 }
