@@ -23,7 +23,13 @@ export default async function PostPage({
     .eq('id', postId)
     .limit(1)
 
-  if (postErr) return <p>Error loading post.</p>
+  if (postErr) {
+  return (
+    <pre className="text-xs p-2 rounded bg-red-50 border border-red-200 whitespace-pre-wrap">
+      Post load error: {postErr.message}
+    </pre>
+  );
+}
   const post = posts?.[0]
   if (!post) return <p>Not found</p>
 
@@ -67,7 +73,7 @@ export default async function PostPage({
             {new Date(post.published_at || post.created_at).toLocaleString()}
           </p>
         </div>
-        {canDelete && <DeletePostButton postId={postId} />}
+        <DeletePostButton postId={postId} />
       </div>
 
       {/* Debug – add ?debug=1 to the URL if needed */}
