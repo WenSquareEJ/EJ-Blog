@@ -1,6 +1,6 @@
 // app/(site)/layout.tsx
 import Link from "next/link";
-import "@/app/(site)/globals.css"; // ← absolute path so it always resolves
+import "./globals.css"; // ← absolute path so it always resolves
 import { Press_Start_2P } from "next/font/google";
 
 const pixel = Press_Start_2P({ weight: "400", subsets: ["latin"], display: "swap" });
