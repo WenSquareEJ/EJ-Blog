@@ -2,18 +2,107 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Prevent horizontal scroll on pages */
-html, body {
-  overflow-x: hidden;
+/* Pixel Minecraft-y font */
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+/* Base reset + theme root */
+:root {
+  --mc-border: 2px;
 }
 
-/* Optional “Minecraft-y” vibe: tweak as needed */
-:root {
-  --mc-green: #3c9d3c;
-  --mc-stone: #6b7280;
+html, body, :root {
+  height: 100%;
 }
-.prose img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.5rem;
+
+@layer base {
+  body {
+    @apply bg-mc-grass/20 text-mc-charcoal font-mc antialiased;
+  }
+
+  /* Make images behave inside rich text */
+  .prose img, .content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+/* Minecraft components/utilities */
+@layer components {
+  /* Blocky rounded */
+  .rounded-block { @apply rounded-block; }
+
+  /* Card */
+  .card-block {
+    @apply rounded-block border-2 border-black bg-white shadow-mc;
+  }
+
+  /* Primary Button – grassy/pixel */
+  .btn-mc {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-sm
+           rounded-block border-2 border-black shadow-mc
+           bg-mc-grass text-black hover:bg-mc-leaf
+           transition-all active:translate-y-[1px];
+  }
+
+  /* Secondary Button – water */
+  .btn-mc-secondary {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-sm
+           rounded-block border-2 border-black shadow-mc
+           bg-mc-water text-white hover:brightness-110
+           transition-all active:translate-y-[1px];
+  }
+
+  /* Danger Button – lava */
+  .btn-mc-danger {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-sm
+           rounded-block border-2 border-black shadow-mc
+           bg-mc-lava text-white hover:brightness-110
+           transition-all active:translate-y-[1px];
+  }
+
+  /* Navigation bar (planks look) */
+  .mc-nav {
+    @apply sticky top-0 z-40 w-full border-b-4 border-black
+           bg-mc-dirt text-white;
+  }
+  .mc-nav-inner {
+    @apply mx-auto max-w-site px-3 h-14 flex items-center gap-3
+           overflow-x-auto;
+  }
+  .mc-nav a {
+    @apply whitespace-nowrap px-3 py-1 rounded-block border-2 border-black
+           bg-mc-sand text-black shadow-mc-soft
+           hover:bg-white hover:underline;
+  }
+
+  /* Page container */
+  .site-container {
+    @apply mx-auto max-w-site px-3 py-4;
+  }
+
+  /* Banner placeholder strip (for future image/text) */
+  .banner-placeholder {
+    @apply w-full h-16 bg-mc-grass/40 border-b-4 border-black;
+    background-image: linear-gradient(45deg, rgba(255,255,255,.12) 25%, transparent 25%),
+                      linear-gradient(-45deg, rgba(255,255,255,.12) 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, rgba(255,255,255,.12) 75%),
+                      linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.12) 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  }
+
+  /* Calendar block look */
+  .calendar-cell {
+    @apply border-2 border-black rounded-block bg-white shadow-mc p-2 min-h-[72px];
+  }
+  .calendar-selected {
+    @apply ring-2 ring-mc-grass;
+  }
+}
+
+/* Tiny helpers */
+@layer utilities {
+  .text-stone { @apply text-mc-stone; }
+  .text-charcoal { @apply text-mc-charcoal; }
 }
