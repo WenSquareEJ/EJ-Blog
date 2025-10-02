@@ -16,9 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-mc-sky">
         <header className="sticky top-0 z-50 backdrop-blur bg-mc-sky/80 border-b border-mc-stone/30">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
             <LogoPlaceholder />
-            <nav className="flex items-center gap-5 text-sm">
+            <nav className="flex items-center gap-6 text-sm flex-wrap">
               <Link href="/">Home</Link>
               <Link href="/calendar">Calendar</Link>
               <Link href="/tags">Tags</Link>
@@ -27,11 +27,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <AuthStatus />
             </nav>
           </div>
-          <div className="max-w-4xl mx-auto px-4"><BannerPlaceholder /></div>
+          <div className="max-w-6xl mx-auto px-6">
+            <BannerPlaceholder />
+          </div>
         </header>
         <main className="max-w-4xl mx-auto px-4 py-6">{children}</main>
         <div className="pixel-divider mt-10" />
-        <footer className="max-w-4xl mx-auto px-4 py-6 text-xs text-mc-stone">© {new Date().getFullYear()} EJ’s Blog</footer>
+        <footer className="max-w-4xl mx-auto px-4 py-6 text-xs text-mc-stone">
+          © {new Date().getFullYear()} EJ’s Blog
+        </footer>
       </body>
     </html>
   )
