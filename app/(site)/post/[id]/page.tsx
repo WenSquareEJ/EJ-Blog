@@ -16,7 +16,7 @@ export default async function PostPage({
   const debug = searchParams?.debug === '1'
   const sb = supabaseServer()
 
-  // 1) Load the post
+  // Load post
   const { data: posts, error: postErr } = await sb
     .from('posts')
     .select('*')
@@ -27,7 +27,7 @@ export default async function PostPage({
   const post = posts?.[0]
   if (!post) return <p>Not found</p>
 
-  // 2) Who is viewing?
+  // Who is viewing?
   const { data: ures } = await sb.auth.getUser()
   const viewerId = ures?.user?.id ?? null
 
@@ -45,7 +45,7 @@ export default async function PostPage({
   const isAuthor = !!viewerId && post.author === viewerId
   const canDelete = isParent || isAuthor
 
-  // 3) Comments (approved only)
+  // Comments (approved only)
   const { data: comments } = await sb
     .from('comments')
     .select('*')
@@ -53,16 +53,16 @@ export default async function PostPage({
     .eq('status', 'approved')
     .order('created_at', { ascending: true })
 
-  // 4) Safe HTML render
+  // Render rich HTML
   const safeHtml = DOMPurify.sanitize(post.content || '', {
     USE_PROFILES: { html: true },
   })
 
   return (
     <article className="prose max-w-none">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1>{post.title}</h1>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate">{post.title}</h1>
           <p className="text-sm text-mc-stone">
             {new Date(post.published_at || post.created_at).toLocaleString()}
           </p>
@@ -70,7 +70,7 @@ export default async function PostPage({
         {canDelete && <DeletePostButton postId={postId} />}
       </div>
 
-      {/* Optional debug info: add ?debug=1 to the URL */}
+      {/* Debug – add ?debug=1 to the URL if needed */}
       {debug && (
         <pre className="text-xs p-2 rounded bg-yellow-50 border border-yellow-200">
 {`DEBUG:
@@ -81,7 +81,6 @@ canDelete: ${String(canDelete)}`}
         </pre>
       )}
 
-      {/* Render HTML content, including inline images */}
       <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
 
       <div className="my-4">
