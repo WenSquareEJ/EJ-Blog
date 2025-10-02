@@ -1,80 +1,131 @@
-/* app/(site)/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ---------- Minecraft palette + font ---------- */
+/* ----------------------------------------
+   Minecraft-y color palette (CSS variables)
+----------------------------------------- */
 :root {
-  --mc-sky:        #7ec0ee;  /* sky */
-  --mc-grass:      #3ab54a;  /* grass */
-  --mc-dirt:       #8b5a2b;  /* dirt */
-  --mc-stone:      #6b7280;  /* slate/stone */
-  --mc-ink:        #0b1320;  /* dark text */
-  --mc-paper:      #fcf5d8;  /* parchment card */
-  --mc-leaf:       #2f8f46;
-  --mc-sand:       #e9d8a6;
+  --mc-grass: #4caf50;      /* grassy background */
+  --mc-sky:   #4ea3c5;      /* buttons / header */
+  --mc-stone: #6b7280;      /* muted gray */
+  --mc-ink:   #111827;      /* main text */
+  --mc-sand:  #fef3c7;      /* light sand highlight */
+  --mc-danger:#dd3333;
 }
 
-/* Kill any old tiled image that might be stuck in cache */
-html, body { height: 100%; }
+/* ----------------------------------------
+   Page background (grid vibe)
+----------------------------------------- */
+html, body {
+  height: 100%;
+}
+
 body {
-  margin: 0;
-  background:
-    linear-gradient(180deg, var(--mc-sky) 0%, var(--mc-sky) 65%, var(--mc-grass) 65%, var(--mc-grass) 100%);
+  font-family: var(--font-pixel), monospace;        /* readable pixel for body */
   color: var(--mc-ink);
-  font-family: var(--font-mc, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji');
-  image-rendering: pixelated;
+  background:
+    linear-gradient(0deg, rgba(0,0,0,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px),
+    var(--mc-grass);
+  background-size: 24px 24px, 24px 24px, auto;
 }
 
-/* Pixel font (Press Start 2P) – loaded via next/font in the layout */
-.font-mc { font-family: var(--font-mc); }
+/* Headings/nav use the chunkier pixel font */
+.font-mc, h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-mc), monospace;
+}
 
-/* ---------- Blocks & UI ---------- */
-.rounded-block { border-radius: 0.375rem; }
+/* Make headings a touch softer */
+h1 { @apply text-2xl mb-3; }
+h2 { @apply text-xl mb-2; }
+h3 { @apply text-lg mb-2; }
+
+/* ----------------------------------------
+   Blocky helpers
+----------------------------------------- */
+.rounded-block { border-radius: 10px; }
+
+.shadow-block {
+  /* slight stacked/pixel shadow */
+  box-shadow:
+    0 2px 0 rgba(0,0,0,0.35),
+    0 6px 0 rgba(0,0,0,0.15);
+}
+
+/* Card using plain CSS (no Tailwind color tokens that could 404) */
+.card-block {
+  background: #ffffff;
+  border: 2px solid #000;
+  border-color: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow:
+    0 2px 0 rgba(0,0,0,0.35),
+    0 6px 0 rgba(0,0,0,0.15);
+}
+
+/* Readable pixel text area for post content */
+.post-body {
+  font-family: var(--font-pixel), monospace;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+/* ----------------------------------------
+   Button styles
+----------------------------------------- */
 .btn-mc {
-  @apply inline-flex items-center px-3 py-1 text-sm no-underline;
-  background: var(--mc-grass);
-  border: 2px solid #1b6f2e;
-  color: white;
-  box-shadow: 0 2px 0 #1b6f2e;
+  font-family: var(--font-mc), monospace;
+  font-size: 0.8rem;                 /* smaller */
+  color: #fff;
+  background-color: var(--mc-sky);
+  padding: 0.30rem 0.6rem;           /* slimmer */
+  border: 2px solid #000;            /* crisp outline */
+  border-radius: 10px;
+  box-shadow:
+    0 2px 0 rgba(0,0,0,0.35),
+    0 6px 0 rgba(0,0,0,0.15);
+  transition: transform 120ms ease, filter 120ms ease;
+  display: inline-block;
 }
-.btn-mc:hover { filter: brightness(1.05); }
-.btn-mc:active { transform: translateY(1px); box-shadow: 0 1px 0 #1b6f2e; }
+.btn-mc:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.btn-mc:active { transform: translateY(0); }
 
 .btn-mc-secondary {
-  @apply inline-flex items-center px-3 py-1 text-sm no-underline;
-  background: var(--mc-sand);
-  border: 2px solid #b59f5a;
-  color: #3a2f10;
-  box-shadow: 0 2px 0 #b59f5a;
-}
-.btn-mc-secondary:hover { filter: brightness(1.03); }
-
-.card-block {
-  background: var(--mc-paper);
-  border: 2px solid #e6d8ad;
-  box-shadow: 0 3px 0 #d7c694;
-  border-radius: 0.375rem;
-}
-
-/* Links */
-a { text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-/* Small helpers used around the site */
-.badge {
+  font-family: var(--font-mc), monospace;
+  font-size: 0.8rem;
+  color: #111;
+  background-color: #ffe3a3;         /* sandy badge feel */
+  padding: 0.30rem 0.6rem;
+  border: 2px solid #000;
+  border-radius: 10px;
+  box-shadow:
+    0 2px 0 rgba(0,0,0,0.35),
+    0 6px 0 rgba(0,0,0,0.15);
+  transition: transform 120ms ease, filter 120ms ease;
   display: inline-block;
-  padding: 0.15rem 0.4rem;
-  font-size: 0.7rem;
-  color: #fff;
-  background: var(--mc-leaf);
-  border: 2px solid #1b6f2e;
-  border-radius: 9999px;
 }
+.btn-mc-secondary:hover { filter: brightness(1.03); transform: translateY(-1px); }
 
-/* Tailwind tweaks */
-@layer utilities {
-  .bg-mc-sky   { background-color: var(--mc-sky); }
-  .bg-mc-grass { background-color: var(--mc-grass); }
-  .text-mc-stone { color: var(--mc-stone); }
+.btn-mc-danger {
+  font-family: var(--font-mc), monospace;
+  font-size: 0.8rem;
+  color: #fff;
+  background-color: var(--mc-danger);
+  padding: 0.30rem 0.6rem;
+  border: 2px solid #000;
+  border-radius: 10px;
+  box-shadow:
+    0 2px 0 rgba(0,0,0,0.35),
+    0 6px 0 rgba(0,0,0,0.15);
+  transition: transform 120ms ease, filter 120ms ease;
+  display: inline-block;
+}
+.btn-mc-danger:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+/* Simple link look for “Read more →” */
+a.link-underline {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
