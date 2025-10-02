@@ -1,65 +1,42 @@
-// app/api/posts/[id]/delete/route.ts
-import { supabaseServer } from '@/lib/supabaseServer'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { NextRequest } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const postId = params.id
-  const userSb = supabaseServer()
-
-  // Who is calling?
-  const { data: ures, error: uerr } = await userSb.auth.getUser()
-  if (uerr || !ures?.user) {
-    return new Response('Unauthorized', { status: 401 })
-  }
-  const userId = ures.user.id
-
-  // Load caller role and the post author
-  const [{ data: prof }, { data: post }] = await Promise.all([
-    userSb.from('profiles').select('role').eq('id', userId).maybeSingle(),
-    userSb.from('posts').select('id, author, title').eq('id', postId).maybeSingle(),
-  ])
-
-  if (!post) return new Response('Not found', { status: 404 })
-
-  const isParent = prof?.role === 'parent'
-  const isAuthor = post.author === userId
-  if (!isParent && !isAuthor) {
-    return new Response('Forbidden', { status: 403 })
-  }
-
-  // Fetch image rows to remove files from storage
-  const { data: imgs } = await userSb
-    .from('images')
-    .select('id, path')
-    .eq('post_id', postId)
-
-  // Use admin client to delete files (bypasses RLS safely)
-  const admin = supabaseAdmin()
-  const keys = (imgs || []).map((i) =>
-    i.path.startsWith('images/') ? i.path.slice('images/'.length) : i.path
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY! // server-side only
   )
-  if (keys.length) {
-    // Remove from storage bucket 'images'
-    const { error: rmErr } = await admin.storage.from('images').remove(keys)
-    if (rmErr) {
-      // Not fatal, but we return 500 so you know to retry
-      return new Response(`Failed to delete files: ${rmErr.message}`, { status: 500 })
-    }
+
+  // Identify caller via auth cookie (best-effort)
+  const accessToken = req.headers.get('Authorization')?.replace('Bearer ', '') || null
+  let callerId: string | null = null
+  if (accessToken) {
+    const { data } = await supabase.auth.getUser(accessToken)
+    callerId = data?.user?.id ?? null
   }
 
-  // Clean up DB (images, comments, reactions, post)
-  // Using admin client to avoid RLS edge cases.
-  const { error: imgDelErr } = await admin.from('images').delete().eq('post_id', postId)
-  if (imgDelErr) return new Response(imgDelErr.message, { status: 500 })
+  // Load post (to check ownership)
+  const { data: post, error: postErr } = await supabase.from('posts').select('*').eq('id', postId).maybeSingle()
+  if (postErr || !post) return new Response('Post not found', { status: 404 })
 
-await admin.from('reactions').delete().eq('post_id', postId)
-await admin.from('comments').delete().eq('post_id', postId)
+  // Load caller role
+  let isParent = false
+  if (callerId) {
+    const { data: prof } = await supabase.from('profiles').select('role').eq('id', callerId).maybeSingle()
+    isParent = (prof?.role || '').toLowerCase() === 'parent'
+  }
+  const isAuthor = callerId && (post as any).author === callerId
 
-  const { error: postDelErr } = await admin.from('posts').delete().eq('id', postId)
-  if (postDelErr) return new Response(postDelErr.message, { status: 500 })
+  if (!isParent && !isAuthor) return new Response('Not authorized', { status: 403 })
+
+  // Best-effort: delete related rows (ignore if none)
+  await supabase.from('reactions').delete().eq('post_id', postId)
+  await supabase.from('comments').delete().eq('post_id', postId)
+
+  // Delete the post
+  const { error: delErr } = await supabase.from('posts').delete().eq('id', postId)
+  if (delErr) return new Response(delErr.message, { status: 500 })
 
   return Response.json({ ok: true })
 }
