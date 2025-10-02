@@ -2,7 +2,13 @@
 import './globals.css'
 import Link from 'next/link'
 import { Press_Start_2P } from 'next/font/google'
+import BannerPlaceholder from '@/components/BannerPlaceholder'
 
+// ...
+<body>
+  <div className="min-h-screen grid grid-rows-[auto_auto_1fr]">
+    <BannerPlaceholder />
+    {/* ...the rest of your layout... */}
 const mcFont = Press_Start_2P({
   weight: '400',
   subsets: ['latin'],
