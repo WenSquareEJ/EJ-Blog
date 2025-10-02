@@ -1,3 +1,4 @@
+// app/(site)/post/[id]/page.tsx
 import { supabaseServer } from '@/lib/supabaseServer'
 import DOMPurify from 'isomorphic-dompurify'
 import CommentList from '@/components/CommentList'
@@ -5,11 +6,16 @@ import CommentForm from '@/components/CommentForm'
 import ReactionBar from '@/components/ReactionBar'
 import DeletePostButton from '@/components/DeletePostButton'
 
-export default async function PostPage({ params }: { params: { id: string } }) {
+type PageProps = {
+  params: { id: string }
+  searchParams?: Record<string, string | string[] | undefined>
+}
+
+export default async function PostPage({ params, searchParams }: PageProps) {
   const postId = params.id
   const sb = supabaseServer()
 
-  // 1) Load post (allow for both author / author_id shapes)
+  // Load the post
   const { data: posts, error: postErr } = await sb
     .from('posts')
     .select('*')
@@ -17,22 +23,19 @@ export default async function PostPage({ params }: { params: { id: string } }) {
     .limit(1)
 
   if (postErr) {
-    return (
-      <pre className="text-xs p-2 rounded bg-red-50 border border-red-200 whitespace-pre-wrap">
-        Post load error: {postErr.message}
-      </pre>
-    )
+    return <p>Error loading post.</p>
   }
   const post = posts?.[0]
   if (!post) return <p>Not found</p>
 
-  // 2) Who is viewing?
-const {
-  data: { user },
-} = await sb.auth.getUser()
-const userId = user?.id ?? null
+  // ---- Who is viewing? ----
+  // Correct way to read the user with @supabase/auth-helpers-nextjs
+  const {
+    data: { user },
+  } = await sb.auth.getUser()
+  const viewerId = user?.id ?? null
 
-  // Read role via profiles (RLS policy above allows this)
+  // Look up the viewer's role (parent/child) from profiles
   let viewerRole: 'parent' | 'child' | null = null
   if (viewerId) {
     const { data: prof } = await sb
@@ -40,26 +43,13 @@ const userId = user?.id ?? null
       .select('role')
       .eq('id', viewerId)
       .maybeSingle()
-
-    const raw = (prof?.role ?? '') as string
-    const normalized = raw.trim().toLowerCase()
-    viewerRole =
-      normalized === 'parent' || normalized === 'guardian'
-        ? 'parent'
-        : normalized === 'child'
-        ? 'child'
-        : null
+    viewerRole = (prof?.role as 'parent' | 'child' | null) ?? null
   }
 
-  // Support either column name
-  const postAuthorId: string | null =
-    (post as any).author_id ?? (post as any).author ?? null
+  const isAuthor = !!viewerId && post.author === viewerId
+  const canDelete = isAuthor || viewerRole === 'parent'
 
-  const isParent = viewerRole === 'parent'
-  const isAuthor = !!viewerId && !!postAuthorId && viewerId === postAuthorId
-  const canDelete = isParent || isAuthor
-
-  // 3) Approved comments
+  // Approved comments for this post
   const { data: comments } = await sb
     .from('comments')
     .select('*')
@@ -67,32 +57,38 @@ const userId = user?.id ?? null
     .eq('status', 'approved')
     .order('created_at', { ascending: true })
 
-  // 4) Render the rich content
+  // Safe HTML render for rich content
   const safeHtml = DOMPurify.sanitize(post.content || '', {
     USE_PROFILES: { html: true },
   })
 
+  const showDebug =
+    typeof searchParams?.debug === 'string' && searchParams?.debug === '1'
+
   return (
     <article className="prose max-w-none">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="truncate">{post.title}</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1>{post.title}</h1>
           <p className="text-sm text-mc-stone">
             {new Date(post.published_at || post.created_at).toLocaleString()}
           </p>
         </div>
+
         {canDelete && <DeletePostButton postId={postId} />}
       </div>
 
-      {/* TEMP debug — remove after confirming */}
-      <pre className="text-[10px] mt-2 p-2 rounded bg-yellow-50 border border-yellow-200 whitespace-pre-wrap">
+      {showDebug && (
+        <pre className="bg-yellow-50 border border-yellow-300 p-3 rounded mb-4 text-xs">
 {`DEBUG:
-viewerId:   ${viewerId}
-viewerRole: ${viewerRole}
-postAuthor: ${postAuthorId}
-canDelete:  ${String(canDelete)}`}
-      </pre>
+viewerId: ${viewerId ?? 'null'}
+viewerRole: ${viewerRole ?? 'null'}
+postAuthor: ${post.author ?? 'null'}
+canDelete: ${String(canDelete)}`}
+        </pre>
+      )}
 
+      {/* Render HTML content, including inline images */}
       <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
 
       <div className="my-4">
