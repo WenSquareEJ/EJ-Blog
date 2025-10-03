@@ -1,5 +1,5 @@
 // /app/(site)/page.tsx
-import { supabaseServer } from "@/lib/supabaseServer"
+import { createServerClient } from "@/lib/supabaseServer"
 import Link from "next/link"
 
 export default async function HomePage({ searchParams }: { searchParams?: { page?: string } }) {
