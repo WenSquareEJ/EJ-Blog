@@ -60,6 +60,7 @@ export async function POST(req: Request) {
     content: (payload.content ?? rawPlain) || "",
     content_html: contentHtml || null,
     content_json: payload.content_json ?? null,
+    status: "pending" as const,
   };
 
   const { error } = await sb.from("posts").insert(insertData);

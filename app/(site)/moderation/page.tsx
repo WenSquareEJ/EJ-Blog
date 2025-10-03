@@ -10,31 +10,53 @@ type ModPost = {
   author_name: string | null;
 };
 
+type ModComment = {
+  id: string;
+  post_id: string;
+  post_title: string | null;
+  content: string;
+  created_at: string | null;
+};
+
 export default async function ModerationPage() {
   const sb = supabaseServer();
 
-  const { data, error } = await sb
+  const { data: postData, error: postError } = await sb
     .from("posts")
     .select("id,title,created_at,status,author:profiles!posts_author_fkey(display_name)")
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 
-  const posts: ModPost[] = (data ?? []).map((post) => ({
+  const posts: ModPost[] = (postData ?? []).map((post) => ({
     id: post.id,
     title: post.title,
     created_at: post.created_at,
-    status: post.status,
+    status: post.status as ModPost["status"],
     author_name:
       (post.author as { display_name?: string | null } | null)?.display_name ?? null,
+  }));
+
+  const { data: commentData, error: commentError } = await sb
+    .from("comments")
+    .select("id,content,created_at,post_id,post:posts(title)")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true });
+
+  const comments: ModComment[] = (commentData ?? []).map((comment) => ({
+    id: comment.id,
+    post_id: comment.post_id,
+    content: comment.content,
+    created_at: comment.created_at,
+    post_title: (comment.post as { title?: string | null } | null)?.title ?? null,
   }));
 
   return (
     <main className="space-y-4">
       <h1 className="text-xl font-semibold">Moderation Queue</h1>
 
-      {error && (
+      {postError && (
         <p className="text-red-600">
-          Failed to load pending posts: {error.message}
+          Failed to load pending posts: {postError.message}
         </p>
       )}
 
@@ -49,15 +71,67 @@ export default async function ModerationPage() {
                 {p.author_name ?? "Unknown"} ·{" "}
                 {p.created_at ? new Date(p.created_at).toLocaleString() : "Unknown time"}
               </div>
-              <div className="mt-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Link className="btn-mc" href={`/post/${p.id}`}>
                   View
                 </Link>
+                <form method="post" action={`/api/posts/${p.id}/approve`}>
+                  <button className="btn-mc" type="submit">
+                    Approve
+                  </button>
+                </form>
+                <form method="post" action={`/api/posts/${p.id}/reject`}>
+                  <button className="btn-mc-secondary" type="submit">
+                    Reject
+                  </button>
+                </form>
               </div>
             </li>
           ))}
         </ul>
       )}
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Pending Comments</h2>
+
+        {commentError && (
+          <p className="text-red-600">
+            Failed to load pending comments: {commentError.message}
+          </p>
+        )}
+
+        {comments.length === 0 ? (
+          <p>No pending comments.</p>
+        ) : (
+          <ul className="space-y-2">
+            {comments.map((comment) => (
+              <li key={comment.id} className="border p-3 rounded bg-white/70 space-y-2">
+                <div className="text-xs opacity-70">
+                  On post: {comment.post_title ?? comment.post_id}
+                </div>
+                <p className="text-sm">{comment.content}</p>
+                <div className="text-xs opacity-60">
+                  {comment.created_at
+                    ? new Date(comment.created_at).toLocaleString()
+                    : "Unknown time"}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <form method="post" action={`/api/comments/${comment.id}/approve`}>
+                    <button className="btn-mc" type="submit">
+                      Approve
+                    </button>
+                  </form>
+                  <form method="post" action={`/api/comments/${comment.id}/reject`}>
+                    <button className="btn-mc-secondary" type="submit">
+                      Reject
+                    </button>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </main>
   );
 }

@@ -3,8 +3,8 @@ import supabaseServer from "@/lib/supabaseServer";
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const sb = supabaseServer();
   const { error } = await sb
-    .from("posts")
-    .update({ status: "approved", published_at: new Date().toISOString() })
+    .from("comments")
+    .update({ status: "rejected" })
     .eq("id", params.id);
 
   if (error) {

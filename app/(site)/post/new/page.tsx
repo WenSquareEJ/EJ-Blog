@@ -92,9 +92,11 @@ export default function NewPostPage() {
           return;
         }
 
-        setStatus("Post created! Redirecting…");
-        router.push("/");
-        router.refresh();
+        setStatus("Post submitted for approval! Redirecting…");
+        setTimeout(() => {
+          router.push("/");
+          router.refresh();
+        }, 1200);
       } catch (error) {
         setStatus(error instanceof Error ? error.message : "Unknown error.");
       } finally {
