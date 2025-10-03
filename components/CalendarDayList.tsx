@@ -1,5 +1,34 @@
-import PostCard from './PostCard'
-export default function CalendarDayList({ posts }: { posts: any[] }) {
-  if (!posts?.length) return <p className="text-gray-600">No posts on this day.</p>
-  return <div className="space-y-4">{posts.map(p => <PostCard key={p.id} post={p} />)}</div>
+import PostCard from "./PostCard";
+import { buildExcerpt, extractPostContent } from "@/lib/postContent";
+
+type CalendarPost = {
+  id: string;
+  title: string;
+  content: string | null;
+  content_html: string | null;
+};
+
+export default function CalendarDayList({ posts }: { posts: CalendarPost[] | null }) {
+  if (!posts?.length) {
+    return <p className="text-gray-600">No posts on this day.</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      {posts.map((post) => {
+        const { text } = extractPostContent({
+          content: post.content,
+          content_html: post.content_html,
+        });
+        return (
+          <PostCard
+            key={post.id}
+            id={post.id}
+            title={post.title}
+            excerpt={buildExcerpt(text)}
+          />
+        );
+      })}
+    </div>
+  );
 }

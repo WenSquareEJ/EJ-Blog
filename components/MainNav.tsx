@@ -22,7 +22,6 @@ export default function MainNav({ isLoggedIn, isAdmin }: Props) {
         <li><Link className="btn-mc" href="/blog">Blog</Link></li>
         <li><Link className="btn-mc" href="/minecraft-zone">Minecraft Zone</Link></li>
         <li><Link className="btn-mc" href="/scratch-board">Scratch Board</Link></li>
-        <li><Link className="btn-mc" href="/calendar">Calendar</Link></li>
         <li><Link className="btn-mc" href="/ai">AI Helper</Link></li>
 
         {/* Secondary in a dropdown */}
