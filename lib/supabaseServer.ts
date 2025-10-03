@@ -1,6 +1,6 @@
 // /lib/supabaseServer.ts
-import { createServerClient, type CookieOptions } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { cookies } from 'next/headers'
+import { createServerClient } from '@supabase/ssr'
 
 export function supabaseServer() {
   const cookieStore = cookies()
@@ -13,13 +13,14 @@ export function supabaseServer() {
         get(name: string) {
           return cookieStore.get(name)?.value
         },
-        set(name: string, value: string, options: CookieOptions) {
+        set(name: string, value: string, options: any) {
+          // Next’s cookies() API acts as a mutating setter
           cookieStore.set({ name, value, ...options })
         },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: "", ...options })
-        },
-      },
+        remove(name: string, options: any) {
+          cookieStore.set({ name, value: '', ...options, expires: new Date(0) })
+        }
+      }
     }
   )
 }
