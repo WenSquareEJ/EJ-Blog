@@ -1,93 +1,50 @@
-import Link from "next/link"
+// /app/(site)/page.tsx
 import { supabaseServer } from "@/lib/supabaseServer"
+import Link from "next/link"
 
-// Simple HTML → text preview (no extra deps)
-function toTextPreview(html: string, max = 160) {
-  const text = (html || "").replace(/<[^>]+>/g, "").trim()
-  return text.length > max ? text.slice(0, max) + "…" : text
-}
+export default async function HomePage({ searchParams }: { searchParams?: { page?: string } }) {
+  const page = parseInt(searchParams?.page || "1", 10)
+  const perPage = 3
+  const from = (page - 1) * perPage
+  const to = from + perPage - 1
 
-type Post = {
-  id: string
-  title: string | null
-  content: string | null
-  author?: string | null
-  created_at?: string | null
-  published_at?: string | null
-}
-
-async function getPosts() {
   const sb = supabaseServer()
-  const { data, error } = await sb
+  const { data: posts, error } = await sb
     .from("posts")
-    .select("id,title,content,author,created_at,published_at")
+    .select("*")
     .order("created_at", { ascending: false })
+    .range(from, to)
 
   if (error) {
-    // Surface a tiny hint on-screen but don't crash the page
-    return { posts: [] as Post[], error: error.message }
+    console.error(error)
+    return <div className="p-4 text-red-500">Error loading posts.</div>
   }
-  return { posts: (data ?? []) as Post[], error: null as string | null }
-}
-
-export default async function HomePage() {
-  const { posts, error } = await getPosts()
 
   return (
-    <main className="mx-auto max-w-3xl p-4">
-      {/* Tiny debug hint if something went wrong fetching posts */}
-      {error && (
-        <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
-          Failed to load posts: {error}
-        </div>
+    <div className="space-y-4">
+      <h1 className="font-mc text-lg md:text-xl mb-4">Recent Posts</h1>
+
+      {posts?.length ? (
+        posts.map((post) => (
+          <div key={post.id} className="card-block">
+            <h2 className="font-mc text-base mb-2">{post.title}</h2>
+            <p className="text-sm mb-2 line-clamp-3">{post.content}</p>
+            <Link href={`/post/${post.id}`} className="btn-mc">Read More</Link>
+          </div>
+        ))
+      ) : (
+        <p>No posts yet.</p>
       )}
 
-      <h1 className="mb-6 text-2xl font-semibold">Latest Posts</h1>
-
-      <div className="space-y-5">
-        {posts.length === 0 && (
-          <p className="text-sm text-neutral-500">
-            No posts yet. Try creating one from <Link className="underline" href="/post/new">New Post</Link>.
-          </p>
+      {/* Pagination */}
+      <div className="flex gap-2 mt-4">
+        {page > 1 && (
+          <Link href={`/?page=${page - 1}`} className="btn-mc-secondary">Previous</Link>
         )}
-
-        {posts.map((post) => {
-          const when = post.published_at || post.created_at
-          return (
-            <article
-              key={post.id}
-              className="rounded-lg border bg-white p-4 shadow-sm transition hover:shadow-md"
-            >
-              <header className="mb-2 flex items-center justify-between gap-2">
-                <h2 className="text-lg font-medium">
-                  <Link href={`/post/${post.id}`} className="hover:underline">
-                    {post.title || "(untitled)"}
-                  </Link>
-                </h2>
-                {when && (
-                  <time
-                    className="shrink-0 text-xs text-neutral-500"
-                    dateTime={new Date(when).toISOString()}
-                  >
-                    {new Date(when).toLocaleString()}
-                  </time>
-                )}
-              </header>
-              <p className="text-sm text-neutral-700">
-                {toTextPreview(post.content || "")}
-              </p>
-              <div className="mt-3">
-                <Link
-                  href={`/post/${post.id}`}
-                  className="text-sm font-medium underline"
-                >
-                  Read more →
-                </Link>
-              </div>
-            </article>
-          )
-        })}
+        {posts?.length === perPage && (
+          <Link href={`/?page=${page + 1}`} className="btn-mc-secondary">Next</Link>
+        )}
       </div>
-    </main>
+    </div>
   )
 }
