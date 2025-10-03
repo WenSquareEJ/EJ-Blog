@@ -3,7 +3,7 @@ import "./globals.css";
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer"; // ✅ default import
 import AIHelper from "@/components/AIHelper";
-import NavBar from "@/components/NavBar";
+import NavBar from "@/components/navbar";
 
 export const metadata = {
   title: "EJ Blog",
