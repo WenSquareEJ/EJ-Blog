@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabaseClient'
 
 export default function AuthStatus() {
   const [user, setUser] = useState<null | { id: string; email?: string }>(null)
-  const supabase = createClient()
+  const supabase = supabaseBrowser()
 
   useEffect(() => {
     let isMounted = true

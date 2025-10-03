@@ -8,7 +8,7 @@ export default function NewPostLink() {
   const [hasUser, setHasUser] = useState<boolean>(false)
 
   useEffect(() => {
-    const supabase = createClient()
+    const supabase = supabaseBrowser()
 
     // initial check
     supabase.auth.getSession().then(({ data }) => {

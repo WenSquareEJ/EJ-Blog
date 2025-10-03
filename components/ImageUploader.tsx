@@ -12,7 +12,7 @@ export default function ImageUploader({ onUploaded }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const supabase = createClient(); // ← use our wrapper (no args)
+  const supabase = supabaseBrowser(); // ← use our wrapper (no args)
 
   async function upload() {
     if (!file || loading) return;

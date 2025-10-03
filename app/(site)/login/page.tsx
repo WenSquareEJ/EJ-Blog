@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [msg, setMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const supabase = createClient()
+  const supabase = supabaseBrowser()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
