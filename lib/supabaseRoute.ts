@@ -7,7 +7,9 @@ import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
-export function supabaseRoute(response: NextResponse): SupabaseClient<Database> {
+type TypedSupabaseClient = SupabaseClient<Database, "public", Database["public"]>;
+
+export function supabaseRoute(response: NextResponse): TypedSupabaseClient {
   const requestCookies = cookies();
 
   return createServerClient<Database>(

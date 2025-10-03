@@ -19,7 +19,9 @@ import {
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
-function makeServerClient(): SupabaseClient<Database> {
+type TypedSupabaseClient = SupabaseClient<Database, "public", Database["public"]>;
+
+function makeServerClient(): TypedSupabaseClient {
   const cookieStore = cookies();
 
   return _createServerClient<Database>(
