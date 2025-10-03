@@ -3,13 +3,13 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createSupabaseBrowser } from "@/lib/supabaseClient";
+import { supabaseBrowser } from "@/lib/supabaseClient";
 
 type SessionUser = { id: string; email: string | null };
 
 export default function AuthButtons() {
   const router = useRouter();
-  const supabase = createSupabaseBrowser();
+  const supabase = supabaseBrowser();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [isPending, startTransition] = useTransition();
 

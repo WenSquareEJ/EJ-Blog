@@ -21,7 +21,7 @@ import type { Database } from "./database.types";
 
 type TypedSupabaseClient = SupabaseClient<Database, "public", Database["public"]>;
 
-function makeServerClient(): TypedSupabaseClient {
+function createServerSupabaseClient(): TypedSupabaseClient {
   const cookieStore = cookies();
 
   return _createServerClient<Database>(
@@ -45,13 +45,13 @@ function makeServerClient(): TypedSupabaseClient {
 
 /** Preferred name going forward */
 export function supabaseServer() {
-  return makeServerClient();
+  return createServerSupabaseClient();
 }
 
 /** Backwards-compatible alias for older imports */
 export function createServerClient() {
-  return makeServerClient();
+  return createServerSupabaseClient();
 }
 
 /** Default export so `import x from "@/lib/supabaseServer"` also works */
-export default makeServerClient;
+export default supabaseServer;

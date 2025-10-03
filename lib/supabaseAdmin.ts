@@ -11,3 +11,5 @@ export function supabaseAdmin(): TypedSupabaseClient {
     auth: { persistSession: false },
   })
 }
+
+export default supabaseAdmin;
