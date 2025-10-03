@@ -56,7 +56,7 @@ export default async function SiteLayout({
               )}
 
               {/* Auth area (Login / Logout) */}
-              <AuthButtons userEmail={user?.email || null} />
+              <AuthButtons />
             </div>
           </nav>
         </header>

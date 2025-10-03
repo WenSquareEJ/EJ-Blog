@@ -1,20 +1,18 @@
-// /components/AuthButtons.tsx
 'use client';
 
 import Link from "next/link";
 
 type AuthButtonsProps = {
-  /** Logged-in user's email, or null if not logged in */
-  userEmail: string | null;
+  userEmail?: string | null;
 };
 
-export default function AuthButtons({ userEmail }: AuthButtonsProps) {
-  // Not logged in → show Login link
+export default function AuthButtons({ userEmail = null }: AuthButtonsProps) {
   if (!userEmail) {
+    // If no one is logged in → show Login link
     return <Link className="btn-mc-secondary" href="/login">Log in</Link>;
   }
 
-  // Logged in → show Logout button (posts to your /logout route)
+  // If logged in → show Logout button
   return (
     <form action="/logout" method="post">
       <button className="btn-mc-secondary" type="submit">Log out</button>
