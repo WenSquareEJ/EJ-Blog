@@ -1,18 +1,32 @@
 // /app/(site)/post/[id]/page.tsx
 import supabaseServer from "@/lib/supabaseServer";
-import Link from "next/link"
+import Link from "next/link";
+import { extractPostContent, markdownToHtml } from "@/lib/postContent";
 
 export default async function PostPage({ params }: { params: { id: string } }) {
   const sb = supabaseServer()
-  const { data: post } = await sb.from("posts").select("*").eq("id", params.id).single()
+  const { data: post } = await sb
+    .from("posts")
+    .select("id, title, content, content_html, content_json, image_url, created_at")
+    .eq("id", params.id)
+    .single()
   const { data: comments } = await sb.from("comments").select("*").eq("post_id", params.id)
 
   if (!post) return <div className="p-4">Post not found.</div>
 
+  const { html, text } = extractPostContent({
+    content_html: post.content_html,
+    content: post.content,
+  });
+  const safeHtml = html || (text ? markdownToHtml(text) : "<p></p>");
+
   return (
     <div className="space-y-4">
       <h1 className="font-mc text-lg">{post.title}</h1>
-      <article className="whitespace-pre-wrap text-sm">{post.content}</article>
+      <article
+        className="prose prose-sm sm:prose-base max-w-none text-mc-dirt"
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
 
       {/* Likes */}
       <form action={`/api/posts/${post.id}/like`} method="post">

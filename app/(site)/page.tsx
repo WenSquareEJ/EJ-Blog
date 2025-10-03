@@ -2,6 +2,7 @@
 import Link from "next/link";
 import PostCard from "@/components/PostCard";
 import supabaseServer from "@/lib/supabaseServer";
+import { buildExcerpt, extractPostContent } from "@/lib/postContent";
 
 const PER_PAGE = 3;
 const TIMEZONE = "Europe/London";
@@ -18,7 +19,8 @@ type TagRow = { id: number; name: string; slug: string };
 type PostRow = {
   id: string;
   title: string;
-  content: string;
+  content: string | null;
+  content_html: string | null;
   created_at: string;
 };
 
@@ -188,7 +190,7 @@ export default async function HomePage({
   } else {
     let query = sb
       .from("posts")
-      .select("id, title, content, created_at")
+      .select("id, title, content, content_html, created_at")
       .eq("status", "approved")
       .order("created_at", { ascending: false });
 
@@ -211,6 +213,20 @@ export default async function HomePage({
       postsError = error.message;
     }
   }
+
+  const postSummaries = posts.map((post) => {
+    const { html, text } = extractPostContent({
+      content_html: post.content_html,
+      content: post.content,
+    });
+    return {
+      id: post.id,
+      title: post.title,
+      html,
+      text,
+      excerpt: buildExcerpt(text),
+    };
+  });
 
   const days = Array.from({ length: 42 }, (_, i) => addDays(startOfCalendarGrid(monthStart), i));
   const monthLabel = monthName(year, monthIdx);
@@ -382,8 +398,13 @@ export default async function HomePage({
         )}
 
         <div className="space-y-4">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+          {postSummaries.map((post) => (
+            <PostCard
+              key={post.id}
+              id={post.id}
+              title={post.title}
+              excerpt={post.excerpt}
+            />
           ))}
         </div>
 

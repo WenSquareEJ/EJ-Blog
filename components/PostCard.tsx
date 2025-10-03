@@ -1,12 +1,21 @@
 // /components/PostCard.tsx
-import Link from "next/link"
+import Link from "next/link";
 
-export default function PostCard({ post }: { post: any }) {
+type PostCardProps = {
+  id: string;
+  title: string;
+  excerpt: string;
+};
+
+export default function PostCard({ id, title, excerpt }: PostCardProps) {
+  const summary = excerpt.trim() || "No description yet.";
   return (
     <div className="card-block">
-      <h2 className="font-mc text-base mb-2">{post.title}</h2>
-      <p className="text-sm mb-2 line-clamp-3">{post.content}</p>
-      <Link href={`/post/${post.id}`} className="btn-mc">Read More</Link>
+      <h2 className="font-mc text-base mb-2">{title}</h2>
+      <p className="text-sm text-mc-stone">{summary}</p>
+      <Link href={`/post/${id}`} className="btn-mc">
+        Read More
+      </Link>
     </div>
-  )
+  );
 }

@@ -1,6 +1,8 @@
 // app/api/posts/route.ts
 import { NextResponse } from 'next/server'
+import type { JSONContent } from '@tiptap/core'
 import supabaseServer from "@/lib/supabaseServer";   // uses @supabase/ssr under the hood
+import { markdownToHtml, sanitizeRichText } from '@/lib/postContent'
 // If you plan to bypass RLS for admin-only actions, you can also use supabaseAdmin.
 // import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
@@ -53,23 +55,46 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}))
-  const { title, content_md, tags = [], images = [] } = body as {
+  const {
+    title,
+    content_md,
+    content_html,
+    content_json,
+    content_text,
+    tags = [],
+    images = [],
+  } = body as {
     title?: string
     content_md?: string
+    content_html?: string
+    content_json?: JSONContent
+    content_text?: string
     tags?: string[]
     images?: string[]
   }
 
-  if (!title || !content_md) {
+  if (!title || !(content_md || content_html || content_text)) {
     return NextResponse.json(
       { error: 'Missing title or content' },
       { status: 400 }
     )
   }
 
+  const plain = content_text?.trim() ?? content_md?.trim() ?? ''
+  let html = content_html?.trim() ?? ''
+  if (html) {
+    html = sanitizeRichText(html)
+  } else if (content_md) {
+    html = markdownToHtml(content_md)
+  } else if (plain) {
+    html = markdownToHtml(plain)
+  }
+
   const insert = {
     title,
-    content_md,
+    content: content_md ?? plain || '',
+    content_html: html || null,
+    content_json: content_json ?? null,
     author_id: userRes.user.id,
     status: 'pending' as const,
     tags,

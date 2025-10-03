@@ -1,6 +1,7 @@
 // /app/(site)/minecraft-zone/page.tsx
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
+import { buildExcerpt, extractPostContent } from "@/lib/postContent";
 
 export default async function MinecraftZonePage() {
   const sb = supabaseServer();
@@ -8,7 +9,7 @@ export default async function MinecraftZonePage() {
   // Fetch only 3 recent Minecraft posts
   const { data: posts } = await sb
     .from("posts")
-    .select("*")
+    .select("id, title, content, content_html, created_at")
     .eq("status", "approved")
     .contains("tags", ["minecraft"]) // posts tagged with 'minecraft'
     .order("published_at", { ascending: false })
@@ -24,23 +25,28 @@ export default async function MinecraftZonePage() {
       {/* Recent Posts */}
       <div className="space-y-4">
         {posts?.length ? (
-          posts.map((p) => (
+          posts.map((post) => {
+            const { text } = extractPostContent({
+              content_html: post.content_html,
+              content: post.content,
+            });
+            const excerpt = buildExcerpt(text, 120);
+            return (
             <div
-              key={p.id}
+              key={post.id}
               className="card-block hover:shadow-lg transition"
             >
-              <h2 className="font-mc text-lg">{p.title}</h2>
-              <p className="text-sm opacity-90">
-                {p.content.slice(0, 120)}…
-              </p>
+              <h2 className="font-mc text-lg">{post.title}</h2>
+              <p className="text-sm opacity-90">{excerpt}</p>
               <Link
-                href={`/post/${p.id}`}
+                href={`/post/${post.id}`}
                 className="text-blue-600 underline text-xs"
               >
                 Read more
               </Link>
             </div>
-          ))
+          );
+          })
         ) : (
           <p>No Minecraft posts yet — stay tuned!</p>
         )}

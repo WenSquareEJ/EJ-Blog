@@ -201,6 +201,36 @@ a:hover {
       0 2px 0 rgba(17, 8, 4, 0.35),
       0 6px 0 rgba(13, 6, 3, 0.2);
   }
+
+  .tiptap {
+    min-height: 320px;
+  }
+
+  .tiptap p,
+  .tiptap ul,
+  .tiptap ol,
+  .tiptap blockquote,
+  .tiptap pre {
+    margin-bottom: 0.75rem;
+  }
+
+  .tiptap ul,
+  .tiptap ol {
+    padding-left: 1.2rem;
+  }
+
+  .tiptap blockquote {
+    border-left: 4px solid var(--mc-wood-dark);
+    padding-left: 1rem;
+    color: var(--mc-stone);
+  }
+
+  .tiptap pre {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    overflow-x: auto;
+  }
 }
 
 .banner-placeholder {
