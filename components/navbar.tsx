@@ -68,16 +68,16 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-mc-wood-dark bg-mc-wood text-mc-parchment shadow-mc">
-      <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3 sm:gap-3">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 whitespace-nowrap font-mc text-xs uppercase tracking-[0.2em] hover:opacity-90"
+          className="flex shrink-0 items-center gap-2 whitespace-nowrap font-mc text-[0.7rem] uppercase tracking-[0.2em] hover:opacity-90"
         >
           <span className="inline-block h-4 w-4 rounded-sm bg-mc-leaf border border-mc-wood-dark shadow-pixel" />
           EJ Blog
         </Link>
 
-        <nav className="flex flex-1 items-center gap-2 overflow-x-auto">
+        <nav className="flex w-full flex-1 flex-wrap items-center gap-1.5 sm:w-auto sm:gap-2">
           <Link className="btn-mc" href="/">
             Blog
           </Link>
@@ -110,7 +110,7 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
           )}
         </nav>
 
-        <div className="ms-auto shrink-0">
+        <div className="ms-0 shrink-0 sm:ms-auto">
           {!isLoggedIn ? (
             <Link className="btn-mc-secondary" href="/login">
               Log in

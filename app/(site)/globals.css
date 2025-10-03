@@ -143,7 +143,7 @@ a:hover {
    ------------------------------------------------------------ */
 @layer components {
   .btn-mc {
-    @apply inline-flex items-center justify-center rounded-md border-2 px-2 py-1 text-xs font-mc uppercase tracking-widest transition-transform duration-150;
+    @apply inline-flex items-center justify-center rounded-md border-2 px-2 py-1 text-[0.68rem] font-mc uppercase tracking-[0.12em] leading-none transition-transform duration-150 sm:text-[0.72rem];
     border-color: var(--mc-wood-dark);
     background-color: var(--mc-wood-light);
     color: var(--mc-parchment);
@@ -163,7 +163,7 @@ a:hover {
   }
 
   .btn-mc-secondary {
-    @apply inline-flex items-center justify-center rounded-md border-2 px-2 py-1 text-xs font-mc uppercase tracking-widest transition-transform duration-150;
+    @apply inline-flex items-center justify-center rounded-md border-2 px-2 py-1 text-[0.68rem] font-mc uppercase tracking-[0.12em] leading-none transition-transform duration-150 sm:text-[0.72rem];
     border-color: var(--mc-wood-dark);
     background-color: var(--mc-parchment);
     color: var(--mc-dirt-dark);
@@ -178,7 +178,7 @@ a:hover {
   }
 
   .btn-mc-danger {
-    @apply inline-flex items-center justify-center rounded-md border-2 px-2 py-1 text-xs font-mc uppercase tracking-widest transition-transform duration-150;
+    @apply inline-flex items-center justify-center rounded-md border-2 px-2 py-1 text-[0.68rem] font-mc uppercase tracking-[0.12em] leading-none transition-transform duration-150 sm:text-[0.72rem];
     border-color: rgba(120, 23, 23, 0.8);
     background-color: var(--mc-danger);
     color: var(--mc-parchment);
