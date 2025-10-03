@@ -10,7 +10,7 @@ type SessionUser = { id: string; email?: string | null } | null;
 export default function AuthButtons() {
   const router = useRouter();
   // IMPORTANT: createBrowserClient needs URL + anon key
-  const supabase = createBrowserClient(
+  const supabase = createSupabaseBrowser(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );

@@ -68,7 +68,7 @@ export default async function CalendarPage({
   const monthEnd = endOfMonth(year, monthIdx);
 
   // Fetch all APPROVED posts in this month (single query)
-  const sb = createServerClient();
+  const sb = supabaseServer();
   const { data: posts, error } = await sb
     .from("posts")
     .select("id,title,created_at,status")

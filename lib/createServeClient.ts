@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 
 export function createServerSupabase() {
   const cookieStore = cookies();
-  const supabase = createServerClient(
+  const supabase = supabaseServer(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

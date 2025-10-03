@@ -9,7 +9,7 @@ import {
  * Server-side Supabase client for route handlers / server components.
  * Works with @supabase/ssr and Next.js app router cookies.
  */
-export function createServerClient() {
+export function supabaseServer() {
   const cookieStore = cookies();
 
   return createSupabaseServerClient(

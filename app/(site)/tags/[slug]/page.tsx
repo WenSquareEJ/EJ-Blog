@@ -2,7 +2,7 @@ import PostCard from '@/components/PostCard'
 import { createServerClient } from '@/lib/supabaseServer'
 
 export default async function TagPage({ params }: { params: { slug: string } }) {
-  const sb = createServerClient()
+  const sb = supabaseServer()
 
   // find tag id
   const { data: tag } = await sb.from('tags').select('id, name, slug').eq('slug', params.slug).maybeSingle()
