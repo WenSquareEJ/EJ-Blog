@@ -36,7 +36,8 @@ export default async function SiteLayout({
 
   return (
     <html lang="en">
-      <body className="bg-mc-grass text-mc-ink">
+      <body className="theme-wood bg-mc-grass text-mc-ink">
+        {children}
         {/* ---------- Top Nav ---------- */}
         <header className="sticky top-0 z-40 border-b bg-mc-sky/60 backdrop-blur supports-[backdrop-filter]:bg-mc-sky/40">
           <nav className="mx-auto max-w-5xl px-3 py-2 flex items-center gap-2">

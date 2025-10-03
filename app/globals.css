@@ -12,12 +12,18 @@
   }
 }
 
-/* Minecraft theme palette */
+/* ------------------------------------------------------------
+   DEFAULT THEME (your current light grass/sky palette)
+   ------------------------------------------------------------ */
 :root {
-  --mc-grass: #4CAF50;
-  --mc-sky: #87CEEB;
-  --mc-ink: #2E2E2E;
-  --mc-stone: #8B8B8B;
+  --mc-grass: #4CAF50;   /* background */
+  --mc-sky:   #87CEEB;   /* accents / buttons */
+  --mc-ink:   #2E2E2E;   /* text */
+  --mc-stone: #8B8B8B;   /* neutral panels */
+  /* optional extras (kept neutral by default) */
+  --mc-accent: var(--mc-sky);
+  --mc-parchment: #ffffff;
+  --mc-link: #1e7bf6;
 }
 
 /* Base body */
@@ -29,20 +35,39 @@ body {
 
 /* Buttons */
 .btn-mc {
-  @apply bg-[var(--mc-sky)] border border-black px-2 py-1 rounded text-xs font-mc shadow-md hover:brightness-90;
+  @apply border border-black px-2 py-1 rounded text-xs font-mc shadow-md hover:brightness-90;
+  background-color: var(--mc-sky);
+  color: var(--mc-ink);
 }
 
 .btn-mc-secondary {
-  @apply bg-white border border-black px-2 py-1 rounded text-xs font-mc shadow hover:bg-gray-100;
+  @apply border border-black px-2 py-1 rounded text-xs font-mc shadow hover:bg-gray-100;
+  background-color: white;
+  color: var(--mc-ink);
 }
 
 .btn-mc-danger {
-  @apply bg-red-600 text-white px-2 py-1 rounded text-xs font-mc shadow hover:bg-red-700;
+  @apply px-2 py-1 rounded text-xs font-mc shadow hover:bg-red-700;
+  background-color: #dc2626; /* red-600 */
+  color: white;
+}
+
+/* Optional: semantic button variants that follow the theme vars */
+.btn-mc-primary {
+  @apply border border-black px-2 py-1 rounded text-xs font-mc shadow hover:brightness-90;
+  background-color: var(--mc-accent);
+  color: var(--mc-ink);
+}
+.btn-mc-parchment {
+  @apply border border-black px-2 py-1 rounded text-xs font-mc shadow;
+  background-color: var(--mc-parchment);
+  color: var(--mc-ink);
 }
 
 /* Card blocks */
 .card-block {
-  @apply border border-black bg-white rounded p-2 shadow;
+  @apply border border-black rounded p-2 shadow;
+  background-color: white;
 }
 
 /* Banner */
@@ -50,4 +75,52 @@ body {
   background-color: var(--mc-grass);
   height: 80px;
   border-bottom: 2px solid black;
+}
+
+/* Links */
+a {
+  color: var(--mc-link);
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------
+   THEME: WOOD (Minecraft-y brown + green mockup)
+   Toggle by adding class="theme-wood" to <html> or <body>
+   ------------------------------------------------------------ */
+.theme-wood {
+  /* Remap the SAME variables used above to new colors */
+  --mc-grass: #5a3d2b;   /* warm brown page background */
+  --mc-sky:   #2f4f2f;   /* deep green for nav / accents */
+  --mc-ink:   #f4f0e6;   /* parchment-like text */
+  --mc-stone: #7a5230;   /* lighter brown panels */
+  --mc-accent:#3c9d3c;   /* Minecraft green for primary buttons */
+  --mc-parchment: #f4f0e6; /* light parchment surfaces */
+  --mc-link: #4fa3f7;    /* bright blue links */
+}
+
+/* Optional: wood-themed helper surfaces (used if you want) */
+.theme-wood .card-block {
+  background-color: color-mix(in srgb, var(--mc-parchment) 90%, white 10%);
+}
+
+.theme-wood .banner-placeholder {
+  background-color: var(--mc-stone);
+  border-bottom: 2px solid #2b1b12; /* darker edge for pixel-y feel */
+}
+
+/* Optional: a subtle pixel-border utility (for panels/nav) */
+.pixel-border {
+  box-shadow:
+    0 0 0 1px #000,          /* outer hard edge */
+    2px 2px 0 0 rgba(0,0,0,0.2); /* drop shadow-ish */
+}
+
+/* Optional: AI helper dock default surface if you use a class */
+.ai-helper-dock {
+  @apply fixed bottom-4 right-4 rounded-lg shadow-lg border;
+  background-color: var(--mc-stone);
+  color: var(--mc-ink);
+  border-color: #000;
 }
