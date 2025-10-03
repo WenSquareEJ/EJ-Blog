@@ -2,25 +2,48 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
-import type { User } from '@supabase/supabase-js';
+import { useEffect, useState, useTransition } from 'react';
 import { createBrowserClient } from '@/lib/supabaseClient';
 
-// Your admin email (case-insensitive)
 const ADMIN_EMAIL = 'wenyu.yan@gmail.com';
 
-type Props = {
-  user: User | null;
-};
+type SessionUser = { email: string | null } | null;
 
-export default function AuthButtons({ user }: Props) {
+export default function AuthButtons() {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const supabase = createBrowserClient();
+  const [isPending, startTransition] = useTransition();
+  const [user, setUser] = useState<SessionUser>(null);
+
+  // Read session on mount and whenever it changes
+  useEffect(() => {
+    let isMounted = true;
+
+    async function load() {
+      const { data } = await supabase.auth.getUser();
+      if (isMounted) {
+        setUser(data?.user ? { email: data.user.email ?? null } : null);
+      }
+    }
+
+    load();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      load();
+      // ensure server components refresh too
+      startTransition(() => router.refresh());
+    });
+
+    return () => {
+      isMounted = false;
+      subscription?.unsubscribe();
+    };
+  }, [router, supabase]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    // Make sure UI updates to logged-out state
     startTransition(() => {
       router.refresh();
       router.push('/');
@@ -32,11 +55,7 @@ export default function AuthButtons({ user }: Props) {
 
   if (!user) {
     // Logged OUT — show Login
-    return (
-      <Link className="btn-mc-secondary" href="/login">
-        Log in
-      </Link>
-    );
+    return <Link className="btn-mc-secondary" href="/login">Log in</Link>;
   }
 
   // Logged IN — show Parent Zone (if admin) + Logout
