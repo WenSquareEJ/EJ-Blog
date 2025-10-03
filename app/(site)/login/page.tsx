@@ -1,7 +1,7 @@
 // /app/(site)/login/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabaseClient";
@@ -14,6 +14,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  // 🔁 Keep server cookie in sync with client auth state
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Tell our server route to set/clear the cookie
+      await fetch("/auth/callback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event, session }),
+      });
+
+      // Make server components (layout) re-run with the new cookie
+      router.refresh();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase, router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -28,8 +47,7 @@ export default function LoginPage() {
         setMsg(error.message);
         return;
       }
-      // Important: refresh server components so layout sees the session
-      router.refresh();
+      // After onAuthStateChange runs, the cookie is set and layout will see it
       router.push("/");
     } catch (err: any) {
       setMsg(err?.message ?? "Something went wrong.");
@@ -67,17 +85,9 @@ export default function LoginPage() {
           />
         </div>
 
-        {msg && (
-          <p className="text-sm text-red-600">
-            {msg}
-          </p>
-        )}
+        {msg && <p className="text-sm text-red-600">{msg}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-mc-secondary w-full"
-        >
+        <button type="submit" disabled={loading} className="btn-mc-secondary w-full">
           {loading ? "Signing in…" : "Sign in"}
         </button>
       </form>
