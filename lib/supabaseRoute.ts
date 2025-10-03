@@ -4,11 +4,13 @@
 import { cookies } from "next/headers";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
-export function supabaseRoute(response: NextResponse) {
+export function supabaseRoute(response: NextResponse): SupabaseClient<Database> {
   const requestCookies = cookies();
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

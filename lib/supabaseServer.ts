@@ -16,11 +16,13 @@ import {
   createServerClient as _createServerClient,
   type CookieOptions,
 } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
-function makeServerClient() {
+function makeServerClient(): SupabaseClient<Database> {
   const cookieStore = cookies();
 
-  return _createServerClient(
+  return _createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

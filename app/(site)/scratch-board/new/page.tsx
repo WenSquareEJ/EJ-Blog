@@ -4,12 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 import { parseScratchId } from "@/lib/parseScratchId";
-
-type ScratchProjectInsert = {
-  user_id: string;
-  scratch_id: string;
-  title: string | null;
-};
+import type { TablesInsert } from "@/lib/database.types";
 
 export default function NewScratchProjectPage() {
   const router = useRouter();
@@ -41,7 +36,7 @@ export default function NewScratchProjectPage() {
 
       const { error } = await supabase
         .from("scratch_projects")
-        .insert<ScratchProjectInsert>({
+        .insert<TablesInsert<"scratch_projects">>({
           user_id: user.id,
           scratch_id,
           title: title || null,
