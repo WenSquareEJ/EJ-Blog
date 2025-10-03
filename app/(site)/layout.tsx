@@ -1,8 +1,11 @@
 // /app/(site)/layout.tsx
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import "../globals.css";
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabaseServer";
 import AIHelper from "@/components/AIHelper";
+import LogoutButton from '@/components/LogoutButton';
 
 const ADMIN_EMAIL = "wenyu.yan@gmail.com";
 
@@ -50,15 +53,12 @@ export default async function SiteLayout({
               </ul>
             </nav>
 
-            {/* Auth (right) */}
-            <div className="ml-2">
-              {!isLoggedIn ? (
-                <Link className="btn-mc-secondary" href="/login">Log in</Link>
-              ) : (
-                <form action="/logout" method="post">
-                  <button className="btn-mc-secondary" type="submit">Log out</button>
-                </form>
-              )}
+           {/* Auth (right) */}
+{!isLoggedIn ? (
+  <Link className="btn-mc-secondary" href="/login">Log in</Link>
+) : (
+  <LogoutButton />
+)}
             </div>
           </div>
         </header>
