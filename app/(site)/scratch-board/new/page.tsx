@@ -34,13 +34,15 @@ export default function NewScratchProjectPage() {
         return;
       }
 
+      const payload: TablesInsert<"scratch_projects"> = {
+        user_id: user.id,
+        scratch_id,
+        title: title || null,
+      };
+
       const { error } = await supabase
         .from("scratch_projects")
-        .insert<TablesInsert<"scratch_projects">>({
-          user_id: user.id,
-          scratch_id,
-          title: title || null,
-        });
+        .insert(payload);
 
       if (error) {
         setMsg(error.message);
