@@ -1,36 +1,48 @@
 // /app/(site)/post/[id]/page.tsx
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseServer } from "@/lib/supabaseServer"
+import Link from "next/link"
 
-type Params = { params: { id: string } };
+export default async function PostPage({ params }: { params: { id: string } }) {
+  const sb = supabaseServer()
+  const { data: post } = await sb.from("posts").select("*").eq("id", params.id).single()
+  const { data: comments } = await sb.from("comments").select("*").eq("post_id", params.id)
 
-export default async function PostPage({ params }: Params) {
-  const sb = supabaseServer();
-  const { data, error } = await sb
-    .from("posts")
-    .select("id,title,content,created_at,published_at")
-    .eq("id", params.id)
-    .single();
-
-  if (error || !data) return notFound();
-
-  const date = new Date(data.published_at || data.created_at).toLocaleString();
+  if (!post) return <div className="p-4">Post not found.</div>
 
   return (
-    <article className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h1 className="font-mc text-xl">{data.title}</h1>
-        <span className="text-xs text-gray-500">{date}</span>
-      </div>
+    <div className="space-y-4">
+      <h1 className="font-mc text-lg">{post.title}</h1>
+      <article className="whitespace-pre-wrap text-sm">{post.content}</article>
 
-      <div className="card-block">
-        <div className="post-body whitespace-pre-wrap">{data.content}</div>
-      </div>
+      {/* Likes */}
+      <form action={`/api/posts/${post.id}/like`} method="post">
+        <button className="btn-mc mt-3">❤️ Like</button>
+      </form>
 
-      <div>
-        <Link className="btn-mc" href="/">← Back</Link>
-      </div>
-    </article>
-  );
+      {/* Comments */}
+      <section>
+        <h2 className="font-mc text-base mb-2">Comments</h2>
+        {comments?.length ? (
+          comments.map((c) => (
+            <div key={c.id} className="card-block mb-2">
+              <p className="text-xs">{c.content}</p>
+            </div>
+          ))
+        ) : (
+          <p>No comments yet.</p>
+        )}
+
+        <form action={`/api/posts/${post.id}/comment`} method="post" className="mt-2 space-y-2">
+          <textarea
+            name="content"
+            placeholder="Write a comment..."
+            className="w-full rounded border p-2 text-xs"
+          />
+          <button type="submit" className="btn-mc">Add Comment</button>
+        </form>
+      </section>
+
+      <Link href="/" className="btn-mc-secondary mt-4">← Back to Home</Link>
+    </div>
+  )
 }
