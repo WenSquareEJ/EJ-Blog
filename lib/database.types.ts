@@ -208,6 +208,40 @@ export interface Database {
           }
         ];
       };
+      reactions: {
+        Row: {
+          id: string;
+          target_type: 'post' | 'comment';
+          target_id: string;
+          user_id: string | null;
+          kind: 'like' | 'party' | 'idea' | 'heart';
+          created_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          target_type: 'post' | 'comment';
+          target_id: string;
+          user_id?: string | null;
+          kind: 'like' | 'party' | 'idea' | 'heart';
+          created_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          target_type?: 'post' | 'comment';
+          target_id?: string;
+          user_id?: string | null;
+          kind?: 'like' | 'party' | 'idea' | 'heart';
+          created_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'reactions_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
