@@ -15,12 +15,17 @@ export default async function ModerationPage() {
 
   const { data, error } = await sb
     .from("posts")
-    .select("id,title,created_at,status,author_name")
+    .select("id,title,created_at,status,author(name)")
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 
-  // Guarantee we always have an array
-  const posts: ModPost[] = (data ?? []) as ModPost[];
+  const posts: ModPost[] = (data ?? []).map((post) => ({
+    id: post.id,
+    title: post.title,
+    created_at: post.created_at,
+    status: post.status,
+    author_name: (post.author as { name?: string } | null)?.name ?? null,
+  }));
 
   return (
     <main className="space-y-4">
