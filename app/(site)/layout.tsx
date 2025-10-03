@@ -5,6 +5,11 @@ import supabaseServer from "@/lib/supabaseServer"; // ✅ default import
 import AIHelper from "@/components/AIHelper";
 import NavBar from "@/components/navbar";
 
+// --- force this layout to run on every request (no caching) ---
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 export const metadata = {
   title: "EJ Blog",
   description: "Family blog in Minecraft style",
