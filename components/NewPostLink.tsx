@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabaseClient'
+import supabaseBrowser from "@/lib/supabaseClient";
 
 export default function NewPostLink() {
   const [hasUser, setHasUser] = useState<boolean>(false)

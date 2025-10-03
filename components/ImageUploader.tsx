@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@/lib/supabaseClient';
+import supabaseBrowser from "@/lib/supabaseClient";
 
 type Props = {
   onUploaded?: (path: string, publicUrl: string) => void;
