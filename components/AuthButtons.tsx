@@ -1,53 +1,60 @@
-// Server Component: shows Login (if signed out) or Moderation + Logout (if signed in)
-// Uses your existing createServerClient helper.
+'use client';
 
-import Link from 'next/link'
-import { createServerClient } from '@/lib/supabaseServer'
+import Link from 'next/link';
+import { useEffect, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@/lib/supabaseClient';
 
-export default async function AuthButtons() {
-  const sb = createServerClient()
-  const { data: ures } = await sb.auth.getUser()
-  const user = ures?.user
+type SessionUser = { id: string; email?: string | null } | null;
 
-  // Not logged in → show Login
+export default function AuthButtons() {
+  const router = useRouter();
+  // IMPORTANT: createBrowserClient needs URL + anon key
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const [user, setUser] = useState<SessionUser>(null);
+  const [isPending, startTransition] = useTransition();
+
+  // Load user on mount and listen for auth changes
+  useEffect(() => {
+    let mounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (mounted) setUser(data.user ?? null);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt) => {
+      // refresh the header state after login/logout
+      startTransition(() => router.refresh());
+      supabase.auth.getUser().then(({ data }) => {
+        if (mounted) setUser(data.user ?? null);
+      });
+    });
+
+    return () => {
+      mounted = false;
+      sub?.subscription.unsubscribe();
+    };
+  }, [router, supabase]);
+
+  // Not logged in -> show Login
   if (!user) {
     return (
-      <Link
-        href="/login"
-        className="px-3 py-1 rounded-md border border-mc-stem bg-white/80 hover:bg-white"
-      >
-        Login
+      <Link className="btn-mc-secondary" href="/login">
+        Log in
       </Link>
-    )
+    );
   }
 
-  // Fetch role (allowed by your RLS read policy on `profiles`)
-  let role: 'parent' | 'child' | null = null
-  const { data: prof } = await sb
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle()
-  role = (prof?.role ?? null) as any
-
+  // Logged in -> show Logout
   return (
-    <div className="flex items-center gap-3">
-      {role === 'parent' && (
-        <Link
-          href="/moderation"
-          className="px-3 py-1 rounded-md border border-mc-stem bg-white/80 hover:bg-white"
-        >
-          Moderation
-        </Link>
-      )}
-      <form action="/logout" method="post">
-        <button
-          type="submit"
-          className="px-3 py-1 rounded-md border border-mc-stem bg-white/80 hover:bg-white"
-        >
-          Logout
-        </button>
-      </form>
-    </div>
-  )
+    <form action="/logout" method="post">
+      <button className="btn-mc-secondary" type="submit" disabled={isPending}>
+        {isPending ? 'Logging out…' : 'Log out'}
+      </button>
+    </form>
+  );
 }

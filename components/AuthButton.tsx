@@ -1,79 +1,60 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabaseClient';
 
-const ADMIN_EMAIL = 'wenyu.yan@gmail.com';
-
-type SessionUser = { email: string | null } | null;
+type SessionUser = { id: string; email?: string | null } | null;
 
 export default function AuthButtons() {
   const router = useRouter();
-  const supabase = createBrowserClient();
-  const [isPending, startTransition] = useTransition();
+  // IMPORTANT: createBrowserClient needs URL + anon key
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const [user, setUser] = useState<SessionUser>(null);
+  const [isPending, startTransition] = useTransition();
 
-  // Read session on mount and whenever it changes
+  // Load user on mount and listen for auth changes
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
 
-    async function load() {
-      const { data } = await supabase.auth.getUser();
-      if (isMounted) {
-        setUser(data?.user ? { email: data.user.email ?? null } : null);
-      }
-    }
+    supabase.auth.getUser().then(({ data }) => {
+      if (mounted) setUser(data.user ?? null);
+    });
 
-    load();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      load();
-      // ensure server components refresh too
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt) => {
+      // refresh the header state after login/logout
       startTransition(() => router.refresh());
+      supabase.auth.getUser().then(({ data }) => {
+        if (mounted) setUser(data.user ?? null);
+      });
     });
 
     return () => {
-      isMounted = false;
-      subscription?.unsubscribe();
+      mounted = false;
+      sub?.subscription.unsubscribe();
     };
   }, [router, supabase]);
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    startTransition(() => {
-      router.refresh();
-      router.push('/');
-    });
-  }
-
-  const isAdmin =
-    !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-
+  // Not logged in -> show Login
   if (!user) {
-    // Logged OUT — show Login
-    return <Link className="btn-mc-secondary" href="/login">Log in</Link>;
+    return (
+      <Link className="btn-mc-secondary" href="/login">
+        Log in
+      </Link>
+    );
   }
 
-  // Logged IN — show Parent Zone (if admin) + Logout
+  // Logged in -> show Logout
   return (
-    <div className="flex items-center gap-2">
-      {isAdmin && (
-        <Link className="btn-mc" href="/moderation">
-          Parent Zone
-        </Link>
-      )}
-      <button
-        type="button"
-        className="btn-mc-secondary"
-        onClick={handleLogout}
-        disabled={isPending}
-      >
+    <form action="/logout" method="post">
+      <button className="btn-mc-secondary" type="submit" disabled={isPending}>
         {isPending ? 'Logging out…' : 'Log out'}
       </button>
-    </div>
+    </form>
   );
 }
