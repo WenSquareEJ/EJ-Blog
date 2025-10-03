@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Define custom font utilities so Tailwind @apply can see them */
+@layer utilities {
+  .font-mc {
+    font-family: var(--font-mc), monospace;
+  }
+  .font-pixel {
+    font-family: var(--font-pixel), system-ui, sans-serif;
+  }
+}
+
 /* Minecraft theme palette */
 :root {
   --mc-grass: #4CAF50;
