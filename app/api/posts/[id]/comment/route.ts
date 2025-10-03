@@ -10,7 +10,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   await sb.from("comments").insert({
     post_id: params.id,
     content,
+    status: "pending",
   })
 
-  return NextResponse.redirect(new URL(`/post/${params.id}`, process.env.NEXT_PUBLIC_SITE_URL))
+  const accept = req.headers.get("accept") ?? "";
+  if (accept.includes("text/html")) {
+    const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    return NextResponse.redirect(new URL(`/post/${params.id}`, base));
+  }
+
+  return NextResponse.json({ ok: true });
 }
