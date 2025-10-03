@@ -92,7 +92,7 @@ export async function POST(request: Request) {
 
   const insert = {
     title,
-    content: content_md ?? plain || '',
+    content: (content_md ?? plain) || '',
     content_html: html || null,
     content_json: content_json ?? null,
     author_id: userRes.user.id,

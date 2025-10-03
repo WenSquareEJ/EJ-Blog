@@ -57,7 +57,7 @@ export async function POST(req: Request) {
     title,
     author_id: auth.user.id,
     image_url: payload.image_url ?? null,
-    content: payload.content ?? rawPlain || "",
+    content: (payload.content ?? rawPlain) || "",
     content_html: contentHtml || null,
     content_json: payload.content_json ?? null,
   };
