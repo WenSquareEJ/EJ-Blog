@@ -1,16 +1,22 @@
-// /lib/supabaseClient.ts
-'use client';
+// lib/supabaseClient.ts
+"use client";
 
-import { createBrowserClient } from '@supabase/ssr';
+import { createBrowserClient } from "@supabase/ssr";
 
 /**
- * Use in CLIENT components (files that start with 'use client').
- * We export both names so older imports don't break.
+ * Browser-side Supabase client for components that run in the browser.
+ * Uses public URL + anon key from env vars.
  */
-export function createClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  return createSupabaseBrowser(url, anon);
+export function createSupabaseBrowser(
+  url = process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+) {
+  if (!url || !anonKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    );
+  }
+  return createBrowserClient(url, anonKey);
 }
 
-export { createBrowserClient };
+export default createSupabaseBrowser;
