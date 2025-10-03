@@ -90,12 +90,6 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
           <Link className="btn-mc" href="/badger">
             Badger
           </Link>
-          <Link className="btn-mc" href="/calendar">
-            Calendar
-          </Link>
-          <Link className="btn-mc" href="/tags">
-            Tags
-          </Link>
 
           {isLoggedIn && (
             <Link className="btn-mc" href="/post/new">
