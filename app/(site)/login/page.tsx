@@ -61,7 +61,9 @@ export default function LoginPage() {
   }
 
   function shouldSyncEvent(event: AuthChangeEvent, session: Session | null) {
-    if (event === "SIGNED_OUT" || event === "USER_DELETED") return true;
+    if (event === "SIGNED_OUT" || (event as string) === "USER_DELETED") {
+      return true;
+    }
     const hasTokens = Boolean(session?.access_token && session?.refresh_token);
     return (
       event === "SIGNED_IN" ||
