@@ -1,69 +1,75 @@
 // app/(site)/layout.tsx
-import type { ReactNode } from "react";
+import "./globals.css";
 import Link from "next/link";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { createServerClient } from "@/lib/supabaseServer"; // server-side
+import AuthButtons from "@/components/AuthButtons";
+import NewPostLink from "@/components/NewPostLink";
+import ModerationQueueLink from "@/components/ModerationQueueLink";
+import ParentDashboardLink from "@/components/ParentDashboardLink";
+import AIHelper from "@/components/AIHelper"; // shows for everyone
 
-// Put your admin email in Vercel env: NEXT_PUBLIC_ADMIN_EMAIL
-const ADMIN_EMAIL = (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "").toLowerCase();
-
-export default async function SiteLayout({ children }: { children: ReactNode }) {
-  // Server-side: identify the current user
-  const sb = supabaseServer();
+export default async function SiteLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = createServerClient();
   const {
     data: { user },
-  } = await sb.auth.getUser();
+  } = await supabase.auth.getUser();
 
-  const isAdmin = !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL;
+  const adminEmail = (process.env.ADMIN_EMAIL || "").toLowerCase();
+  const isAdmin = !!user?.email && user.email.toLowerCase() === adminEmail;
 
   return (
     <html lang="en">
       <body className="bg-mc-grass text-mc-ink">
         {/* Top Nav */}
         <header className="sticky top-0 z-40 border-b bg-mc-sky/60 backdrop-blur supports-[backdrop-filter]:bg-mc-sky/40">
-          <nav className="mx-auto flex max-w-5xl items-center justify-between px-3 py-2">
-            {/* Left: brand + primary links */}
-            <div className="flex items-center gap-3">
-              <Link href="/" className="font-bold text-lg">
-                EJ Blog
-              </Link>
-              <div className="hidden md:flex items-center gap-3 text-sm">
-                <Link href="/">Home</Link>
-                <Link href="/calendar">Calendar</Link>
-                <Link href="/tags">Tags</Link>
-                <Link href="/blog">Blog</Link>
-                <Link href="/minecraft-zone">Minecraft Zone</Link>
-                <Link href="/scratch-board">Scratch Board</Link>
-                <Link href="/milestones">Milestones</Link>
-                <Link href="/badges">Badges</Link>
-                <Link href="/about">About</Link>
-              </div>
+          <nav className="mx-auto flex max-w-5xl items-center gap-3 px-3 py-2">
+            {/* Left */}
+            <div className="flex gap-3 font-mc items-center">
+              <Link href="/" className="hover:underline">Home</Link>
+              <Link href="/calendar" className="hover:underline">Calendar</Link>
+              <Link href="/tags" className="hover:underline">Tags</Link>
+              <Link href="/blog" className="hover:underline">Blog</Link>
+              <Link href="/minecraft-zone" className="hover:underline">Minecraft Zone</Link>
+              <Link href="/scratch-board" className="hover:underline">Scratch Board</Link>
+              <Link href="/milestones" className="hover:underline">Milestones</Link>
+              <Link href="/badges" className="hover:underline">Badges</Link>
+              <Link href="/about" className="hover:underline">About</Link>
             </div>
 
-            {/* Right: auth + role-based links */}
-            <div className="flex items-center gap-3 text-sm">
-              {user ? (
+            {/* Right */}
+            <div className="ml-auto flex items-center gap-2">
+              {/* Show when logged in */}
+              {user && (
                 <>
-                  <Link href="/post/new" className="btn-mc">New Post</Link>
+                  <NewPostLink />
                   {isAdmin && (
                     <>
-                      <Link href="/moderation">Moderation</Link>
-                      <Link href="/parent">Parent Dashboard</Link>
+                      <ModerationQueueLink />
+                      <ParentDashboardLink />
                     </>
                   )}
-                  <span className="opacity-70 hidden sm:inline">
-                    {user.email}
-                  </span>
-                  <Link href="/logout" className="btn-mc">Log out</Link>
                 </>
-              ) : (
-                <Link href="/login" className="btn-mc">Log in</Link>
               )}
+
+              {/* Auth area (Login / Logout) */}
+              <AuthButtons userEmail={user?.email || null} />
             </div>
           </nav>
         </header>
 
-        {/* Page content */}
-        <main className="mx-auto max-w-5xl px-3 py-6">{children}</main>
+        {/* Page */}
+        <main className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-3 py-6 lg:grid-cols-[1fr_280px]">
+          <section>{children}</section>
+
+          {/* Right Sidebar — AI Helper shows to everyone */}
+          <aside className="hidden lg:block">
+            <AIHelper />
+          </aside>
+        </main>
       </body>
     </html>
   );
