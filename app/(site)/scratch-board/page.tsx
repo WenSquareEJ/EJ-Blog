@@ -1,89 +1,77 @@
-// /app/(site)/scratch-board/page.tsx
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
 
-const PAGE_SIZE = 3;
-
-export default async function ScratchBoardPage({
-  searchParams,
-}: {
-  searchParams?: { page?: string };
-}) {
+export default async function ScratchBoardPage() {
   const sb = supabaseServer();
-  const page = Number(searchParams?.page ?? 1);
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
 
-  // fetch scratch-tagged posts
-  const { data: posts, error } = await sb
-    .from("posts")
-    .select("id, title, slug, excerpt, scratch_id, created_at")
-    .contains("tags", ["scratch"])
-    .order("created_at", { ascending: false })
-    .range(from, to);
+  // Check login so we can show the "Add" button
+  const { data: userRes } = await sb.auth.getUser();
+  const user = userRes?.user ?? null;
 
-  const { count } = await sb
-    .from("posts")
-    .select("*", { count: "exact", head: true })
-    .contains("tags", ["scratch"]);
-
-  const totalPages = count ? Math.ceil(count / PAGE_SIZE) : 1;
+  // Load projects
+  const { data: projects, error } = await sb
+    .from("scratch_projects")
+    .select("id, scratch_id, title, created_at")
+    .order("created_at", { ascending: false });
 
   return (
     <div className="space-y-6">
-      <h1 className="font-mc text-2xl">Scratch Board</h1>
-      <p className="opacity-80">
-        A gallery of Erik’s Scratch projects and coding experiments.
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="font-mc text-2xl">🎨 Scratch Board</h1>
+          <p className="opacity-80">
+            A gallery of Erik’s Scratch projects and coding experiments.
+          </p>
+        </div>
 
-      {/* Post cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {error && <p className="text-red-600">Error: {error.message}</p>}
-
-        {posts && posts.length > 0 ? (
-          posts.map((post) => (
-            <div key={post.id} className="card-block">
-              <h2 className="font-mc text-lg">{post.title}</h2>
-              <p className="text-sm opacity-80">{post.excerpt}</p>
-
-              {/* If post has a scratch_id, embed it */}
-              {post.scratch_id && (
-                <iframe
-                  src={`https://scratch.mit.edu/projects/${post.scratch_id}/embed`}
-                  allowTransparency
-                  width="100%"
-                  height="300"
-                  frameBorder="0"
-                  scrolling="no"
-                  allowFullScreen
-                  className="mt-2 border"
-                ></iframe>
-              )}
-
-              <Link href={`/post/${post.slug}`} className="btn-mc mt-2 inline-block">
-                Read More
-              </Link>
-            </div>
-          ))
-        ) : (
-          <p className="text-sm opacity-70">No Scratch projects yet — coming soon!</p>
+        {user && (
+          <Link href="/scratch-board/new" className="btn-mc">
+            ➕ Add a project
+          </Link>
         )}
       </div>
 
-      {/* Pagination */}
-      <div className="flex justify-between items-center mt-4">
-        {page > 1 ? (
-          <Link href={`/scratch-board?page=${page - 1}`} className="btn-mc">
-            ← Previous
-          </Link>
-        ) : <span />}
+      {error && (
+        <p className="text-red-600 text-sm">
+          Error loading projects: {error.message}
+        </p>
+      )}
 
-        {page < totalPages ? (
-          <Link href={`/scratch-board?page=${page + 1}`} className="btn-mc">
-            Next →
-          </Link>
-        ) : <span />}
-      </div>
+      {!projects || projects.length === 0 ? (
+        <div className="card-block">
+          <p className="text-sm opacity-80">
+            No Scratch projects yet — add your first one!
+          </p>
+        </div>
+      ) : (
+        <ul className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {projects.map((p) => (
+            <li key={p.id} className="card-block space-y-2">
+              <h3 className="font-mc text-sm">{p.title || `Project ${p.scratch_id}`}</h3>
+              <div className="rounded overflow-hidden border">
+                <iframe
+                  src={`https://scratch.mit.edu/projects/${p.scratch_id}/embed`}
+                  allowTransparency={true}
+                  width="100%"
+                  height="402"
+                  frameBorder="0"
+                  scrolling="no"
+                  allowFullScreen
+                  title={p.title || `Scratch project ${p.scratch_id}`}
+                />
+              </div>
+              <a
+                className="btn-mc-secondary inline-block"
+                href={`https://scratch.mit.edu/projects/${p.scratch_id}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open on Scratch ↗
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
