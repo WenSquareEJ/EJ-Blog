@@ -3,7 +3,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabaseClient'
+import supabaseBrowser from "@/lib/supabaseClient";
 
 export default function AuthStatus() {
   const [user, setUser] = useState<null | { id: string; email?: string }>(null)
