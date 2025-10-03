@@ -1,5 +1,5 @@
 // /app/(site)/tags/page.tsx
-import { createServerClient } from "@/lib/supabaseServer"
+import supabaseServer from "@/lib/supabaseServer";
 import Link from "next/link"
 
 export default async function TagsPage() {
