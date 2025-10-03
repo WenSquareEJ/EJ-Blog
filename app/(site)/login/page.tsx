@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabaseClient";
@@ -20,12 +21,10 @@ export default function LoginPage() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Tell our server route to set/clear the cookie
-      await fetch("/auth/callback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ event, session }),
-      });
+      // Sync browser auth state into HTTP-only cookies for server components
+      if (shouldSyncEvent(event, session)) {
+        await syncSession(event, session);
+      }
 
       // Make server components (layout) re-run with the new cookie
       router.refresh();
@@ -39,7 +38,7 @@ export default function LoginPage() {
     setMsg(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -47,12 +46,44 @@ export default function LoginPage() {
         setMsg(error.message);
         return;
       }
+      // We proactively sync the session so server layouts update on first redirect
+      if (data.session) {
+        await syncSession("SIGNED_IN", data.session);
+      }
+
       // After onAuthStateChange runs, the cookie is set and layout will see it
       router.push("/");
     } catch (err: any) {
       setMsg(err?.message ?? "Something went wrong.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  function shouldSyncEvent(event: AuthChangeEvent, session: Session | null) {
+    if (event === "SIGNED_OUT" || event === "USER_DELETED") return true;
+    const hasTokens = Boolean(session?.access_token && session?.refresh_token);
+    return (
+      event === "SIGNED_IN" ||
+      event === "INITIAL_SESSION" ||
+      event === "TOKEN_REFRESHED" ||
+      event === "USER_UPDATED"
+    ) && hasTokens;
+  }
+
+  async function syncSession(event: AuthChangeEvent, session: Session | null) {
+    try {
+      const res = await fetch("/auth/callback", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event, session }),
+      });
+      if (!res.ok) {
+        console.error("Failed to sync Supabase session", event, await res.text());
+      }
+    } catch (error) {
+      console.error("Error syncing Supabase session", error);
     }
   }
 

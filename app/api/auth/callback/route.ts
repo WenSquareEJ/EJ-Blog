@@ -14,7 +14,10 @@ export async function POST(req: Request) {
   }
 
   if (
-    (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") &&
+    (event === "SIGNED_IN" ||
+      event === "INITIAL_SESSION" ||
+      event === "TOKEN_REFRESHED" ||
+      event === "USER_UPDATED") &&
     session?.access_token &&
     session?.refresh_token
   ) {
