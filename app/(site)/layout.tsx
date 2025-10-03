@@ -1,16 +1,13 @@
 // /app/(site)/layout.tsx
 import "./globals.css";
 import Link from "next/link";
-import { supabaseServer } from "@/lib/supabaseServer";
-import AIHelper from "@/components/AIHelper"; // uses your existing component
+import supabaseServer from "@/lib/supabaseServer"; // ✅ default import
+import AIHelper from "@/components/AIHelper";
 
 export const metadata = {
   title: "EJ Blog",
   description: "Family blog in Minecraft style",
 };
-
-// change this if you add more admins
-const ADMIN_EMAIL = "wenyu.yan@gmail.com";
 
 export default async function SiteLayout({
   children,
@@ -21,9 +18,15 @@ export default async function SiteLayout({
   const sb = supabaseServer();
   const { data: userRes } = await sb.auth.getUser();
   const user = userRes?.user ?? null;
+
+  // Set your admin email in .env or Vercel (NEXT_PUBLIC_ADMIN_EMAIL)
+  const ADMIN_EMAIL =
+    process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ??
+    "wenyu.yan@gmail.com"; // fallback to your current email
+
   const isLoggedIn = Boolean(user);
   const isAdmin =
-    !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+    !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL;
 
   return (
     <html lang="en">
@@ -80,7 +83,6 @@ export default async function SiteLayout({
         {/* ---------- Banner placeholder (under nav) ---------- */}
         <div className="banner-placeholder">
           <div className="mx-auto max-w-5xl px-3 h-full flex items-center justify-center">
-            {/* Keep this text to remind: */}
             <p className="text-xs md:text-sm opacity-80">
               Banner placeholder — add your image or text here later.
             </p>
@@ -93,7 +95,6 @@ export default async function SiteLayout({
         </main>
 
         {/* ---------- AI Helper on every page (bottom-right) ---------- */}
-        {/* Your existing AIHelper component is rendered; make sure it positions itself fixed bottom-right. */}
         <AIHelper />
       </body>
     </html>
