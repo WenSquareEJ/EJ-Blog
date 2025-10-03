@@ -1,27 +1,10 @@
 // /app/(site)/layout.tsx
-import type { Metadata } from "next";
+import "../globals.css";
 import Link from "next/link";
 import { supabaseServer } from "@/lib/supabaseServer";
+import AIHelper from "@/components/AIHelper";
 
-import { Press_Start_2P, Pixelify_Sans } from "next/font/google";
-
-// Pixel fonts
-const mcFont = Press_Start_2P({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-mc",
-});
-
-const pixelBody = Pixelify_Sans({
-  weight: ["400", "700"],
-  subsets: ["latin"],
-  variable: "--font-pixel",
-});
-
-export const metadata: Metadata = {
-  title: "EJ Blog",
-  description: "Minecraft-styled blog",
-};
+const ADMIN_EMAIL = "wenyu.yan@gmail.com";
 
 export default async function SiteLayout({
   children,
@@ -30,40 +13,45 @@ export default async function SiteLayout({
 }) {
   const sb = supabaseServer();
   const { data: userRes } = await sb.auth.getUser();
-  const isLoggedIn = Boolean(userRes?.user);
+  const user = userRes?.user || null;
+  const isLoggedIn = Boolean(user);
+  const isAdmin = !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL;
 
   return (
-    <html lang="en" className={`${mcFont.variable} ${pixelBody.variable}`}>
-      <body className="bg-mc-grass text-mc-ink font-pixel">
-        {/* Top Navigation */}
-        <header className="sticky top-0 z-40 border-b-4 border-mc-dirt bg-mc-sky/70 backdrop-blur">
-          <div className="mx-auto max-w-6xl px-4 py-3 flex items-center">
-            {/* Brand */}
+    <html lang="en">
+      <body className="bg-mc-grass text-mc-ink">
+        {/* Top Nav */}
+        <header className="sticky top-0 z-40 border-b bg-mc-sky/60 backdrop-blur supports-[backdrop-filter]:bg-mc-sky/40">
+          <div className="mx-auto max-w-5xl px-3 py-2 flex items-center">
+            {/* Brand (left) */}
             <Link
               href="/"
-              className="font-mc text-base md:text-lg tracking-wide hover:opacity-90"
+              className="shrink-0 font-mc text-sm md:text-base leading-none hover:opacity-90"
             >
               EJ Blog
             </Link>
 
-            {/* Nav Links */}
-            <nav className="flex-1 ml-6">
-              <ul className="flex flex-wrap gap-2">
+            {/* Tabs (center) */}
+            <nav className="flex-1 overflow-x-auto ml-3">
+              <ul className="flex items-center gap-1 whitespace-nowrap pr-2">
                 <li><Link className="btn-mc" href="/">Home</Link></li>
                 <li><Link className="btn-mc" href="/calendar">Calendar</Link></li>
-                <li><Link className="btn-mc" href="/tags">Tags</Link></li>
                 <li><Link className="btn-mc" href="/milestones">Milestones</Link></li>
                 <li><Link className="btn-mc" href="/minecraft-zone">Minecraft Zone</Link></li>
                 <li><Link className="btn-mc" href="/scratch-board">Scratch Board</Link></li>
-                <li><Link className="btn-mc" href="/badges">Badges</Link></li>
-                {isLoggedIn && (
-                  <li><Link className="btn-mc" href="/post/new">New Post</Link></li>
+                <li><Link className="btn-mc" href="/tags">Tags</Link></li>
+                {isAdmin && (
+                  <>
+                    <li><Link className="btn-mc" href="/moderation">Moderation</Link></li>
+                    <li><Link className="btn-mc" href="/parent">Parent Zone</Link></li>
+                  </>
                 )}
+                {isLoggedIn && <li><Link className="btn-mc" href="/post/new">New Post</Link></li>}
               </ul>
             </nav>
 
-            {/* Auth */}
-            <div className="ml-3">
+            {/* Auth (right) */}
+            <div className="ml-2">
               {!isLoggedIn ? (
                 <Link className="btn-mc-secondary" href="/login">Log in</Link>
               ) : (
@@ -75,15 +63,20 @@ export default async function SiteLayout({
           </div>
         </header>
 
-        {/* Banner Placeholder */}
-        <div className="banner-placeholder bg-mc-leaf text-center py-6 text-mc-ink font-mc">
-          🌱 Banner Placeholder (custom banner goes here)
+        {/* Banner placeholder */}
+        <div className="banner-placeholder">
+          <div className="mx-auto max-w-5xl px-3 h-full flex items-center justify-center">
+            <span className="text-xs md:text-sm opacity-80">
+              Banner placeholder — drop in your image or message here later.
+            </span>
+          </div>
         </div>
 
-        {/* Page Content */}
-        <main className="mx-auto max-w-6xl w-full px-4 py-6">
-          {children}
-        </main>
+        {/* Page content */}
+        <main className="mx-auto max-w-5xl w-full px-3 py-5">{children}</main>
+
+        {/* Floating AI helper */}
+        <AIHelper />
       </body>
     </html>
   );
