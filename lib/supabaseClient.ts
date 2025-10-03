@@ -6,7 +6,7 @@ import type { Database } from "./database.types";
 // Keep a singleton instance so the client isn't recreated every render
 let _client: SupabaseClient<Database> | null = null;
 
-export function supabaseBrowser() {
+export function supabaseBrowser(): SupabaseClient<Database> {
   if (_client) return _client;
   _client = createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
