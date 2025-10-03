@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
 
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const { data, error, count } = await sb
     .from('posts')
     .select('*', { count: 'exact' })
@@ -46,7 +46,7 @@ export async function GET(request: Request) {
  * Requires logged-in user.
  */
 export async function POST(request: Request) {
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const { data: userRes, error: userErr } = await sb.auth.getUser()
   if (userErr || !userRes?.user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })

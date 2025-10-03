@@ -8,7 +8,7 @@ export default async function HomePage({ searchParams }: { searchParams?: { page
   const from = (page - 1) * perPage
   const to = from + perPage - 1
 
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const { data: posts, error } = await sb
     .from("posts")
     .select("*")

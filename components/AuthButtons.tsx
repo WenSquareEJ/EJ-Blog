@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { supabaseServer } from '@/lib/supabaseServer'
 
 export default async function AuthButtons() {
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const { data: ures } = await sb.auth.getUser()
   const user = ures?.user
 

@@ -2,7 +2,7 @@ import { supabaseServer } from '@/lib/supabaseServer'
 import { sendDailyDigest } from '@/lib/email'
 
 export async function POST() {
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const { data: parents } = await sb.from('profiles').select('email').eq('role','parent')
   const since = new Date(Date.now()-24*3600*1000).toISOString()
   const [{ data: rc }, { data: cm }] = await Promise.all([

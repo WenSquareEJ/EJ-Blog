@@ -2,7 +2,7 @@
 import { createServerClient } from "@/lib/supabaseServer"
 
 export default async function ModerationPage() {
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const { data: posts } = await sb.from("posts").select("*").eq("status", "pending")
 
   return (

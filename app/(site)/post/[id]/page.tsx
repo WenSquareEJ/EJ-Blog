@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabaseServer"
 import Link from "next/link"
 
 export default async function PostPage({ params }: { params: { id: string } }) {
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const { data: post } = await sb.from("posts").select("*").eq("id", params.id).single()
   const { data: comments } = await sb.from("comments").select("*").eq("post_id", params.id)
 

@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabaseServer"
 import Link from "next/link"
 
 export default async function TagsPage() {
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const { data: tags } = await sb.from("tags").select("id, name")
 
   return (

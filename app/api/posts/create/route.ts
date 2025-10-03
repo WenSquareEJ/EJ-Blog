@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabaseServer"
 import { NextResponse } from "next/server"
 
 export async function POST(req: Request) {
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const form = await req.formData()
   const title = form.get("title") as string
   const content = form.get("content") as string

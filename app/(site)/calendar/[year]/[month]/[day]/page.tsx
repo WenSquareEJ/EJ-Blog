@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabaseServer'
 
 export default async function DayPage({ params }: { params: { year: string, month: string, day: string } }) {
   const { year, month, day } = params
-  const sb = supabaseServer()
+  const sb = createServerClient()
   const from = new Date(Number(year), Number(month)-1, Number(day)).toISOString()
   const to = new Date(Number(year), Number(month)-1, Number(day), 23,59,59).toISOString()
   const { data } = await sb.from('posts').select('*').eq('status','approved').gte('published_at', from).lte('published_at', to).order('published_at', { ascending: false })
