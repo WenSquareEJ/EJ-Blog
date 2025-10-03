@@ -233,6 +233,19 @@ a:hover {
   }
 }
 
+input,
+textarea,
+select {
+  color: var(--mc-ink-dark);
+  background-color: var(--mc-parchment);
+}
+
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: rgba(43, 26, 16, 0.6);
+}
+
 .banner-placeholder {
   background-color: var(--mc-wood);
   border-bottom: 2px solid var(--mc-wood-dark);

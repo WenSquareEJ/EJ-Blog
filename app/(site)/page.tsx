@@ -331,9 +331,7 @@ export default async function HomePage({
               const key = toLondonDateKey(day);
               const inMonth = day.getUTCMonth() === monthIdx;
               const count = postsByDay.get(key)?.length ?? 0;
-              const displayDay = new Date(
-                day.toLocaleString("en-GB", { timeZone: TIMEZONE })
-              ).getDate();
+              const displayDay = day.getUTCDate();
               const dayHref = buildHref(searchParams, {
                 date: key,
                 y: String(year),

@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
   const insertData = {
     title,
-    author_id: auth.user.id,
+    author: auth.user.id,
     image_url: payload.image_url ?? null,
     content: (payload.content ?? rawPlain) || "",
     content_html: contentHtml || null,

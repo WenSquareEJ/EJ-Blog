@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     content: (content_md ?? plain) || '',
     content_html: html || null,
     content_json: content_json ?? null,
-    author_id: userRes.user.id,
+    author: userRes.user.id,
     status: 'pending' as const,
     tags,
     images,
