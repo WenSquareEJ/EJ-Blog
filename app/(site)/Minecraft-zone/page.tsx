@@ -1,4 +1,4 @@
-// /app/(site)/minecraft-zone/page.tsx
+// /app/(site)/Minecraft-zone/page.tsx
 export const dynamic = "force-dynamic";
 
 export default function MinecraftZonePage() {
