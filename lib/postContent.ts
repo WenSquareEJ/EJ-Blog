@@ -4,7 +4,6 @@ import { marked } from "marked";
 marked.setOptions({
   gfm: true,
   breaks: true,
-  smartLists: true,
 });
 
 const sanitizeOptions: IOptions = {
