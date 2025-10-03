@@ -1,19 +1,21 @@
-import Link from 'next/link'
-import { supabaseServer } from '@/lib/supabaseServer'
+// /app/(site)/tags/page.tsx
+import { supabaseServer } from "@/lib/supabaseServer"
+import Link from "next/link"
 
 export default async function TagsPage() {
   const sb = supabaseServer()
-  const { data: tags } = await sb.from('tags').select('name, slug').order('name')
+  const { data: tags } = await sb.from("tags").select("id, name")
+
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-4">Tags</h1>
-      <div className="flex flex-wrap gap-2">
-        {(tags||[]).map(t => (
-          <Link key={t.slug} href={`/tags/${t.slug}`} className="bg-gray-100 px-3 py-1 rounded-full hover:bg-gray-200">
-            #{t.name}
-          </Link>
+      <h1 className="font-mc text-lg mb-4">Tags</h1>
+      <ul className="flex flex-wrap gap-2">
+        {tags?.map((tag) => (
+          <li key={tag.id}>
+            <Link href={`/tags/${tag.id}`} className="btn-mc-secondary">{tag.name}</Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   )
 }
