@@ -1,5 +1,5 @@
 import CalendarDayList from '@/components/CalendarDayList'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { createServerClient } from '@/lib/createServerClient'
 
 export default async function DayPage({ params }: { params: { year: string, month: string, day: string } }) {
   const { year, month, day } = params

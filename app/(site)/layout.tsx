@@ -1,7 +1,7 @@
 // app/(site)/layout.tsx
 import "./globals.css";
 import Link from "next/link";
-import { createServerClient } from "@/lib/supabaseServer"; // server-side
+import { createServerClient } from "@/lib/createServerClient"; // server-side
 import AuthButtons from "@/components/AuthButtons";
 import NewPostLink from "@/components/NewPostLink";
 import ModerationQueueLink from "@/components/ModerationQueueLink";

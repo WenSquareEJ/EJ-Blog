@@ -1,8 +1,8 @@
 // Server Component: shows Login (if signed out) or Moderation + Logout (if signed in)
-// Uses your existing supabaseServer helper.
+// Uses your existing createServerClient helper.
 
 import Link from 'next/link'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { createServerClient } from '@/lib/createServerClient'
 
 export default async function AuthButtons() {
   const sb = createServerClient()

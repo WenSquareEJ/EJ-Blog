@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabaseServer'
+import { createServerClient } from '@/lib/createServerClient'
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   const sb = createServerClient()
   const { error } = await sb.from('posts').update({ status: 'approved', published_at: new Date().toISOString() }).eq('id', params.id)

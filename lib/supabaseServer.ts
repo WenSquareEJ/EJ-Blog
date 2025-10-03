@@ -1,6 +1,6 @@
-// lib/supabaseServer.ts
+// lib/createServerClient.ts
 import { cookies, headers } from "next/headers";
-import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
+import { createServerClient as createcreateServerClientClient } from "@supabase/ssr";
 
 /**
  * Server-side Supabase client for App Router (uses @supabase/ssr).
@@ -9,7 +9,7 @@ import { createServerClient as createSupabaseServerClient } from "@supabase/ssr"
 export function createServerClient() {
   const cookieStore = cookies();
 
-  return createSupabaseServerClient(
+  return createcreateServerClientClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

@@ -1,5 +1,5 @@
 import PostCard from '@/components/PostCard'
-import { supabaseServer } from '@/lib/supabaseServer'
+import { createServerClient } from '@/lib/createServerClient'
 
 export default async function TagPage({ params }: { params: { slug: string } }) {
   const sb = createServerClient()

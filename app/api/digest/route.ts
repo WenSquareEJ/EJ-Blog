@@ -1,4 +1,4 @@
-import { supabaseServer } from '@/lib/supabaseServer'
+import { createServerClient } from '@/lib/createServerClient'
 import { sendDailyDigest } from '@/lib/email'
 
 export async function POST() {
