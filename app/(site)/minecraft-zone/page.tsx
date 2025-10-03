@@ -2,18 +2,26 @@
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
 import { buildExcerpt, extractPostContent } from "@/lib/postContent";
+import type { TablesRow } from "@/lib/database.types";
+
+type PostSummary = Pick<
+  TablesRow<"posts">,
+  "id" | "title" | "content" | "content_html" | "created_at"
+>;
 
 export default async function MinecraftZonePage() {
   const sb = supabaseServer();
 
   // Fetch only 3 recent Minecraft posts
-  const { data: posts } = await sb
+  const { data: postsData } = await sb
     .from("posts")
     .select("id, title, content, content_html, created_at")
     .eq("status", "approved")
     .contains("tags", ["minecraft"]) // posts tagged with 'minecraft'
     .order("published_at", { ascending: false })
     .limit(3);
+
+  const posts: PostSummary[] = (postsData ?? []) as PostSummary[];
 
   return (
     <div className="space-y-6">
@@ -24,7 +32,7 @@ export default async function MinecraftZonePage() {
 
       {/* Recent Posts */}
       <div className="space-y-4">
-        {posts?.length ? (
+        {posts.length ? (
           posts.map((post) => {
             const { text } = extractPostContent({
               content_html: post.content_html,
@@ -32,20 +40,20 @@ export default async function MinecraftZonePage() {
             });
             const excerpt = buildExcerpt(text, 120);
             return (
-            <div
-              key={post.id}
-              className="card-block hover:shadow-lg transition"
-            >
-              <h2 className="font-mc text-lg">{post.title}</h2>
-              <p className="text-sm opacity-90">{excerpt}</p>
-              <Link
-                href={`/post/${post.id}`}
-                className="text-blue-600 underline text-xs"
+              <div
+                key={post.id}
+                className="card-block hover:shadow-lg transition"
               >
-                Read more
-              </Link>
-            </div>
-          );
+                <h2 className="font-mc text-lg">{post.title}</h2>
+                <p className="text-sm opacity-90">{excerpt}</p>
+                <Link
+                  href={`/post/${post.id}`}
+                  className="text-blue-600 underline text-xs"
+                >
+                  Read more
+                </Link>
+              </div>
+            );
           })
         ) : (
           <p>No Minecraft posts yet — stay tuned!</p>
