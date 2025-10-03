@@ -2,130 +2,210 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ----------------------------------------
-   Minecraft-y color palette (CSS variables)
------------------------------------------ */
+/* ------------------------------------------------------------
+   Minecraft Woodlands Palette (shared via CSS variables)
+   ------------------------------------------------------------ */
 :root {
-  --mc-grass: #4caf50;      /* grassy background */
-  --mc-sky:   #4ea3c5;      /* buttons / header */
-  --mc-stone: #6b7280;      /* muted gray */
-  --mc-ink:   #111827;      /* main text */
-  --mc-sand:  #fef3c7;      /* light sand highlight */
-  --mc-danger:#dd3333;
+  --mc-dirt: #2f2115;
+  --mc-dirt-dark: #22160d;
+  --mc-wood: #6f4223;
+  --mc-wood-dark: #4a2813;
+  --mc-wood-light: #8b5a31;
+  --mc-leaf: #3f6b38;
+  --mc-moss: #2f4f2f;
+  --mc-parchment: #f4ede0;
+  --mc-ink: #f7f2e7;
+  --mc-ink-dark: #2b1a10;
+  --mc-stone: #b49a82;
+  --mc-sand: #d9c5a5;
+  --mc-link: #d4b469;
+  --mc-danger: #d4553f;
+  --mc-shadow: rgba(17, 8, 4, 0.45);
 }
 
-/* ----------------------------------------
-   Page background (grid vibe)
------------------------------------------ */
-html, body {
+html,
+body {
   height: 100%;
 }
 
 body {
-  font-family: var(--font-pixel), monospace;        /* readable pixel for body */
+  font-family: var(--font-pixel), monospace;
   color: var(--mc-ink);
   background:
-    linear-gradient(0deg, rgba(0,0,0,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px),
-    var(--mc-grass);
-  background-size: 24px 24px, 24px 24px, auto;
+    linear-gradient(0deg, rgba(17, 8, 4, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 8, 4, 0.08) 1px, transparent 1px),
+    var(--mc-dirt);
+  background-size: 32px 32px, 32px 32px, auto;
 }
 
-/* Headings/nav use the chunkier pixel font */
-.font-mc, h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-mc), monospace;
+a {
+  color: var(--mc-link);
 }
 
-/* Make headings a touch softer */
-h1 { @apply text-2xl mb-3; }
-h2 { @apply text-xl mb-2; }
-h3 { @apply text-lg mb-2; }
-
-/* ----------------------------------------
-   Blocky helpers
------------------------------------------ */
-.rounded-block { border-radius: 10px; }
-
-.shadow-block {
-  /* slight stacked/pixel shadow */
-  box-shadow:
-    0 2px 0 rgba(0,0,0,0.35),
-    0 6px 0 rgba(0,0,0,0.15);
-}
-
-/* Card using plain CSS (no Tailwind color tokens that could 404) */
-.card-block {
-  background: #ffffff;
-  border: 2px solid #000;
-  border-color: rgba(0,0,0,0.2);
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow:
-    0 2px 0 rgba(0,0,0,0.35),
-    0 6px 0 rgba(0,0,0,0.15);
-}
-
-/* Readable pixel text area for post content */
-.post-body {
-  font-family: var(--font-pixel), monospace;
-  font-size: 0.98rem;
-  line-height: 1.6;
-}
-
-/* ----------------------------------------
-   Button styles
------------------------------------------ */
-.btn-mc {
-  font-family: var(--font-mc), monospace;
-  font-size: 0.8rem;                 /* smaller */
-  color: #fff;
-  background-color: var(--mc-sky);
-  padding: 0.30rem 0.6rem;           /* slimmer */
-  border: 2px solid #000;            /* crisp outline */
-  border-radius: 10px;
-  box-shadow:
-    0 2px 0 rgba(0,0,0,0.35),
-    0 6px 0 rgba(0,0,0,0.15);
-  transition: transform 120ms ease, filter 120ms ease;
-  display: inline-block;
-}
-.btn-mc:hover { filter: brightness(1.05); transform: translateY(-1px); }
-.btn-mc:active { transform: translateY(0); }
-
-.btn-mc-secondary {
-  font-family: var(--font-mc), monospace;
-  font-size: 0.8rem;
-  color: #111;
-  background-color: #ffe3a3;         /* sandy badge feel */
-  padding: 0.30rem 0.6rem;
-  border: 2px solid #000;
-  border-radius: 10px;
-  box-shadow:
-    0 2px 0 rgba(0,0,0,0.35),
-    0 6px 0 rgba(0,0,0,0.15);
-  transition: transform 120ms ease, filter 120ms ease;
-  display: inline-block;
-}
-.btn-mc-secondary:hover { filter: brightness(1.03); transform: translateY(-1px); }
-
-.btn-mc-danger {
-  font-family: var(--font-mc), monospace;
-  font-size: 0.8rem;
-  color: #fff;
-  background-color: var(--mc-danger);
-  padding: 0.30rem 0.6rem;
-  border: 2px solid #000;
-  border-radius: 10px;
-  box-shadow:
-    0 2px 0 rgba(0,0,0,0.35),
-    0 6px 0 rgba(0,0,0,0.15);
-  transition: transform 120ms ease, filter 120ms ease;
-  display: inline-block;
-}
-.btn-mc-danger:hover { filter: brightness(1.05); transform: translateY(-1px); }
-
-/* Simple link look for “Read more →” */
-a.link-underline {
+a:hover {
   text-decoration: underline;
-  text-underline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   Utility helpers so Tailwind classes map to palette
+   ------------------------------------------------------------ */
+@layer utilities {
+  .font-mc {
+    font-family: var(--font-mc), monospace;
+  }
+
+  .font-pixel {
+    font-family: var(--font-pixel), monospace;
+  }
+
+  .bg-mc-dirt {
+    background-color: var(--mc-dirt);
+  }
+
+  .bg-mc-wood {
+    background-color: var(--mc-wood);
+  }
+
+  .bg-mc-wood-dark {
+    background-color: var(--mc-wood-dark);
+  }
+
+  .bg-mc-wood-light {
+    background-color: var(--mc-wood-light);
+  }
+
+  .bg-mc-parchment {
+    background-color: var(--mc-parchment);
+  }
+
+  .bg-mc-grass,
+  .bg-mc-sky,
+  .bg-mc-leaf {
+    background-color: var(--mc-leaf);
+  }
+
+  .bg-mc-sage,
+  .bg-mc-moss {
+    background-color: var(--mc-moss);
+  }
+
+  .bg-mc-sand {
+    background-color: var(--mc-sand);
+  }
+
+  .text-mc-ink {
+    color: var(--mc-ink);
+  }
+
+  .text-mc-parchment {
+    color: var(--mc-parchment);
+  }
+
+  .text-mc-dirt {
+    color: var(--mc-ink-dark);
+  }
+
+  .text-mc-stone {
+    color: var(--mc-stone);
+  }
+
+  .text-mc-sand {
+    color: var(--mc-sand);
+  }
+
+  .border-mc-wood {
+    border-color: var(--mc-wood);
+  }
+
+  .border-mc-wood-dark {
+    border-color: var(--mc-wood-dark);
+  }
+
+  .border-mc-sand {
+    border-color: var(--mc-sand);
+  }
+
+  .shadow-pixel {
+    box-shadow:
+      0 1px 0 var(--mc-shadow),
+      0 2px 0 rgba(17, 8, 4, 0.35);
+  }
+
+  .shadow-mc {
+    box-shadow:
+      0 2px 0 rgba(17, 8, 4, 0.45),
+      0 10px 0 rgba(13, 6, 3, 0.25);
+  }
+}
+
+/* ------------------------------------------------------------
+   Components (buttons, cards, banners)
+   ------------------------------------------------------------ */
+@layer components {
+  .btn-mc {
+    @apply inline-flex items-center justify-center rounded-md border-2 px-2 py-1 text-xs font-mc uppercase tracking-widest transition-transform duration-150;
+    border-color: var(--mc-wood-dark);
+    background-color: var(--mc-wood-light);
+    color: var(--mc-parchment);
+    box-shadow:
+      0 2px 0 rgba(17, 8, 4, 0.35),
+      0 6px 0 rgba(13, 6, 3, 0.2);
+  }
+
+  .btn-mc:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+
+  .btn-mc:active {
+    transform: translateY(0);
+    filter: brightness(0.97);
+  }
+
+  .btn-mc-secondary {
+    @apply inline-flex items-center justify-center rounded-md border-2 px-2 py-1 text-xs font-mc uppercase tracking-widest transition-transform duration-150;
+    border-color: var(--mc-wood-dark);
+    background-color: var(--mc-parchment);
+    color: var(--mc-dirt-dark);
+    box-shadow:
+      0 2px 0 rgba(17, 8, 4, 0.35),
+      0 6px 0 rgba(13, 6, 3, 0.2);
+  }
+
+  .btn-mc-secondary:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+  }
+
+  .btn-mc-danger {
+    @apply inline-flex items-center justify-center rounded-md border-2 px-2 py-1 text-xs font-mc uppercase tracking-widest transition-transform duration-150;
+    border-color: rgba(120, 23, 23, 0.8);
+    background-color: var(--mc-danger);
+    color: var(--mc-parchment);
+    box-shadow:
+      0 2px 0 rgba(17, 8, 4, 0.35),
+      0 6px 0 rgba(13, 6, 3, 0.2);
+  }
+
+  .btn-mc-danger:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+
+  .card-block {
+    @apply rounded-lg border-2 p-4;
+    border-color: var(--mc-wood-dark);
+    background-color: var(--mc-parchment);
+    color: var(--mc-ink-dark);
+    box-shadow:
+      0 2px 0 rgba(17, 8, 4, 0.35),
+      0 6px 0 rgba(13, 6, 3, 0.2);
+  }
+}
+
+.banner-placeholder {
+  background-color: var(--mc-wood);
+  border-bottom: 2px solid var(--mc-wood-dark);
+  color: var(--mc-parchment);
+  height: 72px;
 }

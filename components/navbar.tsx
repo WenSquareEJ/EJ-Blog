@@ -4,152 +4,133 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
-
-const ADMIN_EMAIL = "wenyu.yan@gmail.com";
+import { supabaseBrowser } from "@/lib/supabaseClient";
 
 type SessionUser = { id: string; email?: string | null } | null;
 
-export default function NavBar() {
-  const router = useRouter();
-  const [user, setUser] = useState<SessionUser>(null);
-  const [isPending, startTransition] = useTransition();
+type NavBarProps = {
+  initialUser: SessionUser;
+  adminEmail: string;
+};
 
-  // Create a plain browser Supabase client
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
+  const router = useRouter();
+  const supabase = supabaseBrowser();
+  const normalizedAdminEmail = adminEmail.toLowerCase();
+
+  const [user, setUser] = useState<SessionUser>(initialUser ?? null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() =>
+    isAdminUser(initialUser, normalizedAdminEmail)
   );
+  const [isPending, startTransition] = useTransition();
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
-    // 1) Get current session on mount
+    let isMounted = true;
+
     supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
+      if (!isMounted) return;
+      const nextUser = data.session?.user ?? null;
+      setUser(nextUser);
+      setIsAdmin(isAdminUser(nextUser, normalizedAdminEmail));
     });
 
-    // 2) Listen to auth changes so the UI updates immediately
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      // re-render current page (e.g. to reveal New Post / Moderation)
-      startTransition(() => router.refresh());
-    });
+    const { data: subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        const nextUser = session?.user ?? null;
+        setUser(nextUser);
+        setIsAdmin(isAdminUser(nextUser, normalizedAdminEmail));
+        startTransition(() => router.refresh());
+      }
+    );
 
     return () => {
-      sub.subscription.unsubscribe();
+      isMounted = false;
+      subscription?.subscription?.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [normalizedAdminEmail, router, supabase]);
 
-  const isLoggedIn = !!user;
-  const isAdmin =
-    !!user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const isLoggedIn = Boolean(user);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
-    startTransition(() => router.push("/"));
+    setLoggingOut(true);
+    await Promise.allSettled([
+      supabase.auth.signOut(),
+      fetch("/logout", { method: "POST" }),
+    ]);
+
+    startTransition(() => {
+      router.push("/");
+      router.refresh();
+    });
+    setLoggingOut(false);
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-mc-sage/85 backdrop-blur supports-[backdrop-filter]:bg-mc-sage/70">
-      <div className="mx-auto max-w-5xl px-4">
-        <nav className="flex items-center gap-3 flex-wrap py-3">
-          {/* Left: Logo / Title */}
-          <Link
-            href="/"
-            className="shrink-0 whitespace-nowrap font-bold flex items-center gap-2"
-          >
-            <span className="inline-block h-4 w-4 rounded-sm bg-mc-grass border border-mc-wood translate-y-0.5" />
-            EJ Blog
+    <header className="sticky top-0 z-40 border-b border-mc-wood-dark bg-mc-wood text-mc-parchment shadow-mc">
+      <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-2 whitespace-nowrap font-mc text-xs uppercase tracking-[0.2em] hover:opacity-90"
+        >
+          <span className="inline-block h-4 w-4 rounded-sm bg-mc-leaf border border-mc-wood-dark shadow-pixel" />
+          EJ Blog
+        </Link>
+
+        <nav className="flex flex-1 items-center gap-2 overflow-x-auto">
+          <Link className="btn-mc" href="/">
+            Blog
+          </Link>
+          <Link className="btn-mc" href="/minecraft-zone">
+            Minecraft Zone
+          </Link>
+          <Link className="btn-mc" href="/scratch-board">
+            Scratch Board
+          </Link>
+          <Link className="btn-mc" href="/badger">
+            Badger
+          </Link>
+          <Link className="btn-mc" href="/calendar">
+            Calendar
+          </Link>
+          <Link className="btn-mc" href="/tags">
+            Tags
           </Link>
 
-          {/* Middle: Links (wraps if needed) */}
-          <ul className="flex items-center gap-3 flex-wrap">
-            <li>
-              <Link href="/" className="hover:underline whitespace-nowrap">
-                Blog
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/minecraft-zone"
-                className="hover:underline whitespace-nowrap"
-              >
-                Minecraft Zone
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/scratch-board"
-                className="hover:underline whitespace-nowrap"
-              >
-                Scratch Board
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/badger"
-                className="hover:underline whitespace-nowrap"
-              >
-                Badger
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/calendar"
-                className="hover:underline whitespace-nowrap"
-              >
-                Calendar
-              </Link>
-            </li>
-            <li>
-              <Link href="/tags" className="hover:underline whitespace-nowrap">
-                Tags
-              </Link>
-            </li>
+          {isLoggedIn && (
+            <Link className="btn-mc" href="/post/new">
+              New Post
+            </Link>
+          )}
 
-            {/* Logged-in only */}
-            {isLoggedIn && (
-              <li>
-                <Link
-                  href="/post/new"
-                  className="hover:underline whitespace-nowrap"
-                >
-                  New Post
-                </Link>
-              </li>
-            )}
-
-            {/* Admin-only (Parent/Moderation page) */}
-            {isAdmin && (
-              <li>
-                <Link
-                  href="/moderation"
-                  className="hover:underline whitespace-nowrap"
-                >
-                  Parent / Moderation
-                </Link>
-              </li>
-            )}
-          </ul>
-
-          {/* Right: Auth area – pinned to edge */}
-          <div className="ms-auto shrink-0 whitespace-nowrap">
-            {!isLoggedIn ? (
-              <Link className="btn-mc-secondary" href="/login">
-                Log in
-              </Link>
-            ) : (
-              <button
-                disabled={isPending}
-                onClick={handleLogout}
-                className="btn-mc-secondary"
-              >
-                {isPending ? "…" : "Log out"}
-              </button>
-            )}
-          </div>
+          {isAdmin && (
+            <Link className="btn-mc" href="/moderation">
+              Parent / Moderation
+            </Link>
+          )}
         </nav>
+
+        <div className="ms-auto shrink-0">
+          {!isLoggedIn ? (
+            <Link className="btn-mc-secondary" href="/login">
+              Log in
+            </Link>
+          ) : (
+            <button
+              className="btn-mc-secondary"
+              disabled={isPending || loggingOut}
+              onClick={handleLogout}
+            >
+              {loggingOut ? "…" : "Log out"}
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );
+}
+
+function isAdminUser(user: SessionUser, adminEmail: string) {
+  if (!user?.email) return false;
+  return user.email.toLowerCase() === adminEmail;
 }
