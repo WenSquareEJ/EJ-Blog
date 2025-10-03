@@ -3,6 +3,7 @@ import Link from "next/link";
 import PostCard from "@/components/PostCard";
 import supabaseServer from "@/lib/supabaseServer";
 import { buildExcerpt, extractPostContent } from "@/lib/postContent";
+import type { TablesRow } from "@/lib/database.types";
 
 const PER_PAGE = 3;
 const TIMEZONE = "Europe/London";
@@ -25,6 +26,7 @@ type PostRow = {
 };
 
 type MonthlyPost = { id: string; title: string; created_at: string };
+type MonthlyPostRow = Pick<TablesRow<"posts">, "id" | "title" | "created_at">;
 
 function toISO(date: Date) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();
@@ -175,13 +177,13 @@ export default async function HomePage({
     .order("created_at", { ascending: false });
 
   const postsByDay = new Map<string, MonthlyPost[]>();
-  (monthlyPosts ?? []).forEach((post) => {
+  ((monthlyPosts ?? []) as MonthlyPostRow[]).forEach((post) => {
     if (!post.created_at) return;
     const createdAt = new Date(post.created_at);
     if (Number.isNaN(createdAt.getTime())) return;
     const key = toLondonDateKey(createdAt);
     const bucket = postsByDay.get(key) ?? [];
-    bucket.push(post as MonthlyPost);
+    bucket.push({ id: post.id, title: post.title, created_at: post.created_at });
     postsByDay.set(key, bucket);
   });
 
