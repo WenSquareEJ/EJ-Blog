@@ -1,35 +1,47 @@
 // /app/auth/callback/route.ts
 import { NextResponse } from "next/server";
-import supabaseServer from "@/lib/supabaseServer";
+import supabaseRoute from "@/lib/supabaseRoute";
 
 // Handle client->server auth state sync (password sign-in, sign-out, token refresh)
 export async function POST(req: Request) {
-  const supabase = supabaseServer();
-  const { event, session } = await req.json();
+  const { event, session } = await req.json().catch(() => ({}) as any);
+  const response = NextResponse.json({ ok: true });
+  const supabase = supabaseRoute(response);
 
-  try {
-    if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-      // Persist the session into HTTP-only cookies
-      await supabase.auth.setSession(session);
-    }
-    if (event === "SIGNED_OUT") {
-      await supabase.auth.signOut();
-    }
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+  if (event === "SIGNED_OUT" || event === "USER_DELETED") {
+    await supabase.auth.signOut();
+    return response;
   }
+
+  if (
+    (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") &&
+    session?.access_token &&
+    session?.refresh_token
+  ) {
+    await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    });
+  }
+
+  return response;
 }
 
 // Optional: supports OAuth or magic link redirect
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const code = searchParams.get("code");
-  if (code) {
-    const supabase = supabaseServer();
-    await supabase.auth.exchangeCodeForSession(code);
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+  const redirect = requestUrl.searchParams.get("redirect_to") ?? "/";
+  const origin =
+    process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin;
+  const response = NextResponse.redirect(new URL(redirect, origin));
+
+  if (!code) {
+    return response;
   }
-  return NextResponse.redirect(
-    new URL("/", process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000")
-  );
+
+  const supabase = supabaseRoute(response);
+  await supabase.auth.exchangeCodeForSession(code);
+
+  return response;
 }

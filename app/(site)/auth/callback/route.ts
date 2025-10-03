@@ -1,20 +1,45 @@
 import { NextResponse } from "next/server";
-import supabaseServer from "@/lib/supabaseServer";
+import supabaseRoute from "@/lib/supabaseRoute";
 
 export async function POST(req: Request) {
-  const { event, session } = await req.json().catch(() => ({} as any));
-  const sb = supabaseServer();
+  const { event, session } = await req.json().catch(() => ({}) as any);
+  const response = NextResponse.json({ ok: true });
+  const supabase = supabaseRoute(response);
 
-  // Keep the server cookies in sync with the browser session
   if (event === "SIGNED_OUT" || event === "USER_DELETED") {
-    await sb.auth.signOut();
-  } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-    if (session?.access_token && session?.refresh_token) {
-      await sb.auth.setSession({
-        access_token: session.access_token,
-        refresh_token: session.refresh_token,
-      });
-    }
+    await supabase.auth.signOut();
   }
-  return NextResponse.json({ ok: true });
+
+  if (
+    (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") &&
+    session?.access_token &&
+    session?.refresh_token
+  ) {
+    await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    });
+  }
+
+  return response;
+}
+
+export async function GET(req: Request) {
+  const requestUrl = new URL(req.url);
+  const code = requestUrl.searchParams.get("code");
+  const next = requestUrl.searchParams.get("next") ?? "/";
+
+  const origin =
+    process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin;
+  const redirectUrl = new URL(next, origin);
+  const response = NextResponse.redirect(redirectUrl);
+
+  if (!code) {
+    return response;
+  }
+
+  const supabase = supabaseRoute(response);
+  await supabase.auth.exchangeCodeForSession(code);
+
+  return response;
 }
