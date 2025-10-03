@@ -42,7 +42,7 @@ export default function NewScratchProjectPage() {
 
       const { error } = await supabase
         .from("scratch_projects")
-        .insert(payload);
+        .insert(payload as never);
 
       if (error) {
         setMsg(error.message);

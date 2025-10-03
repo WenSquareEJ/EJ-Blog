@@ -19,12 +19,10 @@ import {
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
-type TypedSupabaseClient = SupabaseClient<Database, "public", Database["public"]>;
-
-function createServerSupabaseClient(): TypedSupabaseClient {
+function createServerSupabaseClient(): SupabaseClient<Database> {
   const cookieStore = cookies();
 
-  return _createServerClient<Database>(
+  return _createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -40,7 +38,7 @@ function createServerSupabaseClient(): TypedSupabaseClient {
         },
       },
     }
-  );
+  ) as unknown as SupabaseClient<Database>;
 }
 
 /** Preferred name going forward */

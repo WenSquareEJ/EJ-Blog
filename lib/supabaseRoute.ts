@@ -7,12 +7,10 @@ import { NextResponse } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
-type TypedSupabaseClient = SupabaseClient<Database, "public", Database["public"]>;
-
-export function supabaseRoute(response: NextResponse): TypedSupabaseClient {
+export function supabaseRoute(response: NextResponse): SupabaseClient<Database> {
   const requestCookies = cookies();
 
-  return createServerClient<Database>(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -35,7 +33,7 @@ export function supabaseRoute(response: NextResponse): TypedSupabaseClient {
         },
       },
     }
-  );
+  ) as unknown as SupabaseClient<Database>;
 }
 
 export default supabaseRoute;
