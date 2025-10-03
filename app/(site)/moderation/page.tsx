@@ -1,6 +1,7 @@
 // app/(site)/moderation/page.tsx
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
+import type { TablesRow } from "@/lib/database.types";
 
 type ModPost = {
   id: string;
@@ -18,6 +19,14 @@ type ModComment = {
   created_at: string | null;
 };
 
+type RawPost = Pick<TablesRow<"posts">, "id" | "title" | "created_at" | "status"> & {
+  author: { display_name: string | null } | null;
+};
+
+type RawComment = Pick<TablesRow<"comments">, "id" | "post_id" | "content" | "created_at" | "status"> & {
+  post: { title: string | null } | null;
+};
+
 export default async function ModerationPage() {
   const sb = supabaseServer();
 
@@ -27,14 +36,16 @@ export default async function ModerationPage() {
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 
-  const posts: ModPost[] = (postData ?? []).map((post) => ({
-    id: post.id,
-    title: post.title,
-    created_at: post.created_at,
-    status: post.status as ModPost["status"],
-    author_name:
-      (post.author as { display_name?: string | null } | null)?.display_name ?? null,
-  }));
+  const posts: ModPost[] = (postData ?? []).map((post) => {
+    const typed = post as RawPost;
+    return {
+      id: typed.id,
+      title: typed.title,
+      created_at: typed.created_at,
+      status: typed.status as ModPost["status"],
+      author_name: typed.author?.display_name ?? null,
+    };
+  });
 
   const { data: commentData, error: commentError } = await sb
     .from("comments")
@@ -42,13 +53,16 @@ export default async function ModerationPage() {
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
-  const comments: ModComment[] = (commentData ?? []).map((comment) => ({
-    id: comment.id,
-    post_id: comment.post_id,
-    content: comment.content,
-    created_at: comment.created_at,
-    post_title: (comment.post as { title?: string | null } | null)?.title ?? null,
-  }));
+  const comments: ModComment[] = (commentData ?? []).map((comment) => {
+    const typed = comment as RawComment;
+    return {
+      id: typed.id,
+      post_id: typed.post_id,
+      content: typed.content,
+      created_at: typed.created_at,
+      post_title: typed.post?.title ?? null,
+    };
+  });
 
   return (
     <main className="space-y-4">
