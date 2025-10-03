@@ -2,6 +2,12 @@
 import supabaseServer from "@/lib/supabaseServer";
 import Link from "next/link";
 import { extractPostContent, markdownToHtml } from "@/lib/postContent";
+import type { TablesRow } from "@/lib/database.types";
+
+type PostRow = Pick<
+  TablesRow<"posts">,
+  "id" | "title" | "content" | "content_html" | "content_json" | "image_url" | "created_at"
+>;
 
 type CommentRow = {
   id: string;
@@ -13,11 +19,12 @@ type CommentRow = {
 
 export default async function PostPage({ params }: { params: { id: string } }) {
   const sb = supabaseServer();
-  const { data: post } = await sb
+  const { data: postData } = await sb
     .from("posts")
     .select("id, title, content, content_html, content_json, image_url, created_at")
     .eq("id", params.id)
     .single();
+  const post = postData as PostRow | null;
   const { data: commentsData } = await sb
     .from("comments")
     .select("id, content, created_at, status, author:profiles(display_name)")
