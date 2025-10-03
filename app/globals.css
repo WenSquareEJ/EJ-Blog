@@ -1,52 +1,43 @@
-/* /app/globals.css */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ===== Global Fonts ===== */
+/* Minecraft theme palette */
 :root {
-  --font-mc: "Press Start 2P", cursive;
-  --font-pixel: "Pixelify Sans", sans-serif;
+  --mc-grass: #4CAF50;
+  --mc-sky: #87CEEB;
+  --mc-ink: #2E2E2E;
+  --mc-stone: #8B8B8B;
 }
 
-/* Base */
+/* Base body */
 body {
-  @apply bg-mc-grass text-mc-ink font-pixel;
+  font-family: var(--font-pixel), sans-serif;
+  background-color: var(--mc-grass);
+  color: var(--mc-ink);
 }
 
-/* ===== Minecraft Colors ===== */
-@layer utilities {
-  .bg-mc-grass { background-color: #6aa84f; }
-  .bg-mc-sky { background-color: #87ceeb; }
-  .bg-mc-dirt { background-color: #8b5a2b; }
-  .bg-mc-stone { background-color: #999999; }
-  .bg-mc-leaf { background-color: #228b22; }
-
-  .text-mc-ink { color: #1b1b1b; }
-  .text-mc-sand { color: #f4e3b2; }
+/* Buttons */
+.btn-mc {
+  @apply bg-[var(--mc-sky)] border border-black px-2 py-1 rounded text-xs font-mc shadow-md hover:brightness-90;
 }
 
-/* ===== Reusable Buttons ===== */
-@layer components {
-  .btn-mc {
-    @apply px-3 py-1 bg-mc-dirt text-white border-2 border-black 
-           rounded-sm shadow hover:translate-y-[-2px] hover:shadow-lg
-           font-mc text-xs md:text-sm transition;
-  }
-
-  .btn-mc-secondary {
-    @apply px-3 py-1 bg-mc-stone text-mc-ink border-2 border-black 
-           rounded-sm font-pixel text-xs md:text-sm hover:bg-mc-leaf transition;
-  }
-
-  .card-block {
-    @apply bg-white border-2 border-mc-stone rounded-sm shadow-md p-4;
-  }
+.btn-mc-secondary {
+  @apply bg-white border border-black px-2 py-1 rounded text-xs font-mc shadow hover:bg-gray-100;
 }
 
-/* ===== Banner Placeholder ===== */
+.btn-mc-danger {
+  @apply bg-red-600 text-white px-2 py-1 rounded text-xs font-mc shadow hover:bg-red-700;
+}
+
+/* Card blocks */
+.card-block {
+  @apply border border-black bg-white rounded p-2 shadow;
+}
+
+/* Banner */
 .banner-placeholder {
-  @apply w-full text-center bg-mc-leaf text-white py-4 text-sm md:text-base;
-  font-family: var(--font-mc);
+  background-color: var(--mc-grass);
+  height: 80px;
+  border-bottom: 2px solid black;
 }
