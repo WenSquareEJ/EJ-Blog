@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabaseServer'
+import supabaseServer from "@/lib/supabaseServer";
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   const sb = supabaseServer()
   const { error } = await sb.from('posts').update({ status: 'rejected' }).eq('id', params.id)

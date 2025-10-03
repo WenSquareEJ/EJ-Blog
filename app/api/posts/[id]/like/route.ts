@@ -1,5 +1,5 @@
 // /app/api/posts/[id]/like/route.ts
-import { createServerClient } from "@/lib/supabaseServer"
+import supabaseServer from "@/lib/supabaseServer";
 import { NextResponse } from "next/server"
 
 export async function POST(_: Request, { params }: { params: { id: string } }) {

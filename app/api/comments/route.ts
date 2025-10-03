@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabaseServer'
+import supabaseServer from "@/lib/supabaseServer";
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const status = url.searchParams.get('status')

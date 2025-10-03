@@ -1,6 +1,6 @@
 // app/api/posts/route.ts
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabaseServer'   // uses @supabase/ssr under the hood
+import supabaseServer from "@/lib/supabaseServer";   // uses @supabase/ssr under the hood
 // If you plan to bypass RLS for admin-only actions, you can also use supabaseAdmin.
 // import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
