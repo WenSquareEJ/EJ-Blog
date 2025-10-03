@@ -1,6 +1,6 @@
 // app/(site)/calendar/page.tsx
 import Link from "next/link";
-import { createServerClient } from "@/lib/createServerClient";
+import { createServerClient } from "@/lib/supabaseServer";
 
 // ---- helpers ---------------------------------------------------------------
 

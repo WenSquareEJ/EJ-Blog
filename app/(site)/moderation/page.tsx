@@ -1,5 +1,5 @@
 // /app/(site)/moderation/page.tsx
-import { createServerClient } from "@/lib/createServerClient"
+import { createServerClient } from "@/lib/supabaseServer"
 
 export default async function ModerationPage() {
   const sb = createServerClient()

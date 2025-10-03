@@ -1,5 +1,5 @@
 // /app/(site)/post/[id]/page.tsx
-import { createServerClient } from "@/lib/createServerClient"
+import { createServerClient } from "@/lib/supabaseServer"
 import Link from "next/link"
 
 export default async function PostPage({ params }: { params: { id: string } }) {

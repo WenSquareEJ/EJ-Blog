@@ -1,6 +1,6 @@
 // /app/(site)/logout/route.ts
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/createServerClient";
+import { createServerClient } from "@/lib/supabaseServer";
 
 export async function POST(req: Request) {
   const sb = createServerClient();

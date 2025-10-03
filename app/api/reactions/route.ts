@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/createServerClient'
+import { createServerClient } from '@/lib/supabaseServer'
 export async function POST(req: Request) {
   const body = await req.json()
   const sb = createServerClient()

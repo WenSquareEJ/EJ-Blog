@@ -2,7 +2,7 @@
 // Uses your existing createServerClient helper.
 
 import Link from 'next/link'
-import { createServerClient } from '@/lib/createServerClient'
+import { createServerClient } from '@/lib/supabaseServer'
 
 export default async function AuthButtons() {
   const sb = createServerClient()
