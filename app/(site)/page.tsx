@@ -176,7 +176,10 @@ export default async function HomePage({
 
   const postsByDay = new Map<string, MonthlyPost[]>();
   (monthlyPosts ?? []).forEach((post) => {
-    const key = toLondonDateKey(new Date(post.created_at));
+    if (!post.created_at) return;
+    const createdAt = new Date(post.created_at);
+    if (Number.isNaN(createdAt.getTime())) return;
+    const key = toLondonDateKey(createdAt);
     const bucket = postsByDay.get(key) ?? [];
     bucket.push(post as MonthlyPost);
     postsByDay.set(key, bucket);
