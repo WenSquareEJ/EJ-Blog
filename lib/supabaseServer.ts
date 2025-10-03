@@ -33,8 +33,5 @@ export function supabaseServer() {
   );
 }
 
-/** Backwards-compatible alias (some files import { supabaseServer }) */
-export const supabaseServer = createServerClient;
-
-/** Optional default export so `import x from '@/lib/supabaseServer'` also works */
-export default createServerClient;
+// Default export so `import x from '@/lib/supabaseServer'` also works
+export default supabaseServer;
