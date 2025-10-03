@@ -1,4 +1,22 @@
 // /app/(site)/layout.tsx
+// at the top with other imports
+import NavAuth from "@/components/NavAuth";
+
+// ...
+
+<ul className="flex-1 overflow-x-auto flex items-center gap-1 whitespace-nowrap pr-2">
+  {/* Public */}
+  <li><Link href="/" className="btn-mc">Blog</Link></li>
+  <li><Link href="/minecraft-zone" className="btn-mc">Minecraft Zone</Link></li>
+  <li><Link href="/scratch-board" className="btn-mc">Scratch Board</Link></li>
+  <li><Link href="/badger" className="btn-mc">Badger</Link></li>
+  <li><Link href="/calendar" className="btn-mc">Calendar</Link></li>
+  <li><Link href="/tags" className="btn-mc">Tags</Link></li>
+
+  {/* ✅ Client-side conditional items + right auth */}
+  <NavAuth />
+</ul>
+
 import "./globals.css";
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer"; // ✅ default import
