@@ -49,7 +49,6 @@ export interface Database {
           status: 'draft' | 'pending' | 'approved' | 'rejected';
           created_at: string | null;
           published_at: string | null;
-          author_name: string | null;
         };
         Insert: {
           id?: string;
@@ -63,7 +62,6 @@ export interface Database {
           status?: 'draft' | 'pending' | 'approved' | 'rejected';
           created_at?: string | null;
           published_at?: string | null;
-          author_name?: string | null;
         };
         Update: {
           id?: string;
@@ -77,7 +75,6 @@ export interface Database {
           status?: 'draft' | 'pending' | 'approved' | 'rejected';
           created_at?: string | null;
           published_at?: string | null;
-          author_name?: string | null;
         };
         Relationships: [
           {

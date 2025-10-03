@@ -5,7 +5,7 @@ import supabaseServer from "@/lib/supabaseServer";
 type ModPost = {
   id: string;
   title: string | null;
-  created_at: string;
+  created_at: string | null;
   status: "pending" | "approved" | "rejected";
   author_name: string | null;
 };
@@ -15,7 +15,7 @@ export default async function ModerationPage() {
 
   const { data, error } = await sb
     .from("posts")
-    .select("id,title,created_at,status,author(name)")
+    .select("id,title,created_at,status,author:profiles!posts_author_fkey(display_name)")
     .eq("status", "pending")
     .order("created_at", { ascending: false });
 
@@ -24,7 +24,8 @@ export default async function ModerationPage() {
     title: post.title,
     created_at: post.created_at,
     status: post.status,
-    author_name: (post.author as { name?: string } | null)?.name ?? null,
+    author_name:
+      (post.author as { display_name?: string | null } | null)?.display_name ?? null,
   }));
 
   return (
@@ -46,7 +47,7 @@ export default async function ModerationPage() {
               <div className="font-medium">{p.title ?? "(Untitled)"}</div>
               <div className="text-xs opacity-70">
                 {p.author_name ?? "Unknown"} ·{" "}
-                {new Date(p.created_at).toLocaleString()}
+                {p.created_at ? new Date(p.created_at).toLocaleString() : "Unknown time"}
               </div>
               <div className="mt-2">
                 <Link className="btn-mc" href={`/post/${p.id}`}>
