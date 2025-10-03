@@ -1,60 +1,86 @@
-// app/api/posts/[id]/route.ts
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+// app/api/posts/route.ts
+import { NextResponse } from 'next/server'
+import { supabaseServer } from '@/lib/supabaseServer'   // uses @supabase/ssr under the hood
+// If you plan to bypass RLS for admin-only actions, you can also use supabaseAdmin.
+// import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
-  const cookieStore = cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+/**
+ * GET /api/posts
+ * Returns approved posts (paginated)
+ * Query params: ?page=1&pageSize=10
+ */
+export async function GET(request: Request) {
+  const url = new URL(request.url)
+  const page = Math.max(parseInt(url.searchParams.get('page') || '1', 10), 1)
+  const pageSize = Math.min(
+    Math.max(parseInt(url.searchParams.get('pageSize') || '10', 10), 1),
+    50
+  )
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
 
-  // who is logged in?
-  const { data: { user } = { user: null } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const sb = supabaseServer()
+  const { data, error, count } = await sb
+    .from('posts')
+    .select('*', { count: 'exact' })
+    .eq('status', 'approved')
+    .order('published_at', { ascending: false })
+    .range(from, to)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const postId = params.id;
+  return NextResponse.json({
+    page,
+    pageSize,
+    total: count ?? 0,
+    posts: data ?? [],
+  })
+}
 
-  // fetch post author
-  const { data: post, error: postErr } = await supabase
-    .from("posts")
-    .select("id, author")
-    .eq("id", postId)
-    .maybeSingle();
-
-  if (postErr) {
-    return NextResponse.json({ error: "Failed to load post" }, { status: 500 });
-  }
-  if (!post) {
-    return NextResponse.json({ error: "Post not found" }, { status: 404 });
-  }
-
-  // check role
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const isParent = profile?.role === "parent";
-  const isAuthor = post.author === user.id;
-
-  if (!isParent && !isAuthor) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+/**
+ * POST /api/posts
+ * Creates a new post as PENDING for moderation.
+ * Body: { title: string, content_md: string, tags?: string[], images?: string[] }
+ * Requires logged-in user.
+ */
+export async function POST(request: Request) {
+  const sb = supabaseServer()
+  const { data: userRes, error: userErr } = await sb.auth.getUser()
+  if (userErr || !userRes?.user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  // delete post
-  const { error: delErr } = await supabase
-    .from("posts")
-    .delete()
-    .eq("id", postId);
-
-  if (delErr) {
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  const body = await request.json().catch(() => ({}))
+  const { title, content_md, tags = [], images = [] } = body as {
+    title?: string
+    content_md?: string
+    tags?: string[]
+    images?: string[]
   }
 
-  return NextResponse.json({ ok: true });
+  if (!title || !content_md) {
+    return NextResponse.json(
+      { error: 'Missing title or content' },
+      { status: 400 }
+    )
+  }
+
+  const insert = {
+    title,
+    content_md,
+    author_id: userRes.user.id,
+    status: 'pending' as const,
+    tags,
+    images,
+  }
+
+  const { data, error } = await sb.from('posts').insert(insert).select().single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ post: data }, { status: 201 })
 }
