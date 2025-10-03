@@ -1,111 +1,52 @@
+/* /app/globals.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ---------- Palette ---------- */
-:root{
-  --mc-grass:#4caf50;
-  --mc-sky:#4ea3c5;
-  --mc-stone:#6b7280;
-  --mc-ink:#111827;
-  --mc-sand:#fef3c7;
-  --mc-danger:#dd3333;
+/* ===== Global Fonts ===== */
+:root {
+  --font-mc: "Press Start 2P", cursive;
+  --font-pixel: "Pixelify Sans", sans-serif;
 }
 
-/* ---------- Background grid ---------- */
-html,body{height:100%}
-body{
-  font-family:var(--font-pixel), monospace; /* readable pixel everywhere */
-  color:var(--mc-ink);
-  background:
-    linear-gradient(0deg, rgba(0,0,0,.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,.05) 1px, transparent 1px),
-    var(--mc-grass);
-  background-size:16px 16px,16px 16px,auto;
+/* Base */
+body {
+  @apply bg-mc-grass text-mc-ink font-pixel;
 }
 
-/* Headings & nav = chunky pixel */
-.font-mc, h1,h2,h3,h4,h5,h6{ font-family:var(--font-mc), monospace; }
+/* ===== Minecraft Colors ===== */
+@layer utilities {
+  .bg-mc-grass { background-color: #6aa84f; }
+  .bg-mc-sky { background-color: #87ceeb; }
+  .bg-mc-dirt { background-color: #8b5a2b; }
+  .bg-mc-stone { background-color: #999999; }
+  .bg-mc-leaf { background-color: #228b22; }
 
-/* Smaller headings */
-h1{ @apply text-xl mb-2; }
-h2{ @apply text-lg mb-2; }
-h3{ @apply text-base mb-1.5; }
-
-/* ---------- Banner placeholder under the nav ---------- */
-.banner-placeholder{
-  border-bottom:2px solid rgba(0,0,0,.25);
-  background:
-    linear-gradient(0deg, rgba(0,0,0,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,.06) 1px, transparent 1px),
-    #3fa94a;
-  background-size:18px 18px,18px 18px,auto;
-  height:72px;                 /* adjust banner height here */
+  .text-mc-ink { color: #1b1b1b; }
+  .text-mc-sand { color: #f4e3b2; }
 }
 
-/* ---------- Block helpers ---------- */
-.rounded-block{ border-radius:10px; }
-.shadow-block{
-  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 6px 0 rgba(0,0,0,.15);
-}
-.card-block{
-  background:#fff;
-  border:2px solid rgba(0,0,0,.2);
-  border-radius:10px;
-  padding:0.85rem;
-  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 6px 0 rgba(0,0,0,.15);
+/* ===== Reusable Buttons ===== */
+@layer components {
+  .btn-mc {
+    @apply px-3 py-1 bg-mc-dirt text-white border-2 border-black 
+           rounded-sm shadow hover:translate-y-[-2px] hover:shadow-lg
+           font-mc text-xs md:text-sm transition;
+  }
+
+  .btn-mc-secondary {
+    @apply px-3 py-1 bg-mc-stone text-mc-ink border-2 border-black 
+           rounded-sm font-pixel text-xs md:text-sm hover:bg-mc-leaf transition;
+  }
+
+  .card-block {
+    @apply bg-white border-2 border-mc-stone rounded-sm shadow-md p-4;
+  }
 }
 
-/* Post body text */
-.post-body{
-  font-family:var(--font-pixel), monospace;
-  font-size:0.95rem;
-  line-height:1.55;
+/* ===== Banner Placeholder ===== */
+.banner-placeholder {
+  @apply w-full text-center bg-mc-leaf text-white py-4 text-sm md:text-base;
+  font-family: var(--font-mc);
 }
-
-/* ---------- Pixel Buttons (compact) ---------- */
-.btn-mc{
-  font-family:var(--font-mc), monospace;
-  font-size:0.72rem;
-  color:#fff;
-  background:var(--mc-sky);
-  padding:0.22rem 0.5rem;
-  border:2px solid #000;
-  border-radius:10px;
-  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 4px 0 rgba(0,0,0,.15);
-  transition:transform 120ms ease, filter 120ms ease;
-  display:inline-block;
-}
-.btn-mc:hover{ filter:brightness(1.05); transform:translateY(-1px); }
-.btn-mc:active{ transform:translateY(0); }
-
-.btn-mc-secondary{
-  font-family:var(--font-mc), monospace;
-  font-size:0.72rem;
-  color:#111;
-  background:#ffe3a3;
-  padding:0.22rem 0.5rem;
-  border:2px solid #000;
-  border-radius:10px;
-  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 4px 0 rgba(0,0,0,.15);
-  transition:transform 120ms ease, filter 120ms ease;
-  display:inline-block;
-}
-.btn-mc-secondary:hover{ filter:brightness(1.03); transform:translateY(-1px); }
-
-.btn-mc-danger{
-  font-family:var(--font-mc), monospace;
-  font-size:0.72rem;
-  color:#fff;
-  background:var(--mc-danger);
-  padding:0.22rem 0.5rem;
-  border:2px solid #000;
-  border-radius:10px;
-  box-shadow:0 2px 0 rgba(0,0,0,.35), 0 4px 0 rgba(0,0,0,.15);
-  transition:transform 120ms ease, filter 120ms ease;
-  display:inline-block;
-}
-.btn-mc-danger:hover{ filter:brightness(1.05); transform:translateY(-1px); }
-
-/* Links like “Read more →” */
-a.link-underline{ text-decoration:underline; text-underline-offset:2px; }
