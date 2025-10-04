@@ -1,5 +1,5 @@
 // /app/(site)/page.tsx
-import Link from "next/link";
+// Removed duplicate import
 import supabaseServer from "@/lib/supabaseServer";
 import { buildExcerpt, extractPostContent } from "@/lib/postContent";
 import { resolveBadgeIcon } from "@/lib/badgeIcons";
