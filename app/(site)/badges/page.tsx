@@ -87,7 +87,7 @@ export default async function BadgesPage() {
   if (user?.id) {
     const { data, error } = await sb
       .from('user_badges')
-      .select('badge_id, awarded_at')
+      .select('user_id, badge_id, awarded_at')
       .eq('user_id', user.id);
 
     if (error) {
