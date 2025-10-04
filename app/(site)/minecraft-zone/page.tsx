@@ -1,4 +1,5 @@
 // /app/(site)/minecraft-zone/page.tsx
+import Image from "next/image";
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
 import { buildExcerpt, extractPostContent } from "@/lib/postContent";
@@ -24,7 +25,44 @@ type PostRow = Pick<
   | "created_at"
 > & {
   post_tags?: { tags: { slug: string | null } | null }[] | null;
+  images?: { path: string | null; alt_text: string | null }[] | null;
 };
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+let warnedMissingSupabaseUrl = false;
+
+function buildPublicStorageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  const trimmed = path.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+  if (!SUPABASE_URL) {
+    if (!warnedMissingSupabaseUrl) {
+      console.warn(
+        "[minecraft-zone] Missing NEXT_PUBLIC_SUPABASE_URL, cannot resolve storage path"
+      );
+      warnedMissingSupabaseUrl = true;
+    }
+    return null;
+  }
+  const base = SUPABASE_URL.replace(/\/?$/, "");
+  const normalizedPath = trimmed.replace(/^\/+/, "");
+  return `${base}/storage/v1/object/public/${normalizedPath}`;
+}
+
+function pickFirstImage(images: PostRow["images"]): { url: string | null; alt: string | null } | null {
+  if (!images) return null;
+  for (const image of images) {
+    if (!image) continue;
+    const resolved = buildPublicStorageUrl(image.path);
+    if (resolved) {
+      return { url: resolved, alt: image.alt_text };
+    }
+  }
+  return null;
+}
 
 function parsePageParam(raw?: string): number {
   const parsed = Number.parseInt(raw ?? "1", 10);
@@ -80,6 +118,7 @@ export default async function MinecraftZonePage({
         image_url,
         published_at,
         created_at,
+        images:images(path, alt_text),
         post_tags:post_tags!inner(tags(slug))
       `,
       { count: "exact" }
@@ -116,14 +155,27 @@ export default async function MinecraftZonePage({
       content_html: post.content_html,
       content: post.content,
     });
+    const directImage = post.image_url?.trim() ?? "";
+    const relationImage = pickFirstImage(post.images ?? null);
+    const featuredImage = directImage || relationImage?.url || null;
+    const hasFeaturedImage = Boolean(featuredImage);
+    const featuredImageAlt =
+      (relationImage?.alt ?? "").trim() ||
+      (post.title ? `${post.title} image` : "Minecraft Zone post image");
     return {
       id: post.id,
       title: post.title ?? "Untitled",
       excerpt: buildExcerpt(text, 120),
+      featuredImage,
+      hasFeaturedImage,
+      featuredImageAlt,
     } satisfies {
       id: string;
       title: string;
       excerpt: string;
+      featuredImage: string | null;
+      hasFeaturedImage: boolean;
+      featuredImageAlt: string;
     };
   });
 
@@ -143,12 +195,49 @@ export default async function MinecraftZonePage({
       <div className="space-y-4">
         {posts.length ? (
           posts.map((post) => (
-            <div key={post.id} className="card-block hover:shadow-lg transition">
-              <h2 className="font-mc text-lg">{post.title}</h2>
-              <p className="text-sm opacity-90">{post.excerpt}</p>
+            <div
+              key={post.id}
+              className="card-block space-y-3 transition hover:shadow-lg"
+            >
+              <div className="relative overflow-hidden rounded-md border border-mc-wood-dark bg-white/70">
+                {post.hasFeaturedImage && post.featuredImage ? (
+                  <div className="relative w-full" style={{ aspectRatio: "16 / 9" }}>
+                    <Image
+                      src={post.featuredImage}
+                      alt={post.featuredImageAlt}
+                      fill
+                      className="h-full w-full object-cover"
+                      sizes="(min-width: 768px) 33vw, 100vw"
+                      loading="lazy"
+                    />
+                    <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-[1px] text-xs">
+                      📷
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    className="relative flex w-full items-center justify-center text-xs uppercase tracking-[0.18em] text-mc-stone"
+                    style={{
+                      aspectRatio: "16 / 9",
+                      backgroundImage: "url('/assets/ej-minecraft-bg.jpg')",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                    aria-hidden="true"
+                  >
+                    <span className="rounded-md bg-white/80 px-3 py-1 shadow-sm">
+                      No image yet
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <h2 className="font-mc text-lg">{post.title}</h2>
+                <p className="text-sm opacity-90">{post.excerpt}</p>
+              </div>
               <Link
                 href={`/post/${post.id}`}
-                className="text-blue-600 underline text-xs"
+                className="text-xs text-blue-600 underline"
               >
                 Read more
               </Link>
