@@ -32,8 +32,10 @@ type ScratchProjectRow = Pick<
 
 type BadgeRow = Pick<
   TablesRow<"badges">,
-  "id" | "name" | "icon" | "description"
+  "id" | "name" | "icon" | "description" | "criteria"
 >;
+
+type UserBadgeRow = Pick<TablesRow<"user_badges">, "badge_id" | "awarded_at">;
 
 type PostSummary = {
   id: string;
@@ -54,18 +56,19 @@ type ScratchPreview = {
   createdAt: string | null;
 };
 
-type BadgePreview = {
+type BadgeCriteriaDetails = {
+  type: string | null;
+  threshold: number | null;
+};
+
+type WidgetBadge = {
   id: string;
   name: string;
   icon: string;
   description: string | null;
-};
-
-type EarnedBadgePreview = {
-  id: string;
-  name: string;
-  icon: string | null;
+  criteriaSummary: string | null;
   awardedAt: string | null;
+  status: "earned" | "locked";
 };
 
 type ModerationSnapshot = {
@@ -94,6 +97,130 @@ function coerceNonEmptyString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+const ERIK_EMAIL = "erik.ys.johansson@gmail.com";
+
+let cachedErikUserId: string | null = null;
+let erikUserIdResolved = false;
+let erikUserIdPromise: Promise<string | null> | null = null;
+
+function parseBadgeCriteria(raw: BadgeRow["criteria"]): BadgeCriteriaDetails {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { type: null, threshold: null };
+  }
+
+  const criteria = raw as Record<string, unknown>;
+  const type = typeof criteria.type === "string" ? criteria.type : null;
+
+  let threshold: number | null = null;
+  if (typeof criteria.threshold === "number") {
+    threshold = criteria.threshold;
+  } else if (criteria.threshold != null) {
+    const parsed = Number(criteria.threshold);
+    if (Number.isFinite(parsed)) {
+      threshold = parsed;
+    }
+  }
+
+  return { type, threshold };
+}
+
+function buildBadgeCriteriaSummary(details: BadgeCriteriaDetails): string | null {
+  const { type, threshold } = details;
+  if (!type) return null;
+
+  switch (type) {
+    case "post_count":
+      return threshold && threshold > 1
+        ? `Publish ${threshold} posts to earn this badge.`
+        : "Publish your first post to earn this badge.";
+    case "minecraft_tag_posts":
+      return threshold && threshold > 1
+        ? `Post ${threshold} Minecraft-tagged stories.`
+        : "Post a Minecraft-tagged story to earn this badge.";
+    case "project_posts":
+      return threshold && threshold > 1
+        ? `Document ${threshold} projects or builds.`
+        : "Document a project or build to earn this badge.";
+    case "daily_streak":
+      return threshold && threshold > 1
+        ? `Post daily for ${threshold} days in a row.`
+        : "Post daily for a short streak to earn this badge.";
+    case "location_posts":
+      return threshold && threshold > 1
+        ? `Share adventures from ${threshold} different places.`
+        : "Share an adventure story to earn this badge.";
+    default:
+      return "Complete the special challenge to earn this badge.";
+  }
+}
+
+function formatErikBadgeAwardedAt(isoDate: string | null): string | null {
+  if (!isoDate) return null;
+  const parsed = new Date(isoDate);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+async function resolveErikUserId(): Promise<string | null> {
+  const envUserId = coerceNonEmptyString(process.env.NEXT_PUBLIC_ERIK_USER_ID);
+  if (envUserId) {
+    cachedErikUserId = envUserId;
+    erikUserIdResolved = true;
+    return envUserId;
+  }
+
+  if (erikUserIdResolved) {
+    return cachedErikUserId;
+  }
+
+  if (!erikUserIdPromise) {
+    erikUserIdPromise = (async () => {
+      try {
+        const response = await fetch(
+          `/api/badges/resolve-user?email=${encodeURIComponent(ERIK_EMAIL)}`,
+          {
+            method: "GET",
+            headers: { accept: "application/json" },
+            cache: "no-store",
+          }
+        );
+
+        if (!response.ok) {
+          if (process.env.NODE_ENV !== "production") {
+            console.warn(
+              `[home-hub] failed to resolve Erik's user id (status ${response.status})`
+            );
+          }
+          return null;
+        }
+
+        const payload = (await response.json()) as { user_id?: unknown };
+        const userId = coerceNonEmptyString(payload.user_id);
+        if (!userId && process.env.NODE_ENV !== "production") {
+          console.warn("[home-hub] resolver returned no user id for Erik");
+        }
+        return userId;
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[home-hub] unexpected error resolving Erik's user id", error);
+        }
+        return null;
+      } finally {
+        erikUserIdResolved = true;
+      }
+    })();
+  }
+
+  const resolvedId = await erikUserIdPromise;
+  cachedErikUserId = resolvedId ?? null;
+  erikUserIdPromise = null;
+  return cachedErikUserId;
 }
 
 export default async function HomeHubPage() {
@@ -234,89 +361,78 @@ export default async function HomeHubPage() {
     );
   }
 
-  let badges: BadgePreview[] = [];
+  let widgetBadges: WidgetBadge[] = [];
   let badgesError: string | null = null;
+  let erikCollectionUnavailable = false;
 
   const {
     data: badgesData,
     error: badgesFetchError,
   } = await sb
     .from("badges")
-    .select("id, name, icon, description")
-    .order("name", { ascending: true })
-    .limit(6);
+    .select("id, name, icon, description, criteria")
+    .order("name", { ascending: true });
 
   if (badgesFetchError) {
     console.error("[home-hub] failed to load badges", badgesFetchError);
     badgesError = "Unable to load badges.";
   } else {
-    badges = ((badgesData ?? []) as BadgeRow[]).map((badge) => ({
-      id: badge.id,
-      name: badge.name,
-      icon: resolveBadgeIcon(badge.icon),
-      description: badge.description,
-    }));
-  }
+    const allBadges = ((badgesData ?? []) as BadgeRow[]).filter((badge) => Boolean(badge.id));
+    if (allBadges.length > 0) {
+      const erikUserId = await resolveErikUserId();
 
-  let userBadgeCount: number | null = null;
-  let userBadgesError: string | null = null;
-  let recentBadgeSummaries: EarnedBadgePreview[] = [];
+      let erikUserBadges: UserBadgeRow[] = [];
+      if (erikUserId) {
+        const {
+          data: erikBadgesData,
+          error: erikBadgesFetchError,
+        } = await sb
+          .from("user_badges")
+          .select("badge_id, awarded_at")
+          .eq("user_id", erikUserId);
 
-  if (user) {
-    const {
-      count: earnedCount,
-      error: userBadgesFetchError,
-    } = await sb
-      .from("user_badges")
-      .select("badge_id", { count: "exact", head: true })
-      .eq("user_id", user.id);
+        if (erikBadgesFetchError) {
+          if (process.env.NODE_ENV !== "production") {
+            console.error(
+              "[home-hub] failed to load Erik's badge awards",
+              erikBadgesFetchError
+            );
+          }
+          erikCollectionUnavailable = true;
+        } else {
+          erikUserBadges = (erikBadgesData ?? []) as UserBadgeRow[];
+        }
+      } else {
+        erikCollectionUnavailable = true;
+      }
 
-    if (userBadgesFetchError) {
-      console.error("[home-hub] failed to load user badges", userBadgesFetchError);
-      userBadgesError = "Unable to load your badge progress.";
-    } else {
-      userBadgeCount = earnedCount ?? 0;
-    }
+      const awardedByBadgeId = new Map(
+        erikUserBadges.map((entry) => [entry.badge_id, entry] as const)
+      );
 
-    const {
-      data: recentBadgesData,
-      error: recentBadgesError,
-    } = await sb
-      .from("user_badges")
-      .select("awarded_at, badges:badges(id, name, icon)")
-      .eq("user_id", user.id)
-      .order("awarded_at", { ascending: false })
-      .limit(6);
-
-    if (recentBadgesError) {
-      console.error("[home-hub] failed to load recent user badges", recentBadgesError);
-      userBadgesError = userBadgesError ?? "Unable to load your badge progress.";
-    } else {
-      recentBadgeSummaries = ((recentBadgesData ?? []) as {
-        awarded_at: string | null;
-        badges: { id: string | null; name: string | null; icon: string | null } | null;
-      }[])
-        .map((entry) => {
-          const badge = entry.badges;
-          if (!badge?.id) return null;
+      widgetBadges = allBadges
+        .map((badge) => {
+          const award = badge.id ? awardedByBadgeId.get(badge.id) : undefined;
+          const details = parseBadgeCriteria(badge.criteria);
+          const criteriaSummary = buildBadgeCriteriaSummary(details);
           return {
             id: badge.id,
             name: badge.name ?? "Badge",
-            icon: badge.icon ?? null,
-            awardedAt: entry.awarded_at ?? null,
-          } satisfies EarnedBadgePreview;
+            icon: resolveBadgeIcon(badge.icon),
+            description: badge.description ?? null,
+            criteriaSummary,
+            awardedAt: award?.awarded_at ?? null,
+            status: award ? "earned" : "locked",
+          } satisfies WidgetBadge;
         })
-        .filter((badge): badge is EarnedBadgePreview => Boolean(badge));
+        .sort((a, b) => {
+          if (a.status !== b.status) {
+            return a.status === "earned" ? -1 : 1;
+          }
+          return a.name.localeCompare(b.name);
+        });
     }
   }
-
-  const homeBadgeIcons = recentBadgeSummaries.slice(0, 4).map((badge) => ({
-    id: badge.id,
-    name: badge.name,
-    icon: resolveBadgeIcon(badge.icon),
-  }));
-
-  const featuredBadges = badges.slice(0, 3);
   const messageWallPosts = latestPosts.slice(0, 3);
 
   let moderationSnapshot: ModerationSnapshot = {
@@ -506,56 +622,72 @@ export default async function HomeHubPage() {
                   View all
                 </Link>
               </div>
-              {user ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
-                    Earned: {typeof userBadgeCount === "number" ? userBadgeCount : "—"}
-                  </p>
-                  {userBadgesError ? (
-                    <p className="text-sm text-red-600">{userBadgesError}</p>
-                  ) : homeBadgeIcons.length > 0 ? (
-                    <ul className="flex flex-wrap gap-2">
-                      {homeBadgeIcons.map((badge) => (
-                        <li key={badge.id} className="home-badge" aria-label={badge.name ?? undefined}>
-                          <span aria-hidden>{badge.icon}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
-                      No badges yet—share a story to earn your first!
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
-                    Log in to start collecting badges.
-                  </p>
-                  <Link href="/login" className="btn-mc-secondary">
-                    Log in
-                  </Link>
-                </div>
-              )}
               {badgesError ? (
                 <p className="text-sm text-red-600">{badgesError}</p>
-              ) : featuredBadges.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[color:rgba(46,46,46,0.55)]">
-                    Featured badges
-                  </p>
-                  <ul className="flex flex-wrap gap-3">
-                    {featuredBadges.map((badge) => (
-                      <li key={badge.id} className="home-featured-badge">
-                        <span className="text-2xl" aria-hidden>
-                          {badge.icon}
-                        </span>
-                        <span className="home-featured-badge__label">{badge.name}</span>
-                      </li>
-                    ))}
+              ) : widgetBadges.length === 0 ? (
+                <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                  Badges will appear here once they&apos;re configured.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {erikCollectionUnavailable && (
+                    <p className="text-xs text-[color:rgba(46,46,46,0.6)]">
+                      Erik&apos;s collection unavailable right now — showing badges as locked.
+                    </p>
+                  )}
+                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {widgetBadges.map((badge) => {
+                      const awardedLabel = formatErikBadgeAwardedAt(badge.awardedAt);
+                      const cardClasses = [
+                        "badge-card space-y-3 rounded-xl p-4",
+                        badge.status === "earned" ? "badge-card-earned" : "badge-card-locked",
+                      ].join(" ");
+                      const iconClasses = [
+                        "badge-icon",
+                        badge.status === "earned" ? "badge-icon-earned" : "badge-icon-locked",
+                      ].join(" ");
+
+                      return (
+                        <li key={badge.id} className={cardClasses}>
+                          <div className="flex items-start gap-3">
+                            <span className={iconClasses} aria-hidden>
+                              {badge.icon}
+                            </span>
+                            <div className="space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="badge-title text-base font-semibold sm:text-lg">
+                                  {badge.name}
+                                </h3>
+                                <span
+                                  className={`badge-status-chip ${badge.status === "earned" ? "badge-status-earned" : "badge-status-locked"}`}
+                                >
+                                  {badge.status === "earned" ? "Earned ✓" : "Locked"}
+                                </span>
+                              </div>
+                              {badge.description && (
+                                <p className="badge-description text-sm">
+                                  {badge.description}
+                                </p>
+                              )}
+                              {badge.criteriaSummary && (
+                                <p className="text-xs text-[color:rgba(47,39,28,0.75)]">
+                                  {badge.criteriaSummary}
+                                </p>
+                              )}
+                              {badge.status === "earned" && awardedLabel && (
+                                <p className="text-xs text-[color:rgba(47,39,28,0.75)]">
+                                  Awarded {awardedLabel}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="badge-card-outline" aria-hidden />
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
-              ) : null}
+              )}
             </div>
           </section>
 
