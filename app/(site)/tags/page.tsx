@@ -23,13 +23,13 @@ export default async function TagsPage() {
 
   return (
     <div>
-      <h1 className="font-mc text-lg mb-4">Tags</h1>
+      <h1 className="font-mc section-title text-lg mb-4">Tags</h1>
       <ul className="flex flex-wrap gap-2">
         {tags?.map((tag) => (
           <li key={tag.id}>
-            <Link href={`/tags/${tag.slug}`} className="btn-mc-secondary">
+            <Link href={`/tags/${tag.slug}`} className="btn-mc-secondary section-label">
               {tag.name}
-              <span className="ml-1 rounded-full bg-mc-wood-dark px-2 py-[2px] text-[0.65rem] text-mc-parchment">
+              <span className="ml-1 rounded-full bg-mc-wood-dark px-2 py-[2px] text-[0.65rem] section-label">
                 {tag.count}
               </span>
             </Link>

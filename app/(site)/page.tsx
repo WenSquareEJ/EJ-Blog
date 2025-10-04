@@ -491,7 +491,7 @@ export default async function HomeHubPage() {
             <AvatarTile username={displayName} avatarUrl={avatarUrl} />
             <div className="flex-1 space-y-4">
               <div className="space-y-2 text-[color:var(--mc-ink)]">
-                <h1 className="font-mc text-3xl text-[color:#145a32] sm:text-4xl">{"Erik's Hub"}</h1>
+                <h1 className="font-mc section-title text-3xl sm:text-4xl">{"Erik's Hub"}</h1>
                 <p className="max-w-xl text-sm text-[color:rgba(46,46,46,0.82)] sm:text-base">
                   {HUB_SUBTITLE}
                 </p>
@@ -522,7 +522,7 @@ export default async function HomeHubPage() {
         <section className="home-card">
           <div className="home-card__body space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="font-mc text-2xl">My Projects</h2>
+              <h2 className="font-mc section-title text-2xl">My Projects</h2>
               <Link
                 href="/minecraft-zone"
                 className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.7)] hover:text-[color:var(--mc-ink)]"
@@ -535,7 +535,7 @@ export default async function HomeHubPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="home-icon home-icon--minecraft" aria-hidden="true" />
-                    <h3 className="font-mc text-lg">Minecraft Zone</h3>
+                    <h3 className="font-mc section-title text-lg">Minecraft Zone</h3>
                   </div>
                   <Link
                     href="/minecraft-zone"
@@ -573,7 +573,7 @@ export default async function HomeHubPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="home-icon home-icon--scratch" aria-hidden="true" />
-                    <h3 className="font-mc text-lg">Scratch Board</h3>
+                    <h3 className="font-mc section-title text-lg">Scratch Board</h3>
                   </div>
                   <Link
                     href="/scratch-board"
@@ -614,7 +614,7 @@ export default async function HomeHubPage() {
           <section className="home-card">
             <div className="home-card__body space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-mc text-2xl">Badges &amp; Achievements</h2>
+                <h2 className="font-mc section-title text-2xl">Badges &amp; Achievements</h2>
                 <Link
                   href="/badges"
                   className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.7)] hover:text-[color:var(--mc-ink)]"
@@ -694,7 +694,7 @@ export default async function HomeHubPage() {
           <section className="home-card">
             <div className="home-card__body space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-mc text-xl">Message Wall</h2>
+                <h2 className="font-mc section-title text-xl">Message Wall</h2>
                 <Link
                   href="#latest-posts"
                   className="text-xs uppercase tracking-[0.2em] text-[color:rgba(46,46,46,0.6)] hover:text-[color:var(--mc-ink)]"
@@ -730,7 +730,7 @@ export default async function HomeHubPage() {
 
       <section className="home-card">
         <div className="home-card__body space-y-3">
-          <h3 className="font-mc text-xl">Quick Actions</h3>
+          <h3 className="font-mc section-title text-xl">Quick Actions</h3>
           <div className="flex flex-wrap gap-2">
             {user && (
               <Link href="/post/new" className="btn-mc">
@@ -743,7 +743,7 @@ export default async function HomeHubPage() {
               </Link>
             )}
             {isAdmin && (
-              <Link href="/moderation" className="btn-mc-secondary">
+              <Link href="/moderation" className="btn-mc-secondary section-label">
                 Moderation
               </Link>
             )}
@@ -755,8 +755,8 @@ export default async function HomeHubPage() {
         <section className="home-card">
           <div className="home-card__body space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-mc text-xl">{"Parents' Corner"}</h3>
-              <Link href="/moderation" className="btn-mc-secondary">
+              <h3 className="font-mc section-title text-xl">{"Parents' Corner"}</h3>
+              <Link href="/moderation" className="btn-mc-secondary section-label">
                 Go to moderation
               </Link>
             </div>
