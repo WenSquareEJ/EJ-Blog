@@ -35,22 +35,34 @@
 }
 
 /* Base body */
+html,
 body {
-  font-family: var(--font-pixel), sans-serif;
-  color: var(--mc-ink);
-  background-color: #1a1f23;
+  min-height: 100%;
+  background-color: #101820;
   background-image:
     linear-gradient(
       to bottom,
-      rgba(10, 14, 20, 0.75) 0%,
-      rgba(10, 14, 20, 0.55) 35%,
-      rgba(18, 12, 6, 0.65) 100%
+      rgba(11, 18, 28, 0.74) 0%,
+      rgba(11, 18, 28, 0.52) 38%,
+      rgba(21, 14, 7, 0.6) 100%
     ),
-    url("/assets/ej-minecraft-bg.png");
+    url("/assets/ej-minecraft-bg.jpg?v=1");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   background-attachment: fixed;
+}
+
+body {
+  font-family: var(--font-pixel), sans-serif;
+  color: var(--mc-ink);
+}
+
+@media (max-width: 768px) {
+  html,
+  body {
+    background-attachment: scroll;
+  }
 }
 
 /* Buttons */
