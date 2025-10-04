@@ -55,6 +55,7 @@ export default function NewPostPage() {
   }
 
   function removeTag(tag: string) {
+    setTagError(null);
     setTags((prev) => prev.filter((item) => item !== tag));
   }
 
@@ -149,7 +150,7 @@ export default function NewPostPage() {
         setSubmitting(false);
       }
     },
-    [doc, editor, html, imageUrl, router, tagsInput, textContent, title]
+    [doc, editor, html, imageUrl, router, tags, textContent, title]
   );
 
   return (
@@ -200,11 +201,35 @@ export default function NewPostPage() {
           </label>
           <input
             type="text"
-            value={tagsInput}
-            onChange={(event) => setTagsInput(event.target.value)}
+            value={tagInput}
+            onChange={(event) => setTagInput(event.target.value)}
+            onKeyDown={handleTagKeyDown}
             placeholder="minecraft, adventure, family"
             className="w-full rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-3 py-2 font-pixel text-sm text-mc-dirt focus:outline-none focus:ring-2 focus:ring-mc-wood"
           />
+          {tagError && (
+            <p className="text-xs text-red-500">{tagError}</p>
+          )}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 rounded-full border border-mc-wood-dark bg-mc-sand/70 px-3 py-1 text-xs uppercase tracking-wide text-mc-wood-dark"
+                >
+                  <span>#{tag}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="rounded-full bg-mc-wood-dark/10 px-1 text-[10px] leading-none text-mc-wood-dark transition hover:bg-mc-wood-dark hover:text-mc-parchment"
+                    aria-label={`Remove tag ${tag}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
