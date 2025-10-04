@@ -26,7 +26,17 @@ export default async function ScratchBoardPage() {
     .select("id, scratch_id, title, created_at, created_by, image_path")
     .order("created_at", { ascending: false });
 
-  const projects: ScratchProject[] = (rawProjects ?? []) as ScratchProject[];
+  let projects: ScratchProject[] = [];
+  if (Array.isArray(rawProjects)) {
+    projects = (rawProjects as any[]).filter(p => p && !p.error && typeof p.id === "string").map(p => ({
+      id: p.id,
+      scratch_id: p.scratch_id,
+      title: p.title ?? null,
+      created_at: p.created_at ?? null,
+      created_by: p.created_by ?? null,
+      image_path: p.image_path ?? null,
+    }));
+  }
 
   return (
     <div className="space-y-6">
