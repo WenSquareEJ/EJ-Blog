@@ -87,8 +87,8 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
           <Link className="btn-mc" href="/scratch-board">
             Scratch Board
           </Link>
-          <Link className="btn-mc" href="/badger">
-            Badger
+          <Link className="btn-mc" href="/badges">
+            Badges
           </Link>
 
           {isLoggedIn && (
