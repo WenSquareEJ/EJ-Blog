@@ -60,9 +60,11 @@
   line-height: 1.6;
 }
   /* optional extras (kept neutral by default) */
-  --mc-accent: var(--mc-sky);
-  --mc-parchment: #ffffff;
-  --mc-link: #1e7bf6;
+  --mc-parchment: #f4e7c6;  /* light parchment beige */
+  --mc-cloud: #eae0b9;      /* slightly darker highlight */
+  --mc-ink: #2f2618;        /* dark brown for readable text */
+  --mc-wood: #4b2e05;       /* brown frame border */
+
   /* extended sky/field palette for scenic backgrounds */
   --mc-sky-deep: #7fc2ff;
   --mc-sky-light: #bde4ff;
