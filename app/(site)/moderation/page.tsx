@@ -47,6 +47,9 @@ export default async function ModerationPage() {
     };
   });
 
+  // TODO: remove debug logs
+  console.log("[moderation/page] pending posts count", posts.length);
+
   const { data: commentData, error: commentError } = await sb
     .from("comments")
     .select("id,content,created_at,post_id,post:posts(title)")

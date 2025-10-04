@@ -5,6 +5,7 @@ import supabaseServer from "@/lib/supabaseServer";
 import { markdownToHtml, sanitizeRichText } from "@/lib/postContent";
 
 type CreatePostPayload = {
+  id?: string | null;
   title?: string | null;
   content_html?: string | null;
   content_json?: JSONContent | null;
@@ -57,6 +58,7 @@ export async function POST(req: Request) {
   const tags = sanitizeTags(payload.tags);
 
   const insertData = {
+    id: payload.id ?? undefined,
     title,
     author: auth.user.id,
     image_url: payload.image_url ?? null,
@@ -66,6 +68,13 @@ export async function POST(req: Request) {
     tags,
     status: "pending" as const,
   };
+
+  // TODO: remove debug logs
+  console.log("[api/posts/create] insert payload", {
+    id: insertData.id ?? "(generated)",
+    title: insertData.title,
+    status: insertData.status,
+  });
 
   const { error } = await sb.from("posts").insert(insertData);
 
