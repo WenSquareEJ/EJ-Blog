@@ -78,7 +78,7 @@ export default function CalendarGrid({
     const isToday = isTodayMonth && today.day === day;
 
     const baseClasses =
-      "group relative flex h-14 flex-col justify-between rounded-md border-2 px-2 py-1 text-left transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B2F1B] focus-visible:ring-offset-2 focus-visible:ring-offset-mc-parchment";
+      "group relative box-border flex min-h-[34px] min-w-[34px] items-center justify-center overflow-hidden rounded-md border-2 px-2 py-2 transition duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B2F1B] focus-visible:ring-offset-2 focus-visible:ring-offset-mc-parchment sm:min-h-[38px] sm:min-w-[38px] md:min-h-[42px] md:min-w-[42px]";
     const stateClasses = isActive
       ? "border-mc-wood-dark bg-mc-wood text-mc-parchment shadow-pixel"
       : "border-mc-wood-dark bg-mc-parchment text-[#3B2F1B] hover:bg-mc-sand hover:border-[#8B5A31]";
@@ -95,18 +95,16 @@ export default function CalendarGrid({
         aria-pressed={isActive}
         aria-current={isToday ? "date" : undefined}
       >
-        <span className="font-mc text-[0.8rem] leading-none sm:text-[0.85rem]">{day}</span>
+        <span className="z-10 font-mc text-[0.7rem] leading-none sm:text-[0.8rem] md:text-[0.9rem]">{day}</span>
         {count > 0 ? (
           <span
-            className={`mt-1 inline-flex w-fit items-center rounded px-[6px] py-[2px] font-mc text-[0.72rem] ${
-              isActive ? "bg-[#F8E4B5] text-[#3B2F1B]" : "bg-[#F1DEC1] text-[#3B2F1B]"
-            } drop-shadow-[1px_1px_0_rgba(255,255,255,0.35)]`}
+            className={`pointer-events-none absolute bottom-0.5 right-0.5 inline-flex items-center rounded px-[6px] py-[1px] font-mc text-[0.6rem] text-mc-ink/80 ${
+              isActive ? "bg-[#F8E4B5]" : "bg-[#F1DEC1]"
+            } shadow-[1px_1px_0_rgba(255,255,255,0.35)] sm:text-[0.65rem] md:text-[0.7rem]`}
           >
             {count}
           </span>
-        ) : (
-          <span className="mt-1 h-[1.25rem]" aria-hidden="true" />
-        )}
+        ) : null}
       </button>
     );
   }

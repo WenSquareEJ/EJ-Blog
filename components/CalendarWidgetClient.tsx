@@ -282,10 +282,10 @@ export default function CalendarWidgetClient({
   };
 
   const controlButtonClass =
-    "relative inline-flex h-8 items-center justify-center rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-2 font-mc text-[0.68rem] uppercase tracking-[0.12em] leading-none text-[#3B2F1B] shadow-pixel transition-transform duration-150 hover:-translate-y-0.5 hover:brightness-[1.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B2F1B] focus-visible:ring-offset-2 focus-visible:ring-offset-mc-parchment";
+    "relative inline-flex h-8 shrink-0 items-center justify-center rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-2 font-mc text-[0.64rem] uppercase tracking-[0.12em] leading-none text-[#3B2F1B] shadow-pixel transition-transform duration-150 hover:-translate-y-0.5 hover:brightness-[1.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B2F1B] focus-visible:ring-offset-2 focus-visible:ring-offset-mc-parchment sm:h-9 sm:px-3 sm:text-[0.68rem] md:h-10 md:px-4 md:text-[0.72rem]";
   const controlButtonDisabledClass = "cursor-not-allowed opacity-60 hover:translate-y-0 hover:brightness-100";
   const selectClass =
-    "h-8 min-w-[7rem] rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-2 font-mc text-[0.68rem] uppercase tracking-[0.12em] leading-none text-[#3B2F1B] shadow-pixel focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B2F1B] focus-visible:ring-offset-2 focus-visible:ring-offset-mc-parchment";
+    "h-8 shrink-0 rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-2 font-mc text-[0.64rem] uppercase tracking-[0.12em] leading-none text-[#3B2F1B] shadow-pixel focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B2F1B] focus-visible:ring-offset-2 focus-visible:ring-offset-mc-parchment min-w-[6.5rem] sm:h-9 sm:px-3 sm:text-[0.68rem] sm:min-w-[8rem] md:h-10 md:px-4 md:text-[0.72rem]";
 
   return (
     <div className="space-y-3">
@@ -293,61 +293,65 @@ export default function CalendarWidgetClient({
         <h2 className="font-mc text-lg">Post Calendar</h2>
         <p className="text-xs text-mc-stone">Browse stories by day.</p>
       </div>
-      <div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-3 py-2 shadow-pixel sm:gap-3">
-        <button
-          type="button"
-          className={`${controlButtonClass} ${!canGoPrev ? controlButtonDisabledClass : ""}`}
-          onClick={handlePrev}
-          disabled={!canGoPrev}
-          aria-label="Go to previous month"
-        >
-          ‹
-        </button>
-        <select
-          aria-label="Select month"
-          className={selectClass}
-          value={viewMonth}
-          onChange={handleMonthChange}
-        >
-          {MONTH_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          className={`${controlButtonClass} ${!canGoNext ? controlButtonDisabledClass : ""}`}
-          onClick={handleNext}
-          disabled={!canGoNext}
-          aria-label="Go to next month"
-        >
-          ›
-        </button>
-        <select
-          aria-label="Select year"
-          className={selectClass}
-          value={viewYear}
-          onChange={handleYearChange}
-        >
-          {Array.from({ length: yearBounds.max - yearBounds.min + 1 }, (_, index) => yearBounds.min + index).map(
-            (year) => (
-              <option key={year} value={year}>
-                {year}
+      <div className="flex flex-wrap items-center justify-center gap-1 overflow-hidden whitespace-normal rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-2 py-1 shadow-pixel md:justify-between md:gap-2 md:px-3 md:py-2 lg:gap-3 lg:px-4 lg:py-3">
+        <div className="flex w-full flex-wrap items-center justify-center gap-1 md:w-auto md:flex-nowrap md:justify-start md:gap-2">
+          <button
+            type="button"
+            className={`${controlButtonClass} ${!canGoPrev ? controlButtonDisabledClass : ""}`}
+            onClick={handlePrev}
+            disabled={!canGoPrev}
+            aria-label="Go to previous month"
+          >
+            ‹
+          </button>
+          <select
+            aria-label="Select month"
+            className={`${selectClass} w-auto`}
+            value={viewMonth}
+            onChange={handleMonthChange}
+          >
+            {MONTH_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
-            )
-          )}
-        </select>
-        <button
-          type="button"
-          className={`${controlButtonClass} ${
-            isTodayView && !activeDate ? controlButtonDisabledClass : ""
-          }`}
-          onClick={handleToday}
-          disabled={isTodayView && !activeDate}
-        >
-          Today
-        </button>
+            ))}
+          </select>
+          <button
+            type="button"
+            className={`${controlButtonClass} ${!canGoNext ? controlButtonDisabledClass : ""}`}
+            onClick={handleNext}
+            disabled={!canGoNext}
+            aria-label="Go to next month"
+          >
+            ›
+          </button>
+        </div>
+        <div className="flex w-full items-center justify-center gap-1 md:w-auto md:justify-end md:gap-2">
+          <select
+            aria-label="Select year"
+            className={`${selectClass} w-auto flex-1 min-w-[5.5rem] md:flex-none`}
+            value={viewYear}
+            onChange={handleYearChange}
+          >
+            {Array.from({ length: yearBounds.max - yearBounds.min + 1 }, (_, index) => yearBounds.min + index).map(
+              (year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              )
+            )}
+          </select>
+          <button
+            type="button"
+            className={`${controlButtonClass} ${
+              isTodayView && !activeDate ? controlButtonDisabledClass : ""
+            } w-auto flex-1 md:flex-none`}
+            onClick={handleToday}
+            disabled={isTodayView && !activeDate}
+          >
+            Today
+          </button>
+        </div>
         <span className="sr-only" aria-live="polite">
           {announcement}
         </span>
