@@ -38,6 +38,5 @@ export async function upsertBadges(client: SupabaseClient<Database>) {
   return client
     .from('badges')
     .upsert(BADGE_SEED, { onConflict: 'name' })
-    .select();
+    .select('id, name');
 }
-
