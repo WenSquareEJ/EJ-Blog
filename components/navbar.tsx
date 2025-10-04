@@ -105,7 +105,7 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
           className="flex shrink-0 items-center gap-2 whitespace-nowrap font-mc text-[0.7rem] uppercase tracking-[0.2em] hover:opacity-90"
         >
           <span className="inline-block h-4 w-4 rounded-sm bg-mc-leaf border border-mc-wood-dark shadow-pixel" />
-          EJ Blog
+          EJ
         </Link>
 
         <nav className="flex w-full flex-1 flex-wrap items-center gap-1.5 sm:w-auto sm:gap-2">

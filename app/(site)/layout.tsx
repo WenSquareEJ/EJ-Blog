@@ -1,7 +1,7 @@
 // /app/(site)/layout.tsx
 import "./globals.css";
 import supabaseServer from "@/lib/supabaseServer";
-import AIHelper from "@/components/AIHelper";
+import AskEbot from "@/components/AskEbot";
 import NavBar from "@/components/navbar";
 import ToastViewport from "@/components/Toast";
 import HomeBackground from "@/components/HomeBackground";
@@ -45,8 +45,8 @@ export default async function SiteLayout({
 
         <div className="banner-placeholder">
           <div className="mx-auto flex h-full max-w-5xl items-center justify-center px-4">
-            <p className="text-xs text-mc-parchment opacity-80 md:text-sm">
-              Banner placeholder — add your image or text here later.
+            <p className="text-xs font-mc uppercase tracking-[0.18em] text-mc-parchment opacity-80 md:text-sm">
+              BLOCKS AND BOTS
             </p>
           </div>
         </div>
@@ -59,7 +59,7 @@ export default async function SiteLayout({
 
         <ToastViewport />
 
-        <AIHelper />
+        <AskEbot />
       </body>
     </html>
   );

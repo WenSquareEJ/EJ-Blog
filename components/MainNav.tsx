@@ -13,7 +13,7 @@ export default function MainNav({ isLoggedIn, isAdmin }: Props) {
         href="/"
         className="shrink-0 font-mc text-sm md:text-base leading-none hover:opacity-90"
       >
-        EJ Blog
+        EJ
       </Link>
 
       {/* Primary tabs: horizontally scrollable on mobile */}
@@ -22,7 +22,7 @@ export default function MainNav({ isLoggedIn, isAdmin }: Props) {
         <li><Link className="btn-mc" href="/blog">Blog</Link></li>
         <li><Link className="btn-mc" href="/minecraft-zone">Minecraft Zone</Link></li>
         <li><Link className="btn-mc" href="/scratch-board">Scratch Board</Link></li>
-        <li><Link className="btn-mc" href="/ai">AI Helper</Link></li>
+        <li><Link className="btn-mc" href="/ai">Ask Ebot</Link></li>
 
         {/* Secondary in a dropdown */}
         <li className="ml-1">

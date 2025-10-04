@@ -491,7 +491,7 @@ export default async function HomeHubPage() {
             <AvatarTile username={displayName} avatarUrl={avatarUrl} />
             <div className="flex-1 space-y-4">
               <div className="space-y-2 text-[color:var(--mc-ink)]">
-                <h1 className="font-mc text-3xl sm:text-4xl">{"Erik's Hub"}</h1>
+                <h1 className="font-mc text-3xl text-[color:#145a32] sm:text-4xl">{"Erik's Hub"}</h1>
                 <p className="max-w-xl text-sm text-[color:rgba(46,46,46,0.82)] sm:text-base">
                   {HUB_SUBTITLE}
                 </p>

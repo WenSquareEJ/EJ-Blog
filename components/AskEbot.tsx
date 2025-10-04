@@ -1,9 +1,9 @@
-// /components/AIHelper.tsx
+// /components/AskEbot.tsx
 "use client"
 
 import { useState } from "react"
 
-export default function AIHelper() {
+export default function AskEbot() {
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<{ role: string; text: string }[]>([])
 
@@ -23,23 +23,29 @@ export default function AIHelper() {
   }
 
   return (
-    <div className="card-block w-72 fixed right-2 bottom-2 bg-mc-sky/90">
-      <h2 className="font-mc text-sm mb-2">AI Helper</h2>
-      <div className="h-40 overflow-y-auto bg-white/70 p-2 mb-2 text-xs">
+    <div
+      aria-label="Ask Ebot chat widget"
+      className="card-block fixed bottom-2 right-2 w-72 bg-mc-sky/90"
+    >
+      <h2 className="mb-2 font-mc text-sm">Ask Ebot</h2>
+      <div className="mb-2 h-40 overflow-y-auto bg-white/70 p-2 text-xs">
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
-            <p><strong>{m.role === "user" ? "You" : "AI"}:</strong> {m.text}</p>
+            <p><strong>{m.role === "user" ? "You" : "Ebot"}:</strong> {m.text}</p>
           </div>
         ))}
       </div>
-      <form onSubmit={askAI} className="flex gap-1">
+      <form aria-label="Ask Ebot input" className="flex gap-1" onSubmit={askAI}>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="flex-1 border rounded p-1 text-xs"
-          placeholder="Ask me..."
+          aria-label="Message for Ebot"
+          className="flex-1 rounded border p-1 text-xs"
+          placeholder="Ask Ebot..."
         />
-        <button type="submit" className="btn-mc">Go</button>
+        <button className="btn-mc" type="submit">
+          Go
+        </button>
       </form>
     </div>
   )
