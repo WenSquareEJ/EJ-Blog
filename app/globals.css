@@ -104,7 +104,6 @@ body {
 .btn-mc:hover {
   filter: brightness(0.9);
 }
-}
 .btn-mc-secondary {
   border: 1px solid black;
   padding: 0.5rem 0.5rem;
@@ -119,7 +118,6 @@ body {
 .btn-mc-secondary:hover {
   background-color: #f4ede0;
 }
-}
 .btn-mc-danger {
   padding: 0.5rem 0.5rem;
   border-radius: 0.375rem;
@@ -132,7 +130,6 @@ body {
 }
 .btn-mc-danger:hover {
   background-color: #b91c1c;
-}
 }
 .btn-mc-primary {
   border: 1px solid black;
@@ -148,7 +145,6 @@ body {
 .btn-mc-primary:hover {
   filter: brightness(0.9);
 }
-  color: var(--mc-ink);
 .btn-mc-parchment {
   border: 1px solid black;
   padding: 0.5rem 0.5rem;
@@ -159,15 +155,12 @@ body {
   background-color: var(--mc-parchment);
   color: var(--mc-ink);
 }
-}
 .card-block {
   border: 1px solid black;
   border-radius: 0.5rem;
   padding: 0.5rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.12);
   background-color: var(--mc-parchment);
-}
-  background-color: white;
 }
 
 /* Banner */
