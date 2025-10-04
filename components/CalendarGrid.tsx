@@ -10,7 +10,7 @@ export default function CalendarGrid({ year, month, counts }: { year: number, mo
     const c = counts[d]||0
     const dateParam = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`
     cells.push(
-      <Link key={d} href={`/?date=${dateParam}`} className="border rounded-lg p-3 hover:bg-gray-50 relative">
+      <Link key={d} href={`/blog?day=${dateParam}`} className="border rounded-lg p-3 hover:bg-gray-50 relative">
         <div className="text-sm font-medium">{d}</div>
         {c>0 && <span className="absolute top-2 right-2 inline-flex items-center justify-center text-xs bg-brand text-white rounded-full w-5 h-5">{c}</span>}
       </Link>

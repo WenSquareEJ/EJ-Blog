@@ -110,6 +110,9 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
 
         <nav className="flex w-full flex-1 flex-wrap items-center gap-1.5 sm:w-auto sm:gap-2">
           <Link className="btn-mc" href="/">
+            Home
+          </Link>
+          <Link className="btn-mc" href="/blog">
             Blog
           </Link>
           <Link className="btn-mc" href="/minecraft-zone">

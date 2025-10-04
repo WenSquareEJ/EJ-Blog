@@ -9,13 +9,9 @@ import ParrotSprite from "@/components/ParrotSprite";
 import PixelBackground from "@/components/PixelBackground";
 import XPBar from "@/components/XPBar";
 
-const PAGE_SIZE = 3;
+const MESSAGE_WALL_LIMIT = 3;
 const HUB_SUBTITLE = "Welcome to the base camp for Erik's stories, games, and projects.";
 const MINECRAFT_TAG_SLUG = "minecraft";
-
-type HomeSearchParams = {
-  page?: string | string[];
-};
 
 type PostRow = Pick<
   TablesRow<"posts">,
@@ -78,15 +74,6 @@ type ModerationSnapshot = {
   error: string | null;
 };
 
-function parsePageParam(input: string | string[] | undefined): number {
-  const raw = Array.isArray(input) ? input[0] : input;
-  const parsed = parseInt(raw ?? "1", 10);
-  if (Number.isNaN(parsed) || parsed < 1) {
-    return 1;
-  }
-  return parsed;
-}
-
 function formatDateLabel(isoDate: string | null | undefined): string | null {
   if (!isoDate) return null;
   const value = new Date(isoDate);
@@ -102,9 +89,6 @@ function getPostTimestamp(row: { published_at: string | null; created_at: string
   return row.published_at ?? row.created_at ?? null;
 }
 
-function buildPageHref(page: number) {
-  return page <= 1 ? "/" : `/?page=${page}`;
-}
 
 function coerceNonEmptyString(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -112,11 +96,7 @@ function coerceNonEmptyString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export default async function HomeHubPage({
-  searchParams,
-}: {
-  searchParams?: HomeSearchParams;
-}) {
+export default async function HomeHubPage() {
   const sb = supabaseServer();
 
   const {
@@ -147,10 +127,6 @@ export default async function HomeHubPage({
   const isAdmin =
     userEmail?.toLowerCase() === adminEmail && adminEmail.length > 0;
 
-  const page = parsePageParam(searchParams?.page);
-  const from = (page - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
-
   let latestPosts: PostSummary[] = [];
   let latestPostsError: string | null = null;
 
@@ -165,7 +141,7 @@ export default async function HomeHubPage({
     .eq("status", "approved")
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
-    .range(from, to);
+    .limit(MESSAGE_WALL_LIMIT);
 
   if (latestError) {
     console.error("[home-hub] failed to load latest posts", latestError);
@@ -185,9 +161,6 @@ export default async function HomeHubPage({
       } satisfies PostSummary;
     });
   }
-
-  const hasNextPage = latestPosts.length === PAGE_SIZE;
-  const hasPrevPage = page > 1;
 
   let minecraftPosts: MiniPost[] = [];
   let minecraftError: string | null = null;
@@ -623,57 +596,6 @@ export default async function HomeHubPage({
         </div>
       </div>
 
-      <section id="latest-posts" className="home-card">
-        <div className="home-card__body space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <h2 className="font-mc text-2xl">Latest Posts</h2>
-            <p className="text-xs uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.6)]">
-              Page {page}
-            </p>
-          </div>
-          {latestPostsError ? (
-            <p className="text-sm text-red-600">{latestPostsError}</p>
-          ) : latestPosts.length === 0 ? (
-            <p className="text-sm text-[color:rgba(46,46,46,0.7)]">No posts yet.</p>
-          ) : (
-            <ul className="space-y-3">
-              {latestPosts.map((post) => {
-                const label = formatDateLabel(post.publishedAt);
-                return (
-                  <li key={post.id} className="home-message">
-                    <Link href={`/post/${post.id}`} className="home-message__link">
-                      <span className="home-message__title">{post.title}</span>
-                      <p className="home-message__excerpt">{post.excerpt}</p>
-                      {label && <span className="home-message__meta">{label}</span>}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {hasPrevPage ? (
-              <Link href={buildPageHref(page - 1)} className="btn-mc-secondary">
-                Previous
-              </Link>
-            ) : (
-              <span className="btn-mc-secondary cursor-not-allowed opacity-50">
-                Previous
-              </span>
-            )}
-            {hasNextPage ? (
-              <Link href={buildPageHref(page + 1)} className="btn-mc-secondary">
-                Next
-              </Link>
-            ) : (
-              <span className="btn-mc-secondary cursor-not-allowed opacity-50">
-                Next
-              </span>
-            )}
-          </div>
-        </div>
-      </section>
-
       <section className="home-card">
         <div className="home-card__body space-y-3">
           <h3 className="font-mc text-xl">Quick Actions</h3>
@@ -688,12 +610,6 @@ export default async function HomeHubPage({
                 New Scratch Project
               </Link>
             )}
-            <Link href="/calendar" className="btn-mc-secondary">
-              Calendar
-            </Link>
-            <Link href="/tags" className="btn-mc-secondary">
-              Tags
-            </Link>
             {isAdmin && (
               <Link href="/moderation" className="btn-mc-secondary">
                 Moderation
