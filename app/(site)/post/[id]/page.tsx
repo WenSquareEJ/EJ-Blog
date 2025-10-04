@@ -1,4 +1,5 @@
 // /app/(site)/post/[id]/page.tsx
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
 import { extractPostContent, markdownToHtml } from "@/lib/postContent";
@@ -129,8 +130,19 @@ export default async function PostPage({ params }: { params: { id: string } }) {
           ))}
         </div>
       )}
+      {post.image_url && (
+        <div className="overflow-hidden rounded-lg border-2 border-mc-wood-dark">
+          <img
+            src={post.image_url}
+            alt={post.title ? `${post.title} featured image` : "Featured post image"}
+            className="block h-auto w-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      )}
+
       <article
-        className="prose prose-sm sm:prose-base max-w-none text-mc-dirt"
+        className="prose prose-sm sm:prose-base max-w-none text-mc-dirt prose-img:mx-auto prose-img:block prose-img:h-auto prose-img:max-w-full"
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
 

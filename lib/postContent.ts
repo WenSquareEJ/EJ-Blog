@@ -32,7 +32,7 @@ const sanitizeOptions: IOptions = {
   ],
   allowedAttributes: {
     a: ["href", "name", "target", "rel"],
-    img: ["src", "alt", "title", "width", "height"],
+    img: ["src", "alt", "title", "width", "height", "loading"],
     '*': ["class"],
   },
   allowedSchemes: ["http", "https", "mailto"],
