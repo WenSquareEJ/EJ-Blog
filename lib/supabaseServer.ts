@@ -30,11 +30,11 @@ function createServerSupabaseClient(): SupabaseClient<Database> {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options?: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
+        set() {
+          // Server components should never mutate cookies.
         },
-        remove(name: string, options?: CookieOptions) {
-          cookieStore.set({ name, value: "", ...options, maxAge: 0 });
+        remove() {
+          // No-op: cookie mutations happen inside route handlers via supabaseRoute.
         },
       },
     }
