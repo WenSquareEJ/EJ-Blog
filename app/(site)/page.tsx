@@ -5,6 +5,8 @@ import { buildExcerpt, extractPostContent } from "@/lib/postContent";
 import { resolveBadgeIcon } from "@/lib/badgeIcons";
 import type { TablesRow } from "@/lib/database.types";
 import AvatarTile from "@/components/AvatarTile";
+import { getErikProfileAvatar, getErikUserId } from "@/lib/erik";
+import Link from "next/link";
 import ParrotSprite from "@/components/ParrotSprite";
 import PixelBackground from "@/components/PixelBackground";
 import XPBar from "@/components/XPBar";
@@ -223,36 +225,16 @@ async function resolveErikUserId(): Promise<string | null> {
   return cachedErikUserId;
 }
 
-export default async function HomeHubPage() {
+  // Always show Erik's avatar only
+  const avatarUrl = await getErikProfileAvatar();
+  const erikUserId = await getErikUserId();
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "wenyu.yan@gmail.com";
+  // Get current user for settings link
   const sb = supabaseServer();
-
-  const {
-    data: userRes,
-    error: userError,
-  } = await sb.auth.getUser();
-
-  if (userError) {
-    console.error("[home-hub] failed to fetch user", userError);
-  }
-
+  const { data: userRes } = await sb.auth.getUser();
   const user = userRes?.user ?? null;
-  const userEmail = user?.email ?? null;
-  const userMetadata = (user?.user_metadata ?? {}) as Record<string, unknown>;
-  const metaValue = (key: string) => coerceNonEmptyString(userMetadata[key]);
-  const avatarUrl = metaValue("avatar_url") ?? metaValue("avatar") ?? null;
-  const emailHandle = userEmail ? userEmail.split("@")[0] : null;
-  const displayName =
-    metaValue("full_name") ??
-    metaValue("display_name") ??
-    metaValue("username") ??
-    metaValue("preferred_username") ??
-    emailHandle ??
-    "Guest Explorer";
-
-  const adminEmail =
-    process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "wenyu.yan@gmail.com";
-  const isAdmin =
-    userEmail?.toLowerCase() === adminEmail && adminEmail.length > 0;
+  const isAdmin = user?.email?.toLowerCase() === adminEmail;
+  const isErik = user?.id === erikUserId;
 
   let latestPosts: PostSummary[] = [];
   let latestPostsError: string | null = null;
@@ -488,18 +470,24 @@ export default async function HomeHubPage() {
         <PixelBackground />
         <div className="relative z-10 flex flex-col gap-6 px-6 py-8 sm:px-10">
           <div className="flex flex-col gap-6 md:flex-row md:items-end">
-            <AvatarTile username={displayName} avatarUrl={avatarUrl} />
+            <div className="relative">
+              <AvatarTile avatarUrl={avatarUrl ?? undefined} />
+              {(isAdmin || isErik) && (
+                <Link
+                  href="/settings/avatar"
+                  className="absolute top-2 right-2 text-xs btn-mc-secondary px-2 py-1 rounded"
+                  aria-label="Change avatar"
+                >
+                  Change avatar
+                </Link>
+              )}
+            </div>
             <div className="flex-1 space-y-4">
               <div className="space-y-2">
                 <h1 className="home-card-title text-3xl sm:text-4xl">{"Erik's Hub"}</h1>
                 <p className="home-card-body max-w-xl text-sm sm:text-base">
                   {HUB_SUBTITLE}
                 </p>
-                {userEmail && (
-                  <p className="home-card-meta text-xs uppercase tracking-[0.18em]">
-                    Signed in as {userEmail}
-                  </p>
-                )}
               </div>
               <div className="max-w-lg">
                 <XPBar currentXP={120} nextLevelXP={200} />
