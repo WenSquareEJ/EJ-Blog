@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import supabaseServer from '@/lib/supabaseServer';
+import supabaseAdmin from '@/lib/supabaseAdmin';
 import type { TablesRow } from '@/lib/database.types';
 import { resolveBadgeIcon } from '@/lib/badgeIcons';
 import { AwardBadgeButton } from './AwardBadgeButton';
@@ -30,6 +30,66 @@ type ProgressQueryRow = {
   created_at: string | null;
   post_tags?: { tags: { slug: string | null } | null }[] | null;
 };
+
+const DEFAULT_ERIK_EMAIL = 'erik.ys.johansson@gmail.com';
+const ERIK_EMAIL = (process.env.NEXT_PUBLIC_ERIK_EMAIL ?? DEFAULT_ERIK_EMAIL)
+  .trim()
+  .toLowerCase();
+const ERIK_USER_ID_ENV = process.env.NEXT_PUBLIC_ERIK_USER_ID?.trim() ?? null;
+
+let cachedErikUserId: string | null | undefined;
+let erikUserIdPromise: Promise<string | null> | null = null;
+
+async function resolveErikUserId(): Promise<string | null> {
+  if (typeof cachedErikUserId !== 'undefined') {
+    return cachedErikUserId;
+  }
+
+  if (erikUserIdPromise) {
+    return erikUserIdPromise;
+  }
+
+  erikUserIdPromise = (async () => {
+    if (ERIK_USER_ID_ENV) {
+      cachedErikUserId = ERIK_USER_ID_ENV;
+      return cachedErikUserId;
+    }
+
+    if (!ERIK_EMAIL) {
+      console.warn('[badges/page] NEXT_PUBLIC_ERIK_EMAIL is not configured.');
+      cachedErikUserId = null;
+      return cachedErikUserId;
+    }
+
+    try {
+      const adminClient = supabaseAdmin();
+      const { data, error } = await adminClient.auth.admin.getUserByEmail(ERIK_EMAIL);
+
+      if (error) {
+        console.error('[badges/page] Failed to resolve Erik\'s user via email', error);
+        cachedErikUserId = null;
+        return cachedErikUserId;
+      }
+
+      const userId = data?.user?.id ?? null;
+      if (!userId) {
+        console.warn(
+          `[badges/page] No user account found for Erik email ${ERIK_EMAIL}.`,
+        );
+      }
+      cachedErikUserId = userId;
+      return cachedErikUserId;
+    } catch (error) {
+      console.error('[badges/page] Unexpected error resolving Erik\'s user ID', error);
+      cachedErikUserId = null;
+      return cachedErikUserId;
+    }
+  })();
+
+  const result = await erikUserIdPromise;
+  erikUserIdPromise = null;
+  return result;
+}
 
 function determineBadgeTier(name: string): BadgeTier {
   const normalized = name.toLowerCase();
@@ -157,10 +217,28 @@ export default async function BadgesPage() {
   } = await sb.auth.getUser();
 
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? null;
-  const userId = user?.id ?? null;
   const isAdmin = Boolean(
     adminEmail && user?.email && user.email.toLowerCase() === adminEmail,
   );
+
+  const erikUserId = await resolveErikUserId();
+
+  if (!erikUserId) {
+    console.warn('[badges/page] Erik\'s user ID could not be resolved.');
+    return (
+      <div className="space-y-6">
+        <header className="space-y-2">
+          <h1 className="font-mc text-xl sm:text-2xl">Badges</h1>
+          <p className="text-sm text-mc-stone">
+            Celebrate accomplishments across posts, projects, and family adventures.
+          </p>
+        </header>
+        <div className="card-block border border-red-400 bg-red-50 text-sm text-red-700">
+          Erik&apos;s badges are temporarily unavailable.
+        </div>
+      </div>
+    );
+  }
 
   const {
     data: badgesData,
@@ -177,15 +255,15 @@ export default async function BadgesPage() {
   let userBadges: UserBadgeRow[] = [];
   let userBadgesErrored = false;
 
-  if (userId) {
+  {
     const { data, error } = await sb
       .from('user_badges')
       .select('user_id, badge_id, awarded_at')
-      .eq('user_id', userId);
+      .eq('user_id', erikUserId);
 
     if (error) {
       userBadgesErrored = true;
-      console.error('[badges/page] Failed to fetch user badges', error);
+      console.error('[badges/page] Failed to fetch Erik\'s user badges', error);
     } else if (data) {
       userBadges = data;
     }
@@ -198,7 +276,6 @@ export default async function BadgesPage() {
   const badges: BadgeRow[] = badgesData ?? [];
   const hasBadges = badges.length > 0;
 
-  const isLoggedIn = Boolean(userId);
   const isDev = process.env.NODE_ENV !== 'production';
 
   const progressByType: Record<ProgressType, number | null> = {
@@ -208,7 +285,7 @@ export default async function BadgesPage() {
     daily_streak: null,
   };
 
-  if (isLoggedIn && hasBadges) {
+  if (hasBadges) {
     const neededTypes = new Set<ProgressType>();
 
     for (const badge of badges) {
@@ -227,7 +304,7 @@ export default async function BadgesPage() {
       } = await sb
         .from('posts')
         .select('id, published_at, created_at, post_tags:post_tags(tags(slug))')
-        .eq('author', userId as string)
+        .eq('author', erikUserId)
         .eq('status', 'approved');
 
       if (progressError) {
@@ -278,24 +355,14 @@ export default async function BadgesPage() {
         <p className="text-sm text-mc-stone">
           Celebrate accomplishments across posts, projects, and family adventures.
         </p>
-        {!isLoggedIn && (
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            <span className="text-mc-ink/80">
-              Log in to see which badges you&apos;ve unlocked.
-            </span>
-            <Link href="/login" className="btn-mc-secondary">
-              Log in
-            </Link>
-          </div>
-        )}
         <div className="flex flex-wrap items-center gap-2">
-          {isDev && isLoggedIn && hasBadges && (
+          {isDev && isAdmin && hasBadges && (
             <SelfAwardDevButton
               badgeId={badges[0]?.id ?? null}
               badgeName={badges[0]?.name ?? null}
             />
           )}
-          {isLoggedIn && <CheckBadgeProgressButton />}
+          {isAdmin && <CheckBadgeProgressButton />}
         </div>
       </header>
 
@@ -331,20 +398,16 @@ export default async function BadgesPage() {
             );
             const progressValue =
               isTrackedType && criteriaType
-                ? progressByType[criteriaType as ProgressType]
-                : null;
+                ? progressByType[criteriaType as ProgressType] ?? 0
+                : 0;
             const showProgress =
-              isLoggedIn &&
               !earned &&
               isTrackedType &&
               typeof threshold === 'number' &&
               threshold > 0;
             const effectiveThreshold = showProgress ? (threshold as number) : null;
             const clampedPercent = effectiveThreshold
-              ? Math.max(
-                  0,
-                  Math.min(100, ((progressValue ?? 0) / effectiveThreshold) * 100),
-                )
+              ? Math.max(0, Math.min(100, (progressValue / effectiveThreshold) * 100))
               : 0;
 
             return (
@@ -404,9 +467,7 @@ export default async function BadgesPage() {
                         <div className="badge-progress-meta">
                           <span>Progress</span>
                           <span className="badge-progress-value">
-                            {progressValue != null
-                              ? `${progressValue} / ${effectiveThreshold}`
-                              : `— / ${effectiveThreshold}`}
+                            {`${progressValue} / ${effectiveThreshold}`}
                           </span>
                         </div>
                         <div className="badge-progress-bar" aria-hidden>
@@ -426,12 +487,7 @@ export default async function BadgesPage() {
                 )}
                 {!earned && userBadgesErrored && (
                   <p className="text-xs text-red-600">
-                    We couldn&apos;t check your progress. Refresh to try again.
-                  </p>
-                )}
-                {!earned && !isLoggedIn && (
-                  <p className="text-xs text-mc-stone">
-                    Sign in to start collecting badges.
+                    We couldn&apos;t check Erik&apos;s progress right now. Refresh to try again.
                   </p>
                 )}
                 <span className="badge-card-outline mt-0" aria-hidden />
