@@ -1,26 +1,20 @@
 
+
+/* Centralized home widget text utilities (Minecraft readable ink) */
 .home-card-title {
   font-family: var(--font-mc), monospace;
   color: var(--mc-ink);
+  font-size: 1.125rem;
+  font-weight: bold;
 }
 .home-card-meta {
-  font-size: 0.75rem;
   color: var(--mc-stone);
+  font-size: 0.75rem;
 }
 .home-card-body {
+  color: var(--mc-ink);
   font-size: 15px;
   line-height: 1.6;
-  color: var(--mc-ink);
-}
-/* Centralized home widget text utilities */
-.home-card-title {
-  @apply font-mc text-mc-ink;
-}
-.home-card-meta {
-  @apply text-xs text-mc-stone;
-}
-.home-card-body {
-  @apply text-[15px] leading-6 text-mc-ink;
 }
 @tailwind base;
 @tailwind components;

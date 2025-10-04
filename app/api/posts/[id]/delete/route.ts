@@ -43,13 +43,13 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
     return Response.json({ error: "Post not found" }, { status: 404 });
   }
 
-  const { error: updateError } = await sb
+  const { error: deleteError } = await sb
     .from("posts")
-    .update({ status: "deleted" })
+    .delete()
     .eq("id", postId);
 
-  if (updateError) {
-    console.error("[posts/delete] failed to soft-delete post", updateError);
+  if (deleteError) {
+    console.error("[posts/delete] failed to hard-delete post", deleteError);
     return Response.json({ error: "Failed to delete post" }, { status: 500 });
   }
 
