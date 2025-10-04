@@ -43,7 +43,22 @@
   --mc-grass: #4CAF50;   /* background */
   --mc-sky:   #87CEEB;   /* accents / buttons */
   --mc-ink:   #2E2E2E;   /* text */
-  --mc-stone: #8B8B8B;   /* neutral panels */
+  --mc-stone: #6B7280;   /* neutral panels, improved contrast */
+.home-card-title {
+  font-family: var(--font-mc), monospace;
+  color: var(--mc-ink);
+  font-size: 1.125rem;
+  font-weight: bold;
+}
+.home-card-meta {
+  color: var(--mc-stone);
+  font-size: 0.75rem;
+}
+.home-card-body {
+  color: var(--mc-ink);
+  font-size: 15px;
+  line-height: 1.6;
+}
   /* optional extras (kept neutral by default) */
   --mc-accent: var(--mc-sky);
   --mc-parchment: #ffffff;

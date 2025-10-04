@@ -23,6 +23,7 @@ export default {
     'home-card-body',
     'section-title',
     'section-label',
+    'font-mc',
   ],
   plugins: [],
 } satisfies Config

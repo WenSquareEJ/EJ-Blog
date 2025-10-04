@@ -490,13 +490,13 @@ export default async function HomeHubPage() {
           <div className="flex flex-col gap-6 md:flex-row md:items-end">
             <AvatarTile username={displayName} avatarUrl={avatarUrl} />
             <div className="flex-1 space-y-4">
-              <div className="space-y-2 text-[color:var(--mc-ink)]">
-                <h1 className="font-mc section-title text-3xl sm:text-4xl">{"Erik's Hub"}</h1>
-                <p className="max-w-xl text-sm text-[color:rgba(46,46,46,0.82)] sm:text-base">
+              <div className="space-y-2">
+                <h1 className="home-card-title text-3xl sm:text-4xl">{"Erik's Hub"}</h1>
+                <p className="home-card-body max-w-xl text-sm sm:text-base">
                   {HUB_SUBTITLE}
                 </p>
                 {userEmail && (
-                  <p className="text-xs uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.6)]">
+                  <p className="home-card-meta text-xs uppercase tracking-[0.18em]">
                     Signed in as {userEmail}
                   </p>
                 )}
@@ -522,10 +522,10 @@ export default async function HomeHubPage() {
         <section className="home-card">
           <div className="home-card__body space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="font-mc section-title text-2xl">My Projects</h2>
+              <h2 className="home-card-title text-2xl">My Projects</h2>
               <Link
                 href="/minecraft-zone"
-                className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.7)] hover:text-[color:var(--mc-ink)]"
+                className="home-card-meta text-xs font-semibold uppercase tracking-[0.18em] hover:text-mc-ink"
               >
                 Explore all
               </Link>
@@ -535,11 +535,11 @@ export default async function HomeHubPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="home-icon home-icon--minecraft" aria-hidden="true" />
-                    <h3 className="font-mc section-title text-lg">Minecraft Zone</h3>
+                    <h3 className="home-card-title text-lg">Minecraft Zone</h3>
                   </div>
                   <Link
                     href="/minecraft-zone"
-                    className="text-xs uppercase tracking-[0.2em] text-[color:rgba(46,46,46,0.6)] hover:text-[color:var(--mc-ink)]"
+                    className="home-card-meta text-xs uppercase tracking-[0.2em] hover:text-mc-ink"
                   >
                     Visit
                   </Link>
@@ -547,7 +547,7 @@ export default async function HomeHubPage() {
                 {minecraftError ? (
                   <p className="text-sm text-red-600">{minecraftError}</p>
                 ) : minecraftPosts.length === 0 ? (
-                  <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                  <p className="home-card-meta text-sm">
                     No Minecraft adventures yet.
                   </p>
                 ) : (
@@ -573,11 +573,11 @@ export default async function HomeHubPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="home-icon home-icon--scratch" aria-hidden="true" />
-                    <h3 className="font-mc section-title text-lg">Scratch Board</h3>
+                    <h3 className="home-card-title text-lg">Scratch Board</h3>
                   </div>
                   <Link
                     href="/scratch-board"
-                    className="text-xs uppercase tracking-[0.2em] text-[color:rgba(46,46,46,0.6)] hover:text-[color:var(--mc-ink)]"
+                    className="home-card-meta text-xs uppercase tracking-[0.2em] hover:text-mc-ink"
                   >
                     Visit
                   </Link>
@@ -585,7 +585,7 @@ export default async function HomeHubPage() {
                 {scratchError ? (
                   <p className="text-sm text-red-600">{scratchError}</p>
                 ) : scratchProjects.length === 0 ? (
-                  <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                  <p className="home-card-meta text-sm">
                     No Scratch projects yet.
                   </p>
                 ) : (
@@ -614,10 +614,10 @@ export default async function HomeHubPage() {
           <section className="home-card">
             <div className="home-card__body space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-mc section-title text-2xl">Badges &amp; Achievements</h2>
+                <h2 className="home-card-title text-2xl">Badges &amp; Achievements</h2>
                 <Link
                   href="/badges"
-                  className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.7)] hover:text-[color:var(--mc-ink)]"
+                  className="home-card-meta text-xs font-semibold uppercase tracking-[0.18em] hover:text-mc-ink"
                 >
                   View all
                 </Link>
@@ -625,13 +625,13 @@ export default async function HomeHubPage() {
               {badgesError ? (
                 <p className="text-sm text-red-600">{badgesError}</p>
               ) : widgetBadges.length === 0 ? (
-                <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                <p className="home-card-meta text-sm">
                   Badges will appear here once they&apos;re configured.
                 </p>
               ) : (
                 <div className="space-y-3">
                   {erikCollectionUnavailable && (
-                    <p className="text-xs text-[color:rgba(46,46,46,0.6)]">
+                    <p className="home-card-meta text-xs">
                       Erik&apos;s collection unavailable right now — showing badges as locked.
                     </p>
                   )}
@@ -694,10 +694,10 @@ export default async function HomeHubPage() {
           <section className="home-card">
             <div className="home-card__body space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-mc section-title text-xl">Message Wall</h2>
+                <h2 className="home-card-title text-xl">Message Wall</h2>
                 <Link
                   href="#latest-posts"
-                  className="text-xs uppercase tracking-[0.2em] text-[color:rgba(46,46,46,0.6)] hover:text-[color:var(--mc-ink)]"
+                  className="home-card-meta text-xs uppercase tracking-[0.2em] hover:text-mc-ink"
                 >
                   See all
                 </Link>
@@ -705,7 +705,7 @@ export default async function HomeHubPage() {
               {latestPostsError ? (
                 <p className="text-sm text-red-600">{latestPostsError}</p>
               ) : messageWallPosts.length === 0 ? (
-                <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                <p className="home-card-meta text-sm">
                   No messages yet. Share a story to kick things off!
                 </p>
               ) : (
