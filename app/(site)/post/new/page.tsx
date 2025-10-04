@@ -24,6 +24,51 @@ export default function NewPostPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const [tagError, setTagError] = useState<string | null>(null);
+
+  const MAX_TAGS = 12;
+
+  const normalizeTag = (value: string) => value.trim().toLowerCase();
+
+  function addTag(raw: string) {
+    const normalized = normalizeTag(raw);
+    setTagError(null);
+    if (!normalized) return;
+    if (normalized.length > 20) {
+      setTagError("Tags must be 1-20 characters long.");
+      return;
+    }
+    setTags((prev) => {
+      if (prev.length >= MAX_TAGS) {
+        setTagError("Limit of 12 tags per post.");
+        return prev;
+      }
+      if (prev.some((tag) => tag === normalized)) {
+        setTagError("Duplicate tag.");
+        return prev;
+      }
+      return [...prev, normalized];
+    });
+    setTagInput("");
+  }
+
+  function removeTag(tag: string) {
+    setTags((prev) => prev.filter((item) => item !== tag));
+  }
+
+  function handleTagKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter" || event.key === ",") {
+      event.preventDefault();
+      addTag(tagInput);
+    } else if (event.key === "Backspace" && tagInput === "" && tags.length) {
+      event.preventDefault();
+      const last = tags[tags.length - 1];
+      setTags((prev) => prev.slice(0, prev.length - 1));
+      setTagInput(last);
+    }
+  }
 
   const editor = useEditor({
     extensions: [
@@ -83,6 +128,7 @@ export default function NewPostPage() {
             content_html: currentHtml,
             content_json: currentDoc,
             content_text: plainText,
+            tags,
           }),
         });
 
@@ -103,7 +149,7 @@ export default function NewPostPage() {
         setSubmitting(false);
       }
     },
-    [doc, editor, html, imageUrl, router, textContent, title]
+    [doc, editor, html, imageUrl, router, tagsInput, textContent, title]
   );
 
   return (
@@ -145,6 +191,19 @@ export default function NewPostPage() {
             placeholder="Post title"
             className="w-full rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-3 py-2 font-pixel text-sm text-mc-dirt focus:outline-none focus:ring-2 focus:ring-mc-wood"
             required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-xs uppercase tracking-[0.18em] text-mc-stone">
+            Tags (comma-separated)
+          </label>
+          <input
+            type="text"
+            value={tagsInput}
+            onChange={(event) => setTagsInput(event.target.value)}
+            placeholder="minecraft, adventure, family"
+            className="w-full rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-3 py-2 font-pixel text-sm text-mc-dirt focus:outline-none focus:ring-2 focus:ring-mc-wood"
           />
         </div>
 

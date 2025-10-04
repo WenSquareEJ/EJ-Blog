@@ -45,6 +45,7 @@ export interface Database {
           content_html: string | null;
           content_json: Json | null;
           image_url: string | null;
+          tags: string[] | null;
           visibility: 'family' | 'public';
           status: 'draft' | 'pending' | 'approved' | 'rejected';
           created_at: string | null;
@@ -58,6 +59,7 @@ export interface Database {
           content_html?: string | null;
           content_json?: Json | null;
           image_url?: string | null;
+          tags?: string[] | null;
           visibility?: 'family' | 'public';
           status?: 'draft' | 'pending' | 'approved' | 'rejected';
           created_at?: string | null;
@@ -71,6 +73,7 @@ export interface Database {
           content_html?: string | null;
           content_json?: Json | null;
           image_url?: string | null;
+          tags?: string[] | null;
           visibility?: 'family' | 'public';
           status?: 'draft' | 'pending' | 'approved' | 'rejected';
           created_at?: string | null;

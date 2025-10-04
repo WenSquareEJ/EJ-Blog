@@ -11,6 +11,7 @@ type CreatePostPayload = {
   content_text?: string | null;
   content?: string | null;
   image_url?: string | null;
+  tags?: string[] | null;
 };
 
 export async function POST(req: Request) {
@@ -53,6 +54,8 @@ export async function POST(req: Request) {
     contentHtml = markdownToHtml(rawPlain);
   }
 
+  const tags = sanitizeTags(payload.tags);
+
   const insertData = {
     title,
     author: auth.user.id,
@@ -60,6 +63,7 @@ export async function POST(req: Request) {
     content: (payload.content ?? rawPlain) || "",
     content_html: contentHtml || null,
     content_json: payload.content_json ?? null,
+    tags,
     status: "pending" as const,
   };
 
@@ -84,4 +88,20 @@ function parseJsonSafely(value: string | null | undefined) {
   } catch (error) {
     return null;
   }
+}
+
+function sanitizeTags(input: string[] | null | undefined) {
+  if (!Array.isArray(input)) return null;
+  const seen = new Set<string>();
+  const cleaned: string[] = [];
+  for (const raw of input) {
+    if (typeof raw !== "string") continue;
+    const normalized = raw.trim().toLowerCase();
+    if (!normalized || normalized.length > 20) continue;
+    if (seen.has(normalized)) continue;
+    cleaned.push(normalized);
+    seen.add(normalized);
+    if (cleaned.length >= 12) break;
+  }
+  return cleaned.length ? cleaned : null;
 }

@@ -90,6 +90,8 @@ export async function POST(request: Request) {
     html = markdownToHtml(plain)
   }
 
+  const sanitizedTags = sanitizeTags(tags);
+
   const insert = {
     title,
     content: (content_md ?? plain) || '',
@@ -97,7 +99,7 @@ export async function POST(request: Request) {
     content_json: content_json ?? null,
     author: userRes.user.id,
     status: 'pending' as const,
-    tags,
+    tags: sanitizedTags,
     images,
   }
 
@@ -108,4 +110,20 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ post: data }, { status: 201 })
+}
+
+function sanitizeTags(input: string[] | null | undefined) {
+  if (!Array.isArray(input)) return null;
+  const seen = new Set<string>();
+  const cleaned: string[] = [];
+  for (const raw of input) {
+    if (typeof raw !== 'string') continue;
+    const normalized = raw.trim().toLowerCase();
+    if (!normalized || normalized.length > 20) continue;
+    if (seen.has(normalized)) continue;
+    cleaned.push(normalized);
+    seen.add(normalized);
+    if (cleaned.length >= 12) break;
+  }
+  return cleaned.length ? cleaned : null;
 }
