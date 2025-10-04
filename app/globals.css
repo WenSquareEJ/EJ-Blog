@@ -37,8 +37,20 @@
 /* Base body */
 body {
   font-family: var(--font-pixel), sans-serif;
-  background-color: var(--mc-grass);
   color: var(--mc-ink);
+  background-color: #1a1f23;
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgba(10, 14, 20, 0.75) 0%,
+      rgba(10, 14, 20, 0.55) 35%,
+      rgba(18, 12, 6, 0.65) 100%
+    ),
+    url("/assets/ej-minecraft-bg.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 /* Buttons */
@@ -431,33 +443,24 @@ a:hover {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background-color: var(--mc-sky-deep);
-  background-image:
+  background:
     linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--mc-sky-light) 70%, transparent) 0%,
-      transparent 30%,
-      transparent 55%,
-      color-mix(in srgb, var(--mc-cloud) 30%, transparent) 56%,
-      transparent 62%
-    ),
-    linear-gradient(
-      to top,
-      color-mix(in srgb, var(--mc-field) 70%, transparent) 0%,
-      transparent 40%
-    ),
-    url('/bg/mc-landscape.svg');
-  background-repeat: no-repeat, no-repeat, repeat-x;
-  background-size: cover, cover, 1200px auto;
-  background-position: center top, center bottom, center bottom;
-  background-attachment: fixed, fixed, fixed;
-  filter: saturate(1.05);
+      rgba(12, 22, 32, 0.6) 0%,
+      rgba(12, 22, 32, 0.5) 38%,
+      rgba(19, 12, 6, 0.58) 100%
+    );
 }
 
 @media (max-width: 768px) {
   .home-background {
-    background-size: cover, cover, 900px auto;
-    background-attachment: scroll, scroll, scroll;
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(12, 22, 32, 0.7) 0%,
+        rgba(12, 22, 32, 0.55) 45%,
+        rgba(19, 12, 6, 0.6) 100%
+      );
   }
 }
 

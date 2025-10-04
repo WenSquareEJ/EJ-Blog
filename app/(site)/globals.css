@@ -41,11 +41,19 @@ body {
 body {
   font-family: var(--font-pixel), monospace;
   color: var(--mc-ink);
-  background:
-    linear-gradient(0deg, rgba(17, 8, 4, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17, 8, 4, 0.08) 1px, transparent 1px),
-    var(--mc-dirt);
-  background-size: 32px 32px, 32px 32px, auto;
+  background-color: #1a1f23;
+  background-image:
+    linear-gradient(
+      to bottom,
+      rgba(10, 14, 20, 0.75) 0%,
+      rgba(10, 14, 20, 0.55) 35%,
+      rgba(18, 12, 6, 0.65) 100%
+    ),
+    url("/assets/ej-minecraft-bg.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 a {
