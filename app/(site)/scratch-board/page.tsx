@@ -1,5 +1,17 @@
+
+
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
+import DeleteScratchProjectButton from "./DeleteScratchProjectButton";
+
+type ScratchProject = {
+  id: string;
+  scratch_id: string;
+  title: string | null;
+  created_at: string | null;
+  created_by?: string | null;
+  image_path?: string | null;
+};
 
 export default async function ScratchBoardPage() {
   const sb = supabaseServer();
@@ -8,11 +20,13 @@ export default async function ScratchBoardPage() {
   const { data: userRes } = await sb.auth.getUser();
   const user = userRes?.user ?? null;
 
-  // Load projects
-  const { data: projects, error } = await sb
+  // Load projects with owner and thumbnail info
+  const { data: rawProjects, error } = await sb
     .from("scratch_projects")
-    .select("id, scratch_id, title, created_at")
+    .select("id, scratch_id, title, created_at, created_by, image_path")
     .order("created_at", { ascending: false });
+
+  const projects: ScratchProject[] = (rawProjects ?? []) as ScratchProject[];
 
   return (
     <div className="space-y-6">
@@ -45,31 +59,39 @@ export default async function ScratchBoardPage() {
         </div>
       ) : (
         <ul className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {projects.map((p) => (
-            <li key={p.id} className="card-block space-y-2">
-              <h3 className="font-mc text-sm">{p.title || `Project ${p.scratch_id}`}</h3>
-              <div className="rounded overflow-hidden border">
-                <iframe
-                  src={`https://scratch.mit.edu/projects/${p.scratch_id}/embed`}
-                  allowTransparency={true}
-                  width="100%"
-                  height="402"
-                  frameBorder="0"
-                  scrolling="no"
-                  allowFullScreen
-                  title={p.title || `Scratch project ${p.scratch_id}`}
-                />
-              </div>
-              <a
-                className="btn-mc-secondary inline-block"
-                href={`https://scratch.mit.edu/projects/${p.scratch_id}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Open on Scratch ↗
-              </a>
-            </li>
-          ))}
+          {projects.map((p) => {
+            // Only show delete button to admin or owner
+            const isAdmin = user?.email?.toLowerCase() === process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase();
+            const isOwner = p.created_by && user?.id === p.created_by;
+            return (
+              <li key={p.id} className="card-block space-y-2">
+                <h3 className="font-mc text-sm">{p.title || `Project ${p.scratch_id}`}</h3>
+                <div className="rounded overflow-hidden border">
+                  <iframe
+                    src={`https://scratch.mit.edu/projects/${p.scratch_id}/embed`}
+                    allowTransparency={true}
+                    width="100%"
+                    height="402"
+                    frameBorder="0"
+                    scrolling="no"
+                    allowFullScreen
+                    title={p.title || `Scratch project ${p.scratch_id}`}
+                  />
+                </div>
+                <a
+                  className="btn-mc-secondary inline-block"
+                  href={`https://scratch.mit.edu/projects/${p.scratch_id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open on Scratch ↗
+                </a>
+                {(isAdmin || isOwner) && (
+                  <DeleteScratchProjectButton projectId={p.id} />
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
