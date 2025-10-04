@@ -285,7 +285,7 @@ export default function CalendarWidgetClient({
     "relative inline-flex h-8 items-center justify-center rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-2 font-mc text-[0.68rem] uppercase tracking-[0.12em] leading-none text-[#3B2F1B] shadow-pixel transition-transform duration-150 hover:-translate-y-0.5 hover:brightness-[1.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B2F1B] focus-visible:ring-offset-2 focus-visible:ring-offset-mc-parchment";
   const controlButtonDisabledClass = "cursor-not-allowed opacity-60 hover:translate-y-0 hover:brightness-100";
   const selectClass =
-    "h-8 rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-2 font-mc text-[0.68rem] uppercase tracking-[0.12em] text-[#3B2F1B] shadow-pixel focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B2F1B] focus-visible:ring-offset-2 focus-visible:ring-offset-mc-parchment";
+    "h-8 min-w-[7rem] rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-2 font-mc text-[0.68rem] uppercase tracking-[0.12em] leading-none text-[#3B2F1B] shadow-pixel focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B2F1B] focus-visible:ring-offset-2 focus-visible:ring-offset-mc-parchment";
 
   return (
     <div className="space-y-3">
@@ -293,8 +293,7 @@ export default function CalendarWidgetClient({
         <h2 className="font-mc text-lg">Post Calendar</h2>
         <p className="text-xs text-mc-stone">Browse stories by day.</p>
       </div>
-
-      <div className="flex flex-wrap items-center gap-2 rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-2 py-2 shadow-pixel">
+      <div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto rounded-md border-2 border-mc-wood-dark bg-mc-parchment px-3 py-2 shadow-pixel sm:gap-3">
         <button
           type="button"
           className={`${controlButtonClass} ${!canGoPrev ? controlButtonDisabledClass : ""}`}
@@ -316,6 +315,15 @@ export default function CalendarWidgetClient({
             </option>
           ))}
         </select>
+        <button
+          type="button"
+          className={`${controlButtonClass} ${!canGoNext ? controlButtonDisabledClass : ""}`}
+          onClick={handleNext}
+          disabled={!canGoNext}
+          aria-label="Go to next month"
+        >
+          ›
+        </button>
         <select
           aria-label="Select year"
           className={selectClass}
@@ -330,15 +338,6 @@ export default function CalendarWidgetClient({
             )
           )}
         </select>
-        <button
-          type="button"
-          className={`${controlButtonClass} ${!canGoNext ? controlButtonDisabledClass : ""}`}
-          onClick={handleNext}
-          disabled={!canGoNext}
-          aria-label="Go to next month"
-        >
-          ›
-        </button>
         <button
           type="button"
           className={`${controlButtonClass} ${

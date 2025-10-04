@@ -95,7 +95,7 @@ export default function CalendarGrid({
         aria-pressed={isActive}
         aria-current={isToday ? "date" : undefined}
       >
-        <span className="font-mc text-sm">{day}</span>
+        <span className="font-mc text-[0.8rem] leading-none sm:text-[0.85rem]">{day}</span>
         {count > 0 ? (
           <span
             className={`mt-1 inline-flex w-fit items-center rounded px-[6px] py-[2px] font-mc text-[0.72rem] ${
