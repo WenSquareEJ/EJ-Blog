@@ -540,6 +540,68 @@ a:hover {
     );
 }
 
+/* ------------------------------------------------------------
+   PixelBackground overlays (safe for text contrast)
+   ------------------------------------------------------------ */
+.pixel-banner {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+.pixel-banner__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.pixel-banner__sky {
+  background: linear-gradient(to bottom, var(--mc-sky-light) 0%, var(--mc-sky-deep) 100%);
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+.pixel-banner__clouds {
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+.pixel-banner__cloud {
+  display: inline-block;
+  width: 120px;
+  height: 48px;
+  background: var(--mc-cloud);
+  border-radius: 32px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+.pixel-banner__trees {
+  background: linear-gradient(to bottom, var(--mc-tree-dark) 0%, var(--mc-tree-soft) 100%);
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+.pixel-banner__grass {
+  background: linear-gradient(to top, var(--mc-field) 0%, var(--mc-field-light) 100%);
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+.pixel-banner__grass-top {
+  display: block;
+  width: 100%;
+  height: 16px;
+  background: var(--mc-grass);
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+.pixel-banner__dirt {
+  display: block;
+  width: 100%;
+  height: 24px;
+  background: #8b5a2b;
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+
 @media (max-width: 768px) {
   .home-background {
     background:
