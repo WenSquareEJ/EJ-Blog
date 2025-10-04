@@ -13,13 +13,12 @@ type BlogSearchParams = {
 
 type BlogPostRow = {
   id: string;
-  title: string | null;
-  slug: string | null;
-  content: string | null;
+  title: string;
+  content: string;
   content_html: string | null;
-  excerpt: string | null;
   image_url: string | null;
   created_at: string | null;
+  published_at: string | null;
 };
 
 function parsePageParam(input: string | string[] | undefined): number {
@@ -42,10 +41,7 @@ function formatPublishedDate(value: string | null) {
   });
 }
 
-function pickPostHref(post: { id: string; slug: string | null }) {
-  if (post.slug && post.slug.trim().length > 0) {
-    return `/post/${post.slug}`;
-  }
+function pickPostHref(post: { id: string }) {
   return `/post/${post.id}`;
 }
 
@@ -65,7 +61,7 @@ export default async function BlogPage({
   } = await sb
     .from("posts")
     .select(
-      "id, title, slug, content, content_html, excerpt, image_url, created_at"
+      "id, title, content, content_html, image_url, created_at, published_at"
     )
     .eq("status", "approved")
     .order("created_at", { ascending: false })
@@ -99,9 +95,9 @@ export default async function BlogPage({
       id: post.id,
       title: post.title && post.title.trim().length > 0 ? post.title : "Untitled",
       href: pickPostHref(post),
-      excerpt: post.excerpt?.trim() || buildExcerpt(text),
+      excerpt: buildExcerpt(text),
       imageUrl: post.image_url ?? null,
-      createdAt: post.created_at ?? null,
+      createdAt: post.published_at ?? post.created_at ?? null,
     };
   });
 

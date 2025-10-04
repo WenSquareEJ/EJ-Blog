@@ -31,17 +31,14 @@ type ProgressQueryRow = {
   post_tags?: { tags: { slug: string | null } | null }[] | null;
 };
 
-const DEFAULT_ERIK_EMAIL = 'erik.ys.johansson@gmail.com';
-const ERIK_EMAIL = (process.env.NEXT_PUBLIC_ERIK_EMAIL ?? DEFAULT_ERIK_EMAIL)
-  .trim()
-  .toLowerCase();
-const ERIK_USER_ID_ENV = process.env.NEXT_PUBLIC_ERIK_USER_ID?.trim() ?? null;
+const ERIK_EMAIL = 'erik.ys.johansson@gmail.com'.toLowerCase();
 
-let cachedErikUserId: string | null | undefined;
+let cachedErikUserId: string | null = null;
+let erikUserResolved = false;
 let erikUserIdPromise: Promise<string | null> | null = null;
 
 async function resolveErikUserId(): Promise<string | null> {
-  if (typeof cachedErikUserId !== 'undefined') {
+  if (erikUserResolved) {
     return cachedErikUserId;
   }
 
@@ -50,45 +47,39 @@ async function resolveErikUserId(): Promise<string | null> {
   }
 
   erikUserIdPromise = (async () => {
-    if (ERIK_USER_ID_ENV) {
-      cachedErikUserId = ERIK_USER_ID_ENV;
-      return cachedErikUserId;
-    }
-
-    if (!ERIK_EMAIL) {
-      console.warn('[badges/page] NEXT_PUBLIC_ERIK_EMAIL is not configured.');
-      cachedErikUserId = null;
-      return cachedErikUserId;
-    }
-
     try {
       const adminClient = supabaseAdmin();
-      const { data, error } = await adminClient.auth.admin.getUserByEmail(ERIK_EMAIL);
+      const { data, error } = await adminClient.auth.admin.listUsers({
+        page: 1,
+        perPage: 200,
+      });
 
       if (error) {
         console.error('[badges/page] Failed to resolve Erik\'s user via email', error);
         cachedErikUserId = null;
-        return cachedErikUserId;
+      } else {
+        const users = data?.users ?? [];
+        const match = users.find((candidate) => candidate.email?.toLowerCase() === ERIK_EMAIL);
+        if (match?.id) {
+          cachedErikUserId = match.id;
+        } else {
+          console.warn(
+            `[badges/page] No user account found for Erik email ${ERIK_EMAIL}.`,
+          );
+          cachedErikUserId = null;
+        }
       }
-
-      const userId = data?.user?.id ?? null;
-      if (!userId) {
-        console.warn(
-          `[badges/page] No user account found for Erik email ${ERIK_EMAIL}.`,
-        );
-      }
-      cachedErikUserId = userId;
-      return cachedErikUserId;
     } catch (error) {
       console.error('[badges/page] Unexpected error resolving Erik\'s user ID', error);
       cachedErikUserId = null;
-      return cachedErikUserId;
     }
+
+    erikUserResolved = true;
+    erikUserIdPromise = null;
+    return cachedErikUserId;
   })();
 
-  const result = await erikUserIdPromise;
-  erikUserIdPromise = null;
-  return result;
+  return erikUserIdPromise;
 }
 
 function determineBadgeTier(name: string): BadgeTier {
