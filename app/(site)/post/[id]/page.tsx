@@ -1,12 +1,20 @@
 // /app/(site)/post/[id]/page.tsx
-import supabaseServer from "@/lib/supabaseServer";
 import Link from "next/link";
+import supabaseServer from "@/lib/supabaseServer";
 import { extractPostContent, markdownToHtml } from "@/lib/postContent";
 import type { TablesRow } from "@/lib/database.types";
+import AdminDeletePostButton from "@/components/AdminDeletePostButton";
 
 type PostRow = Pick<
   TablesRow<"posts">,
-  "id" | "title" | "content" | "content_html" | "content_json" | "image_url" | "created_at"
+  | "id"
+  | "title"
+  | "content"
+  | "content_html"
+  | "content_json"
+  | "image_url"
+  | "created_at"
+  | "status"
 > & {
   post_tags?: { tags: { id: string; name: string; slug: string } | null }[] | null;
 };
@@ -21,6 +29,13 @@ type CommentRow = {
 
 export default async function PostPage({ params }: { params: { id: string } }) {
   const sb = supabaseServer();
+  const { data: authRes } = await sb.auth.getUser();
+  const user = authRes?.user ?? null;
+  const adminEmail =
+    process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "wenyu.yan@gmail.com";
+  const isAdmin = Boolean(
+    user?.email && user.email.toLowerCase() === adminEmail,
+  );
   const { data: postData } = await sb
     .from("posts")
     .select(
@@ -32,10 +47,12 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         content_json,
         image_url,
         created_at,
+        status,
         post_tags:post_tags(tags(id, name, slug))
       `
     )
     .eq("id", params.id)
+    .neq("status", "deleted")
     .single();
   const post = postData as PostRow | null;
   const { data: commentsData } = await sb
@@ -45,7 +62,9 @@ export default async function PostPage({ params }: { params: { id: string } }) {
     .eq("status", "approved");
   const comments = (commentsData ?? []) as CommentRow[];
 
-  if (!post) return <div className="p-4">Post not found.</div>
+  if (!post || post.status === "deleted") {
+    return <div className="p-4">Post not found.</div>;
+  }
 
   const { html, text } = extractPostContent({
     content_html: post.content_html,
@@ -58,7 +77,17 @@ export default async function PostPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="space-y-4">
-      <h1 className="font-mc text-lg">{post.title}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <h1 className="font-mc text-lg">{post.title}</h1>
+        {isAdmin && (
+          <AdminDeletePostButton
+            postId={post.id}
+            behavior="redirect"
+            successMessage="Post deleted"
+            confirmMessage="Type DELETE to permanently hide this post."
+          />
+        )}
+      </div>
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.14em] text-mc-stone">
           {tags.map((tag) => (

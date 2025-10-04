@@ -2,6 +2,7 @@
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
 import type { TablesRow } from "@/lib/database.types";
+import AdminDeletePostButton from "@/components/AdminDeletePostButton";
 
 type ModPost = {
   id: string;
@@ -99,6 +100,12 @@ export default async function ModerationPage() {
                     Reject
                   </button>
                 </form>
+                <AdminDeletePostButton
+                  postId={p.id}
+                  behavior="refresh"
+                  successMessage="Post deleted"
+                  confirmMessage="Type DELETE to permanently hide this post."
+                />
               </div>
             </li>
           ))}

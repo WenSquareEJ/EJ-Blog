@@ -1,6 +1,6 @@
 create type role as enum ('child','parent','guest');
 create type post_visibility as enum ('family','public');
-create type post_status as enum ('draft','pending','approved','rejected');
+create type post_status as enum ('draft','pending','approved','rejected','deleted');
 create type comment_status as enum ('pending','approved','rejected');
 create type reaction_kind as enum ('like','party','idea','heart');
 

@@ -27,6 +27,25 @@ create policy "posts_child_update_own" on posts for update using (
 );
 create policy "posts_parents_moderate" on posts for update using (
   (select role from profiles where id = auth.uid()) = 'parent'
+) with check (
+  status <> 'deleted'
+);
+
+create policy "posts_admin_delete" on posts for update using (
+  exists (
+    select 1
+    from profiles p
+    where p.id = auth.uid()
+      and lower(p.email) = lower(coalesce(current_setting('app.admin_email', true), 'wenyu.yan@gmail.com'))
+  )
+) with check (
+  status = 'deleted'
+  and exists (
+    select 1
+    from profiles p
+    where p.id = auth.uid()
+      and lower(p.email) = lower(coalesce(current_setting('app.admin_email', true), 'wenyu.yan@gmail.com'))
+  )
 );
 
 create policy "comments_read" on comments for select using (

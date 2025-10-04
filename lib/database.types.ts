@@ -102,7 +102,7 @@ export interface Database {
           content_json: Json | null;
           image_url: string | null;
           visibility: 'family' | 'public';
-          status: 'draft' | 'pending' | 'approved' | 'rejected';
+          status: 'draft' | 'pending' | 'approved' | 'rejected' | 'deleted';
           created_at: string | null;
           published_at: string | null;
         };
@@ -115,7 +115,7 @@ export interface Database {
           content_json?: Json | null;
           image_url?: string | null;
           visibility?: 'family' | 'public';
-          status?: 'draft' | 'pending' | 'approved' | 'rejected';
+          status?: 'draft' | 'pending' | 'approved' | 'rejected' | 'deleted';
           created_at?: string | null;
           published_at?: string | null;
         };
@@ -128,7 +128,7 @@ export interface Database {
           content_json?: Json | null;
           image_url?: string | null;
           visibility?: 'family' | 'public';
-          status?: 'draft' | 'pending' | 'approved' | 'rejected';
+          status?: 'draft' | 'pending' | 'approved' | 'rejected' | 'deleted';
           created_at?: string | null;
           published_at?: string | null;
         };
