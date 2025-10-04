@@ -1,14 +1,36 @@
 import supabaseServer from "@/lib/supabaseServer";
+import supabaseAdmin from "@/lib/supabaseAdmin";
+import {
+  checkAndAwardForMinecraftPosts,
+  checkAndAwardForPost,
+} from "@/lib/badges";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const sb = supabaseServer();
-  const { error } = await sb
+  const {
+    data: updatedPost,
+    error,
+  } = await sb
     .from("posts")
     .update({ status: "approved", published_at: new Date().toISOString() })
-    .eq("id", params.id);
+    .eq("id", params.id)
+    .select("id, author")
+    .maybeSingle();
 
   if (error) {
     return new Response(error.message, { status: 500 });
+  }
+
+  if (updatedPost?.author) {
+    const adminClient = supabaseAdmin();
+    try {
+      await Promise.all([
+        checkAndAwardForPost(updatedPost.author, adminClient),
+        checkAndAwardForMinecraftPosts(updatedPost.author, adminClient),
+      ]);
+    } catch (awardError) {
+      console.error("[badges] Failed to award badges after approval", awardError);
+    }
   }
 
   return redirectOrJson(req);

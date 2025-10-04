@@ -69,3 +69,18 @@ create table if not exists subscriptions (
   user_id uuid references profiles(id) on delete cascade,
   frequency text check (frequency in ('instant','daily','weekly')) not null default 'daily'
 );
+
+create table if not exists badges (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  description text,
+  icon text,
+  criteria jsonb
+);
+
+create table if not exists user_badges (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  badge_id uuid not null references badges(id) on delete cascade,
+  awarded_at timestamptz default now(),
+  primary key (user_id, badge_id)
+);

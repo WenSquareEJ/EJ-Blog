@@ -3,6 +3,7 @@ import Link from "next/link";
 import PostCard from "@/components/PostCard";
 import supabaseServer from "@/lib/supabaseServer";
 import { buildExcerpt, extractPostContent } from "@/lib/postContent";
+import { resolveBadgeIcon } from "@/lib/badgeIcons";
 import type { TablesRow } from "@/lib/database.types";
 
 const PER_PAGE = 3;
@@ -31,6 +32,13 @@ type PostWithTags = Pick<
 
 type MonthlyPost = { id: string; title: string; created_at: string };
 type MonthlyPostRow = Pick<TablesRow<"posts">, "id" | "title" | "created_at">;
+
+type EarnedBadge = {
+  id: string;
+  name: string;
+  icon: string;
+  awarded_at: string | null;
+};
 
 function toISO(date: Date) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();
@@ -121,6 +129,39 @@ export default async function HomePage({
   searchParams?: SearchParams;
 }) {
   const sb = supabaseServer();
+
+  const {
+    data: { user } = { user: null },
+    error: userError,
+  } = await sb.auth.getUser();
+
+  if (userError) {
+    console.error('[home] Failed to fetch current user', userError);
+  }
+
+  const userId = user?.id ?? null;
+  let earnedBadges: EarnedBadge[] = [];
+
+  if (userId) {
+    const { data: badgeRows, error: badgeError } = await sb
+      .from('user_badges')
+      .select('awarded_at, badge:badges(id, name, icon)')
+      .eq('user_id', userId)
+      .order('awarded_at', { ascending: false });
+
+    if (badgeError) {
+      console.error('[home] Failed to load earned badges', badgeError);
+    } else {
+      earnedBadges = (badgeRows ?? [])
+        .map((row) => ({
+          id: row.badge?.id ?? '',
+          name: row.badge?.name ?? 'Badge',
+          icon: resolveBadgeIcon(row.badge?.icon),
+          awarded_at: row.awarded_at ?? null,
+        }))
+        .filter((badge): badge is EarnedBadge => Boolean(badge.id));
+    }
+  }
 
   const pageParam = parseParam(searchParams?.page) ?? "1";
   const page = Math.max(parseInt(pageParam, 10) || 1, 1);
@@ -291,10 +332,44 @@ export default async function HomePage({
   });
 
   const filtersActive = Boolean(activeTag || selectedDate);
+  const isLoggedIn = Boolean(userId);
+  const hasEarnedBadges = earnedBadges.length > 0;
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row">
-      <aside className="flex flex-col gap-6 lg:w-72 xl:w-80">
+    <div className="space-y-6">
+      {isLoggedIn && (
+        <section className="card-block space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-mc text-[0.8rem] uppercase tracking-[0.14em]">
+              My Badges
+            </h2>
+            {hasEarnedBadges && (
+              <span className="text-[0.65rem] uppercase tracking-[0.18em] text-mc-stone">
+                {earnedBadges.length} earned
+              </span>
+            )}
+          </div>
+          {hasEarnedBadges ? (
+            <ul className="flex flex-wrap gap-3">
+              {earnedBadges.map((badge) => (
+                <li key={badge.id} title={badge.name} className="flex flex-col items-center text-[0.65rem] text-mc-stone">
+                  <span className="text-2xl" aria-hidden>
+                    {badge.icon}
+                  </span>
+                  <span className="sr-only">{badge.name}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-mc-stone">
+              You haven&apos;t earned any badges yet — keep posting and exploring!
+            </p>
+          )}
+        </section>
+      )}
+
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <aside className="flex flex-col gap-6 lg:w-72 xl:w-80">
         <section className="card-block space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-mc text-[0.8rem] uppercase tracking-[0.14em]">
@@ -459,5 +534,6 @@ export default async function HomePage({
         </div>
       </section>
     </div>
+  </div>
   );
 }
