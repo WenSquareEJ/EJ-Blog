@@ -1,3 +1,13 @@
+/* Centralized home widget text utilities */
+.home-card-title {
+  @apply font-mc text-mc-ink;
+}
+.home-card-meta {
+  @apply text-xs text-mc-stone;
+}
+.home-card-body {
+  @apply text-[15px] leading-6 text-mc-ink;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

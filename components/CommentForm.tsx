@@ -14,7 +14,7 @@ export default function CommentForm({ postId }: { postId: string }) {
       if (res.ok) setContent('')
     }}>
       <textarea value={content} onChange={e=>setContent(e.target.value)} placeholder="Say something nice…" className="w-full border rounded-lg p-3 min-h-[100px]" />
-      <button className="mt-2 px-4 py-2 bg-brand text-white rounded-lg">Send</button>
+  <button className="mt-2 px-4 py-2 bg-brand text-mc-ink rounded-lg">Send</button>
       {msg && <p className="text-sm text-gray-600 mt-2">{msg}</p>}
     </form>
   )

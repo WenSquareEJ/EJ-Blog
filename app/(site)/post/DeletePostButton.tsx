@@ -36,7 +36,7 @@ export default function DeletePostButton({ postId }: { postId: string }) {
     <button
       onClick={onDelete}
       disabled={isPending}
-      className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+  className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-mc-ink hover:bg-red-700 disabled:opacity-50"
       aria-label="Delete post"
       title="Delete post"
     >

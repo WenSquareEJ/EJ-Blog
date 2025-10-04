@@ -32,7 +32,7 @@ export default function DeletePostButton({ postId }: { postId: string }) {
     <button
       onClick={onDelete}
       disabled={loading}
-      className="btn bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+  className="btn bg-red-600 hover:bg-red-700 text-mc-ink px-3 py-1 rounded"
       title="Delete this post"
     >
       {loading ? 'Deleting…' : 'Delete'}
