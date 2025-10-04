@@ -4,10 +4,10 @@ import supabaseServer from "@/lib/supabaseServer";
 import { buildExcerpt, extractPostContent } from "@/lib/postContent";
 import { resolveBadgeIcon } from "@/lib/badgeIcons";
 import type { TablesRow } from "@/lib/database.types";
-import ProfileSummary from "@/components/ProfileSummary";
+import AvatarTile from "@/components/AvatarTile";
+import ParrotSprite from "@/components/ParrotSprite";
+import PixelBackground from "@/components/PixelBackground";
 import XPBar from "@/components/XPBar";
-import Bird from "@/components/pixels/Bird";
-import Butterfly from "@/components/pixels/Butterfly";
 
 const PAGE_SIZE = 3;
 const HUB_SUBTITLE = "Welcome to the base camp for Erik's stories, games, and projects.";
@@ -106,6 +106,12 @@ function buildPageHref(page: number) {
   return page <= 1 ? "/" : `/?page=${page}`;
 }
 
+function coerceNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export default async function HomeHubPage({
   searchParams,
 }: {
@@ -124,6 +130,17 @@ export default async function HomeHubPage({
 
   const user = userRes?.user ?? null;
   const userEmail = user?.email ?? null;
+  const userMetadata = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  const metaValue = (key: string) => coerceNonEmptyString(userMetadata[key]);
+  const avatarUrl = metaValue("avatar_url") ?? metaValue("avatar") ?? null;
+  const emailHandle = userEmail ? userEmail.split("@")[0] : null;
+  const displayName =
+    metaValue("full_name") ??
+    metaValue("display_name") ??
+    metaValue("username") ??
+    metaValue("preferred_username") ??
+    emailHandle ??
+    "Guest Explorer";
 
   const adminEmail =
     process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "wenyu.yan@gmail.com";
@@ -326,6 +343,9 @@ export default async function HomeHubPage({
     icon: resolveBadgeIcon(badge.icon),
   }));
 
+  const featuredBadges = badges.slice(0, 3);
+  const messageWallPosts = latestPosts.slice(0, 3);
+
   let moderationSnapshot: ModerationSnapshot = {
     pendingPosts: null,
     pendingComments: null,
@@ -374,145 +394,277 @@ export default async function HomeHubPage({
   }
 
   return (
-    <div className="space-y-8">
-      <section className="card-block relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-8 right-4 z-0 hidden sm:block">
-          <Bird className="h-14 w-20 opacity-85 sm:h-16 sm:w-24 md:h-20 md:w-28" />
-        </div>
-        <div className="pointer-events-none absolute -bottom-6 left-6 z-0 hidden md:block">
-          <Butterfly className="h-16 w-24 opacity-90" />
-        </div>
-        <div className="pointer-events-none absolute top-4 left-[55%] z-0 rotate-6">
-          <Bird className="h-12 w-16 opacity-70 sm:opacity-90" />
-        </div>
-
-        <div className="relative z-10 space-y-3">
-          <div className="space-y-2">
-            <h1 className="font-mc text-3xl">{"Erik's Hub"}</h1>
-            <p className="text-sm opacity-80">{HUB_SUBTITLE}</p>
-            {userEmail && (
-              <p className="text-xs text-mc-stone">Signed in as {userEmail}</p>
-            )}
+    <div className="space-y-10">
+      <section className="home-banner relative overflow-hidden rounded-2xl border-[4px] border-[color:var(--mc-wood)] bg-[color:var(--mc-sky)] text-[color:var(--mc-ink)] shadow-mc">
+        <PixelBackground />
+        <ParrotSprite className="absolute bottom-16 right-6 hidden sm:block w-20 drop-shadow-[0_4px_0_rgba(35,19,8,0.35)]" />
+        <div className="relative z-10 flex flex-col gap-6 px-6 py-8 sm:px-10">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end">
+            <AvatarTile username={displayName} avatarUrl={avatarUrl} />
+            <div className="flex-1 space-y-4">
+              <div className="space-y-2 text-[color:var(--mc-ink)]">
+                <h1 className="font-mc text-3xl sm:text-4xl">{"Erik's Hub"}</h1>
+                <p className="max-w-xl text-sm text-[color:rgba(46,46,46,0.82)] sm:text-base">
+                  {HUB_SUBTITLE}
+                </p>
+                {userEmail && (
+                  <p className="text-xs uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.6)]">
+                    Signed in as {userEmail}
+                  </p>
+                )}
+              </div>
+              <div className="max-w-lg">
+                <XPBar currentXP={120} nextLevelXP={200} />
+              </div>
+            </div>
           </div>
-          <XPBar currentXP={120} nextLevelXP={200} className="w-full max-w-md" />
-          <div className="flex flex-wrap gap-2">
-            {user && (
-              <Link href="/post/new" className="btn-mc">
-                New Post
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="home-banner__tip">
+              <span className="home-banner__tip-label">Tip of the Day</span>
+              <p className="home-banner__tip-copy">{HUB_SUBTITLE}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {user && (
+                <Link href="/post/new" className="btn-mc">
+                  New Post
+                </Link>
+              )}
+              <Link href="/badges" className="btn-mc">
+                Badges
               </Link>
-            )}
-            <Link href="/badges" className="btn-mc">
-              Badges
-            </Link>
-            <Link href="/minecraft-zone" className="btn-mc">
-              Minecraft Zone
-            </Link>
-            <Link href="/scratch-board" className="btn-mc">
-              Scratch Board
-            </Link>
+              <Link href="/minecraft-zone" className="btn-mc">
+                Minecraft Zone
+              </Link>
+              <Link href="/scratch-board" className="btn-mc">
+                Scratch Board
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {user && (
-          <ProfileSummary
-            className="lg:col-span-2"
-            userEmail={userEmail}
-            recentBadges={recentBadgeSummaries}
-            errorMessage={userBadgesError}
-          />
-        )}
-
-        <section className="card-block space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-mc text-xl">Badges</h3>
-            {user && (
-              <Link href="/badges" className="text-xs font-semibold uppercase tracking-wide text-mc-stone hover:text-mc-ink">
-                View all →
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <section className="home-card">
+          <div className="home-card__body space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="font-mc text-2xl">My Projects</h2>
+              <Link
+                href="/minecraft-zone"
+                className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.7)] hover:text-[color:var(--mc-ink)]"
+              >
+                Explore all
               </Link>
-            )}
+            </div>
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="home-icon home-icon--minecraft" aria-hidden="true" />
+                    <h3 className="font-mc text-lg">Minecraft Zone</h3>
+                  </div>
+                  <Link
+                    href="/minecraft-zone"
+                    className="text-xs uppercase tracking-[0.2em] text-[color:rgba(46,46,46,0.6)] hover:text-[color:var(--mc-ink)]"
+                  >
+                    Visit
+                  </Link>
+                </div>
+                {minecraftError ? (
+                  <p className="text-sm text-red-600">{minecraftError}</p>
+                ) : minecraftPosts.length === 0 ? (
+                  <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                    No Minecraft adventures yet.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {minecraftPosts.map((post) => {
+                      const label = formatDateLabel(post.publishedAt);
+                      return (
+                        <li key={post.id} className="home-list-item">
+                          <Link href={`/post/${post.id}`} className="home-list-link">
+                            <span className="home-list-title">{post.title}</span>
+                            {label && (
+                              <span className="home-list-meta">{label}</span>
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="home-icon home-icon--scratch" aria-hidden="true" />
+                    <h3 className="font-mc text-lg">Scratch Board</h3>
+                  </div>
+                  <Link
+                    href="/scratch-board"
+                    className="text-xs uppercase tracking-[0.2em] text-[color:rgba(46,46,46,0.6)] hover:text-[color:var(--mc-ink)]"
+                  >
+                    Visit
+                  </Link>
+                </div>
+                {scratchError ? (
+                  <p className="text-sm text-red-600">{scratchError}</p>
+                ) : scratchProjects.length === 0 ? (
+                  <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                    No Scratch projects yet.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {scratchProjects.map((project) => {
+                      const label = formatDateLabel(project.createdAt);
+                      return (
+                        <li key={project.id} className="home-list-item">
+                          <Link href="/scratch-board" className="home-list-link">
+                            <span className="home-list-title">{project.title}</span>
+                            {label && (
+                              <span className="home-list-meta">{label}</span>
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
           </div>
-
-          {user ? (
-            <div className="space-y-3">
-              <p className="text-sm text-mc-stone">
-                Earned: {typeof userBadgeCount === 'number' ? userBadgeCount : '—'}
-              </p>
-              {userBadgesError ? (
-                <p className="text-sm text-red-500">{userBadgesError}</p>
-              ) : homeBadgeIcons.length > 0 ? (
-                <ul className="flex flex-wrap items-center gap-2">
-                  {homeBadgeIcons.map((badge) => (
-                    <li key={badge.id}>
-                      <span
-                        className="badge-icon badge-icon-earned"
-                        role="img"
-                        aria-label={badge.name}
-                      >
-                        {badge.icon}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-mc-stone">
-                  No badges yet—share a story to earn your first!
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-mc-stone">
-                Log in to start collecting badges.
-              </p>
-              <Link href="/login" className="btn-mc-secondary">
-                Log in
-              </Link>
-            </div>
-          )}
         </section>
 
-        <section className="card-block space-y-4 lg:col-span-2">
+        <div className="flex flex-col gap-6">
+          <section className="home-card">
+            <div className="home-card__body space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-mc text-2xl">Badges &amp; Achievements</h2>
+                <Link
+                  href="/badges"
+                  className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.7)] hover:text-[color:var(--mc-ink)]"
+                >
+                  View all
+                </Link>
+              </div>
+              {user ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                    Earned: {typeof userBadgeCount === "number" ? userBadgeCount : "—"}
+                  </p>
+                  {userBadgesError ? (
+                    <p className="text-sm text-red-600">{userBadgesError}</p>
+                  ) : homeBadgeIcons.length > 0 ? (
+                    <ul className="flex flex-wrap gap-2">
+                      {homeBadgeIcons.map((badge) => (
+                        <li key={badge.id} className="home-badge" aria-label={badge.name ?? undefined}>
+                          <span aria-hidden>{badge.icon}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                      No badges yet—share a story to earn your first!
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                    Log in to start collecting badges.
+                  </p>
+                  <Link href="/login" className="btn-mc-secondary">
+                    Log in
+                  </Link>
+                </div>
+              )}
+              {badgesError ? (
+                <p className="text-sm text-red-600">{badgesError}</p>
+              ) : featuredBadges.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[color:rgba(46,46,46,0.55)]">
+                    Featured badges
+                  </p>
+                  <ul className="flex flex-wrap gap-3">
+                    {featuredBadges.map((badge) => (
+                      <li key={badge.id} className="home-featured-badge">
+                        <span className="text-2xl" aria-hidden>
+                          {badge.icon}
+                        </span>
+                        <span className="home-featured-badge__label">{badge.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <section className="home-card">
+            <div className="home-card__body space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-mc text-xl">Message Wall</h2>
+                <Link
+                  href="#latest-posts"
+                  className="text-xs uppercase tracking-[0.2em] text-[color:rgba(46,46,46,0.6)] hover:text-[color:var(--mc-ink)]"
+                >
+                  See all
+                </Link>
+              </div>
+              {latestPostsError ? (
+                <p className="text-sm text-red-600">{latestPostsError}</p>
+              ) : messageWallPosts.length === 0 ? (
+                <p className="text-sm text-[color:rgba(46,46,46,0.7)]">
+                  No messages yet. Share a story to kick things off!
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {messageWallPosts.map((post) => {
+                    const label = formatDateLabel(post.publishedAt);
+                    return (
+                      <li key={post.id} className="home-message">
+                        <Link href={`/post/${post.id}`} className="home-message__link">
+                          <span className="home-message__title">{post.title}</span>
+                          {label && <span className="home-message__meta">{label}</span>}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section id="latest-posts" className="home-card">
+        <div className="home-card__body space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <h2 className="font-mc text-2xl">Latest Posts</h2>
-            <p className="text-xs uppercase tracking-wide text-mc-stone">
+            <p className="text-xs uppercase tracking-[0.18em] text-[color:rgba(46,46,46,0.6)]">
               Page {page}
             </p>
           </div>
-
           {latestPostsError ? (
-            <p className="text-sm text-red-500">{latestPostsError}</p>
+            <p className="text-sm text-red-600">{latestPostsError}</p>
           ) : latestPosts.length === 0 ? (
-            <p className="text-sm text-mc-stone">No posts yet.</p>
+            <p className="text-sm text-[color:rgba(46,46,46,0.7)]">No posts yet.</p>
           ) : (
             <ul className="space-y-3">
               {latestPosts.map((post) => {
                 const label = formatDateLabel(post.publishedAt);
                 return (
-                  <li
-                    key={post.id}
-                    className="rounded border border-mc-wood-dark/50 bg-mc-wood/20 p-3"
-                  >
-                    <Link href={`/post/${post.id}`} className="block space-y-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <h3 className="font-mc text-lg">{post.title}</h3>
-                        {label && (
-                          <span className="text-xs uppercase text-mc-stone">
-                            {label}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm leading-relaxed text-mc-ink/80">
-                        {post.excerpt}
-                      </p>
+                  <li key={post.id} className="home-message">
+                    <Link href={`/post/${post.id}`} className="home-message__link">
+                      <span className="home-message__title">{post.title}</span>
+                      <p className="home-message__excerpt">{post.excerpt}</p>
+                      {label && <span className="home-message__meta">{label}</span>}
                     </Link>
                   </li>
                 );
               })}
             </ul>
           )}
-
           <div className="flex flex-wrap gap-2">
             {hasPrevPage ? (
               <Link href={buildPageHref(page - 1)} className="btn-mc-secondary">
@@ -533,119 +685,11 @@ export default async function HomeHubPage({
               </span>
             )}
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="card-block space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-mc text-xl">Minecraft Zone</h3>
-            <Link href="/minecraft-zone" className="btn-mc-secondary">
-              View all
-            </Link>
-          </div>
-
-          {minecraftError ? (
-            <p className="text-sm text-red-500">{minecraftError}</p>
-          ) : minecraftPosts.length === 0 ? (
-            <p className="text-sm text-mc-stone">No items yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {minecraftPosts.map((post) => {
-                const label = formatDateLabel(post.publishedAt);
-                return (
-                  <li
-                    key={post.id}
-                    className="rounded border border-mc-wood-dark/50 bg-mc-wood/20 px-3 py-2"
-                  >
-                    <Link href={`/post/${post.id}`} className="block">
-                      <p className="font-mc text-sm">{post.title}</p>
-                      {label && (
-                        <p className="text-xs text-mc-stone">{label}</p>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        <section className="card-block space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-mc text-xl">Scratch Board</h3>
-            <Link href="/scratch-board" className="btn-mc-secondary">
-              View all
-            </Link>
-          </div>
-
-          {scratchError ? (
-            <p className="text-sm text-red-500">{scratchError}</p>
-          ) : scratchProjects.length === 0 ? (
-            <p className="text-sm text-mc-stone">No items yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {scratchProjects.map((project) => {
-                const label = formatDateLabel(project.createdAt);
-                return (
-                  <li
-                    key={project.id}
-                    className="rounded border border-mc-wood-dark/50 bg-mc-wood/20 px-3 py-2"
-                  >
-                    <p className="font-mc text-sm">{project.title}</p>
-                    {label && <p className="text-xs text-mc-stone">{label}</p>}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        <section className="card-block space-y-4 lg:col-span-2">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h3 className="font-mc text-xl">Badges</h3>
-              {user && userBadgeCount !== null && (
-                <p className="text-sm text-mc-stone">
-                  You have earned {userBadgeCount} badge{userBadgeCount === 1 ? "" : "s"}.
-                </p>
-              )}
-              {user && userBadgesError && (
-                <p className="text-sm text-red-500">{userBadgesError}</p>
-              )}
-            </div>
-            <Link href="/badges" className="btn-mc-secondary">
-              View all
-            </Link>
-          </div>
-
-          {badgesError ? (
-            <p className="text-sm text-red-500">{badgesError}</p>
-          ) : badges.length === 0 ? (
-            <p className="text-sm text-mc-stone">No badges yet.</p>
-          ) : (
-            <ul className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-              {badges.map((badge) => (
-                <li
-                  key={badge.id}
-                  className="rounded border border-mc-wood-dark/50 bg-mc-wood/20 px-3 py-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl" aria-hidden>
-                      {badge.icon}
-                    </span>
-                    <div>
-                      <p className="font-mc text-sm">{badge.name}</p>
-                      {badge.description && (
-                        <p className="text-xs text-mc-stone">{badge.description}</p>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="card-block space-y-3 lg:col-span-2">
+      <section className="home-card">
+        <div className="home-card__body space-y-3">
           <h3 className="font-mc text-xl">Quick Actions</h3>
           <div className="flex flex-wrap gap-2">
             {user && (
@@ -670,20 +714,22 @@ export default async function HomeHubPage({
               </Link>
             )}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {isAdmin && (
-          <section className="card-block space-y-3 lg:col-span-2">
-            <div className="flex items-center justify-between gap-2">
+      {isAdmin && (
+        <section className="home-card">
+          <div className="home-card__body space-y-3">
+            <div className="flex items-center justify-between">
               <h3 className="font-mc text-xl">{"Parents' Corner"}</h3>
               <Link href="/moderation" className="btn-mc-secondary">
                 Go to moderation
               </Link>
             </div>
             {moderationSnapshot.error && (
-              <p className="text-sm text-red-500">{moderationSnapshot.error}</p>
+              <p className="text-sm text-red-600">{moderationSnapshot.error}</p>
             )}
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2 text-sm text-[color:var(--mc-ink)]">
               <li className="flex items-center justify-between">
                 <span>Moderation queue</span>
                 <span className="font-mc text-base">
@@ -697,9 +743,10 @@ export default async function HomeHubPage({
                 </span>
               </li>
             </ul>
-          </section>
-        )}
-      </div>
+          </div>
+        </section>
+      )}
     </div>
   );
+
 }
