@@ -19,7 +19,7 @@ export default async function AvatarSettingsPage() {
   // Client-side upload form
   return (
     <div className="max-w-md mx-auto mt-10 card-block p-6 rounded-xl">
-      <h2 className="font-mc text-xl mb-4">Change Erik's Avatar</h2>
+  <h2 className="font-mc text-xl mb-4">Change Erik&apos;s Avatar</h2>
       <div className="mb-4 flex flex-col items-center">
         <img
           src={currentAvatar ?? "/placeholder-logo.svg"}
@@ -52,12 +52,12 @@ export default async function AvatarSettingsPage() {
           }
           // Get public URL
           const { publicUrl } = sb.storage.from("avatars").getPublicUrl(filePath).data ?? {};
-          if (!publicURL) {
+          if (!publicUrl) {
             alert("Could not get public URL for avatar.");
             return;
           }
           // Save to profile
-          const ok = await setErikProfileAvatar(publicURL);
+          const ok = await setErikProfileAvatar(publicUrl);
           if (!ok) {
             alert("Failed to save avatar URL.");
             return;

@@ -73,6 +73,7 @@ export interface Database {
           role: 'child' | 'parent' | 'guest';
           allowlisted: boolean;
           created_at: string | null;
+          avatar_url: string | null;
         };
         Insert: {
           id?: string;
@@ -81,6 +82,7 @@ export interface Database {
           role?: 'child' | 'parent' | 'guest';
           allowlisted?: boolean;
           created_at?: string | null;
+          avatar_url?: string | null;
         };
         Update: {
           id?: string;
@@ -89,6 +91,7 @@ export interface Database {
           role?: 'child' | 'parent' | 'guest';
           allowlisted?: boolean;
           created_at?: string | null;
+          avatar_url?: string | null;
         };
         Relationships: [];
       };
@@ -240,6 +243,8 @@ export interface Database {
           scratch_id: string;
           title: string | null;
           created_at: string;
+          created_by: string | null;
+          image_path: string | null;
         };
         Insert: {
           id?: string;
@@ -247,6 +252,8 @@ export interface Database {
           scratch_id: string;
           title?: string | null;
           created_at?: string;
+          created_by?: string | null;
+          image_path?: string | null;
         };
         Update: {
           id?: string;
@@ -254,6 +261,8 @@ export interface Database {
           scratch_id?: string;
           title?: string | null;
           created_at?: string;
+          created_by?: string | null;
+          image_path?: string | null;
         };
         Relationships: [
           {

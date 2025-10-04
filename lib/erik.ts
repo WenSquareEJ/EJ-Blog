@@ -9,11 +9,14 @@ export async function getErikUserId(): Promise<string | null> {
   if (envId && typeof envId === "string" && envId.trim().length > 0) {
     return envId.trim();
   }
-  // Fallback: lookup by email using admin client
-  const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-  if (error || !data?.users) return null;
-  const user = data.users.find(u => u.email?.toLowerCase() === ERIK_EMAIL.toLowerCase());
-  return user?.id ?? null;
+  // Fallback: lookup by email in profiles table
+  const { data, error } = await supabaseServer()
+    .from(ERIK_PROFILE_TABLE)
+    .select("id")
+    .eq("email", ERIK_EMAIL)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data.id ?? null;
 }
 
 export async function getErikProfileAvatar(): Promise<string | null> {
@@ -31,8 +34,16 @@ export async function getErikProfileAvatar(): Promise<string | null> {
 export async function setErikProfileAvatar(url: string): Promise<boolean> {
   const erikUserId = await getErikUserId();
   if (!erikUserId) return false;
+  // Fetch Erik's profile to get required fields
+  const { data: profile, error: fetchError } = await supabaseServer()
+    .from(ERIK_PROFILE_TABLE)
+    .select("id, email")
+    .eq("id", erikUserId)
+    .maybeSingle();
+  if (fetchError || !profile) return false;
+  const { email } = profile;
   const { error } = await supabaseServer()
     .from(ERIK_PROFILE_TABLE)
-    .upsert({ id: erikUserId, avatar_url: url }, { onConflict: "id" });
+    .upsert({ id: erikUserId, email, avatar_url: url }, { onConflict: "id" });
   return !error;
 }
