@@ -24,6 +24,7 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
   );
   const [isPending, startTransition] = useTransition();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [badgeCount, setBadgeCount] = useState<number | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -51,6 +52,36 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
   }, [normalizedAdminEmail, router, supabase]);
 
   const isLoggedIn = Boolean(user);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setBadgeCount(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    fetch('/api/badges/earned-count')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        const count = data?.count;
+        if (typeof count === 'number' && count > 0) {
+          setBadgeCount(count);
+        } else {
+          setBadgeCount(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setBadgeCount(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, user?.id]);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -104,7 +135,15 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
           )}
         </nav>
 
-        <div className="ms-0 shrink-0 sm:ms-auto">
+        <div className="ms-0 flex shrink-0 items-center gap-2 sm:ms-auto">
+          {isLoggedIn && badgeCount !== null && (
+            <span
+              className="nav-badge-count"
+              aria-label={`Badges earned: ${badgeCount}`}
+            >
+              🎖️ {badgeCount}
+            </span>
+          )}
           {!isLoggedIn ? (
             <Link className="btn-mc-secondary" href="/login">
               Log in

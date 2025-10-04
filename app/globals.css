@@ -24,6 +24,14 @@
   --mc-accent: var(--mc-sky);
   --mc-parchment: #ffffff;
   --mc-link: #1e7bf6;
+  /* extended sky/field palette for scenic backgrounds */
+  --mc-sky-deep: #7fc2ff;
+  --mc-sky-light: #bde4ff;
+  --mc-cloud: #fdfcf6;
+  --mc-tree-dark: #2f5f37;
+  --mc-tree-soft: #3c7344;
+  --mc-field: #6fbf5f;
+  --mc-field-light: #7dd871;
 }
 
 /* Base body */
@@ -98,6 +106,13 @@ a:hover {
   --mc-accent:#3c9d3c;   /* Minecraft green for primary buttons */
   --mc-parchment: #f4f0e6; /* light parchment surfaces */
   --mc-link: #4fa3f7;    /* bright blue links */
+  --mc-sky-deep: #6bb3f0;
+  --mc-sky-light: #9ed3ff;
+  --mc-cloud: #fff9f0;
+  --mc-tree-dark: #224028;
+  --mc-tree-soft: #2f5a33;
+  --mc-field: #4f8f3f;
+  --mc-field-light: #68ac53;
 }
 
 /* Optional: wood-themed helper surfaces (used if you want) */
@@ -123,4 +138,384 @@ a:hover {
   background-color: var(--mc-stone);
   color: var(--mc-ink);
   border-color: #000;
+}
+
+/* ------------------------------------------------------------
+   Badges page utilities (pixel-styled cards & ribbons)
+   ------------------------------------------------------------ */
+.badge-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(250, 244, 228, 0.96), rgba(242, 233, 206, 0.9));
+  border: 2px solid var(--mc-wood-dark, #4f2f13);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.badge-card:hover,
+.badge-card:focus-within {
+  transform: scale(1.01);
+  box-shadow: 0 10px 18px rgba(40, 25, 8, 0.18);
+}
+
+.badge-card-earned {
+  box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.45);
+}
+
+.badge-card-earned:hover,
+.badge-card-earned:focus-within {
+  box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.45), 0 14px 24px rgba(234, 179, 8, 0.25);
+}
+
+.badge-card-locked {
+  opacity: 0.92;
+  filter: saturate(0.85);
+  transition: opacity 120ms ease, filter 120ms ease;
+}
+
+.badge-card-locked:hover,
+.badge-card-locked:focus-within {
+  opacity: 1;
+  filter: saturate(1);
+}
+
+.badge-card-outline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(79, 47, 19, 0.4) 2px, transparent 0) top left,
+    linear-gradient(90deg, transparent calc(100% - 2px), rgba(79, 47, 19, 0.35) 0) top left,
+    linear-gradient(0deg, rgba(79, 47, 19, 0.32) 2px, transparent 0) top left,
+    linear-gradient(0deg, transparent calc(100% - 2px), rgba(79, 47, 19, 0.3) 0) top left;
+  background-size: 4px 100%, 4px 100%, 100% 4px, 100% 4px;
+  background-repeat: no-repeat;
+  mix-blend-mode: multiply;
+}
+
+.badge-icon {
+  font-size: 2.75rem;
+  line-height: 1;
+  text-shadow: 1px 1px 0 rgba(79, 47, 19, 0.2);
+}
+
+@media (min-width: 768px) {
+  .badge-icon {
+    font-size: 3.5rem;
+  }
+}
+
+.badge-icon-earned {
+  filter: drop-shadow(0 0 6px rgba(217, 180, 85, 0.5));
+}
+
+.badge-icon-locked {
+  opacity: 0.85;
+}
+
+.badge-title {
+  color: var(--mc-ink, #1f1b14);
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.badge-description {
+  font-size: 0.9rem;
+  color: rgba(47, 39, 28, 0.85);
+}
+
+.badge-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(47, 39, 28, 0.18);
+}
+
+.badge-status-earned {
+  background: rgba(202, 255, 174, 0.95);
+  color: #1c6b2a;
+}
+
+.badge-status-locked {
+  background: rgba(206, 212, 218, 0.9);
+  color: rgba(60, 68, 77, 0.85);
+}
+
+.badge-criteria {
+  color: rgba(47, 39, 28, 0.85);
+}
+
+.badge-tooltip-trigger {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  border: 2px solid rgba(79, 47, 19, 0.35);
+  background: linear-gradient(135deg, rgba(246, 232, 192, 0.95), rgba(235, 216, 168, 0.92));
+  font-weight: 700;
+  color: rgba(79, 47, 19, 0.85);
+  cursor: help;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.badge-tooltip-trigger:hover,
+.badge-tooltip-trigger:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.35);
+}
+
+.badge-progress {
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.badge-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(47, 39, 28, 0.7);
+}
+
+.badge-progress-value {
+  font-weight: 600;
+  color: var(--mc-ink, #1f1b14);
+}
+
+.badge-progress-bar {
+  position: relative;
+  height: 0.35rem;
+  border: 1px solid rgba(79, 47, 19, 0.35);
+  border-radius: 4px;
+  background: rgba(79, 47, 19, 0.12);
+  overflow: hidden;
+}
+
+.badge-progress-fill {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(60, 189, 73, 0.85), rgba(234, 179, 8, 0.85));
+  transition: width 160ms ease;
+}
+
+.badge-ribbon {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 38px 38px 0;
+  z-index: 2;
+}
+
+.badge-ribbon::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: -36px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 34px 34px 0;
+  opacity: 0.35;
+}
+
+.badge-ribbon-emerald {
+  border-color: transparent var(--mc-leaf, #4caf50) var(--mc-leaf, #4caf50) transparent;
+}
+
+.badge-ribbon-emerald::after {
+  border-color: transparent rgba(39, 94, 43, 0.8) rgba(39, 94, 43, 0.8) transparent;
+}
+
+.badge-ribbon-diamond {
+  border-color: transparent #6fdcf8 #6fdcf8 transparent;
+}
+
+.badge-ribbon-diamond::after {
+  border-color: transparent rgba(53, 138, 158, 0.75) rgba(53, 138, 158, 0.75) transparent;
+}
+
+.badge-ribbon-gold {
+  border-color: transparent #facc15 #facc15 transparent;
+}
+
+.badge-ribbon-gold::after {
+  border-color: transparent rgba(234, 176, 8, 0.8) rgba(234, 176, 8, 0.8) transparent;
+}
+
+.badge-ribbon-iron {
+  border-color: transparent #9ca3af #9ca3af transparent;
+}
+
+.badge-ribbon-iron::after {
+  border-color: transparent rgba(75, 85, 99, 0.8) rgba(75, 85, 99, 0.8) transparent;
+}
+
+/* Toasts */
+.toast-stack {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+.toast-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border: 2px solid rgba(79, 47, 19, 0.85);
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, rgba(246, 232, 192, 0.95), rgba(235, 216, 168, 0.92));
+  box-shadow: 0 6px 14px rgba(40, 25, 8, 0.22);
+  font-size: 0.9rem;
+  color: var(--mc-ink, #1f1b14);
+  animation: toast-pop 160ms ease-out;
+}
+
+.toast-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.toast-message {
+  font-family: var(--font-mc), monospace;
+  letter-spacing: 0.04em;
+}
+
+@keyframes toast-pop {
+  from {
+    transform: translateY(-4px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.nav-badge-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border: 2px solid rgba(79, 47, 19, 0.7);
+  border-radius: 9999px;
+  background-color: rgba(252, 244, 209, 0.2);
+  font-family: var(--font-mc), monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--mc-parchment, #f6e8c0);
+  box-shadow: 0 2px 6px rgba(20, 12, 4, 0.25);
+}
+
+/* ------------------------------------------------------------
+   Scenic home background + surface layering
+   ------------------------------------------------------------ */
+.home-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--mc-sky-deep);
+  background-image:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--mc-sky-light) 70%, transparent) 0%,
+      transparent 30%,
+      transparent 55%,
+      color-mix(in srgb, var(--mc-cloud) 30%, transparent) 56%,
+      transparent 62%
+    ),
+    linear-gradient(
+      to top,
+      color-mix(in srgb, var(--mc-field) 70%, transparent) 0%,
+      transparent 40%
+    ),
+    url('/bg/mc-landscape.svg');
+  background-repeat: no-repeat, no-repeat, repeat-x;
+  background-size: cover, cover, 1200px auto;
+  background-position: center top, center bottom, center bottom;
+  background-attachment: fixed, fixed, fixed;
+  filter: saturate(1.05);
+}
+
+@media (max-width: 768px) {
+  .home-background {
+    background-size: cover, cover, 900px auto;
+    background-attachment: scroll, scroll, scroll;
+  }
+}
+
+.site-content-surface {
+  position: relative;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background-color: rgba(254, 252, 245, 0.75);
+  box-shadow: 0 18px 42px rgba(20, 20, 20, 0.16);
+  padding: clamp(1.5rem, 2vw + 1rem, 2.75rem);
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 768px) {
+  .site-content-surface {
+    background-color: rgba(254, 252, 245, 0.88);
+    padding: clamp(1.25rem, 4vw + 1rem, 2rem);
+  }
+}
+
+.xp-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.xp-bar-label {
+  letter-spacing: 0.18em;
+}
+
+.xp-bar-track {
+  position: relative;
+  width: 100%;
+  height: 1.4rem;
+  border: 2px solid var(--mc-ink);
+  background-color: color-mix(in srgb, var(--mc-stone) 70%, white 30%);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.xp-bar-fill {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--mc-grass) 90%, #ffffff 10%) 0%,
+    color-mix(in srgb, var(--mc-field-light) 85%, #ffffff 15%) 100%
+  );
+  border-right: 2px solid rgba(0, 0, 0, 0.3);
+  transition: width 200ms ease-out;
+}
+
+.xp-bar-track::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }

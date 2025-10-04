@@ -9,6 +9,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import DOMPurify from "isomorphic-dompurify";
 import ImageUploader from "@/components/ImageUploader";
+import { showBadgeEarnedToast } from "@/components/Toast";
 
 function sanitizePreview(html: string) {
   return DOMPurify.sanitize(html);
@@ -140,6 +141,23 @@ export default function NewPostPage() {
         }
 
         setStatus("Post submitted for approval! Redirecting…");
+        void fetch("/api/badges/check-and-award", { method: "POST" })
+          .then((badgeRes) =>
+            badgeRes.ok ? badgeRes.json().catch(() => null) : null,
+          )
+          .then((payload) => {
+            const awarded = Array.isArray(payload?.awarded) ? payload.awarded : [];
+            for (const badge of awarded) {
+              const name =
+                badge && typeof badge.badgeName === "string"
+                  ? badge.badgeName
+                  : "Badge";
+              showBadgeEarnedToast(name);
+            }
+          })
+          .catch((error) => {
+            console.error("[badges/check-award] Passive trigger failed", error);
+          });
         setTimeout(() => {
           router.push("/");
           router.refresh();

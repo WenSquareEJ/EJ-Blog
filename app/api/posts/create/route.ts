@@ -4,6 +4,7 @@ import type { JSONContent } from "@tiptap/core";
 import supabaseServer from "@/lib/supabaseServer";
 import { markdownToHtml, sanitizeRichText } from "@/lib/postContent";
 import { attachTagsToPost, sanitizeTagNames } from "@/lib/tagHelpers";
+import { checkAndAwardBadgesForUser } from "@/lib/badges/checkAndAwardForUser";
 
 type CreatePostPayload = {
   id?: string | null;
@@ -80,10 +81,21 @@ export async function POST(req: Request) {
   }
 
   if (insertedPost?.id) {
-    const tagResult = await attachTagsToPost(sb, insertedPost.id, tags);
+    const tagResult = await attachTagsToPost(sb, insertedPost.id, tags, {
+      authorId: auth.user.id,
+    });
     if (tagResult.error) {
       return NextResponse.json({ error: tagResult.error }, { status: 500 });
     }
+  }
+
+  try {
+    await checkAndAwardBadgesForUser({ userId: auth.user.id, reader: sb });
+  } catch (error) {
+    console.error('[badges/check-award] Post creation follow-up failed', {
+      userId: auth.user.id,
+      error,
+    });
   }
 
   // For JSON callers return 201, otherwise redirect to homepage.

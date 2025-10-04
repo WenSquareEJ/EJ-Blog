@@ -1,539 +1,705 @@
 // /app/(site)/page.tsx
 import Link from "next/link";
-import PostCard from "@/components/PostCard";
 import supabaseServer from "@/lib/supabaseServer";
 import { buildExcerpt, extractPostContent } from "@/lib/postContent";
 import { resolveBadgeIcon } from "@/lib/badgeIcons";
 import type { TablesRow } from "@/lib/database.types";
+import ProfileSummary from "@/components/ProfileSummary";
+import XPBar from "@/components/XPBar";
+import Bird from "@/components/pixels/Bird";
+import Butterfly from "@/components/pixels/Butterfly";
 
-const PER_PAGE = 3;
-const TIMEZONE = "Europe/London";
+const PAGE_SIZE = 3;
+const HUB_SUBTITLE = "Welcome to the base camp for Erik's stories, games, and projects.";
+const MINECRAFT_TAG_SLUG = "minecraft";
 
-type SearchParams = {
+type HomeSearchParams = {
   page?: string | string[];
-  tag?: string | string[];
-  date?: string | string[];
-  y?: string | string[];
-  m?: string | string[];
 };
 
-type TagRow = { id: string; name: string; slug: string };
-type TagSummary = TagRow;
 type PostRow = Pick<
   TablesRow<"posts">,
-  "id" | "title" | "content" | "content_html" | "created_at"
-> & {
-  post_tags?: { tags: TagSummary | null }[] | null;
-};
-type PostWithTags = Pick<
+  "id" | "title" | "content" | "content_html" | "published_at" | "created_at"
+>;
+
+type MinecraftPostRow = Pick<
   TablesRow<"posts">,
-  "id" | "title" | "content" | "content_html" | "created_at"
-> & { tags: TagSummary[] };
+  "id" | "title" | "published_at" | "created_at"
+> & {
+  post_tags?: { tag_id: string | null }[] | null;
+};
 
-type MonthlyPost = { id: string; title: string; created_at: string };
-type MonthlyPostRow = Pick<TablesRow<"posts">, "id" | "title" | "created_at">;
+type ScratchProjectRow = Pick<
+  TablesRow<"scratch_projects">,
+  "id" | "title" | "created_at"
+>;
 
-type EarnedBadge = {
+type BadgeRow = Pick<
+  TablesRow<"badges">,
+  "id" | "name" | "icon" | "description"
+>;
+
+type PostSummary = {
+  id: string;
+  title: string;
+  excerpt: string;
+  publishedAt: string | null;
+};
+
+type MiniPost = {
+  id: string;
+  title: string;
+  publishedAt: string | null;
+};
+
+type ScratchPreview = {
+  id: string;
+  title: string;
+  createdAt: string | null;
+};
+
+type BadgePreview = {
   id: string;
   name: string;
   icon: string;
-  awarded_at: string | null;
+  description: string | null;
 };
 
-function toISO(date: Date) {
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString();
-}
+type EarnedBadgePreview = {
+  id: string;
+  name: string;
+  icon: string | null;
+  awardedAt: string | null;
+};
 
-function startOfMonth(year: number, monthIdx: number) {
-  return new Date(Date.UTC(year, monthIdx, 1, 0, 0, 0));
-}
+type ModerationSnapshot = {
+  pendingPosts: number | null;
+  pendingComments: number | null;
+  error: string | null;
+};
 
-function endOfMonth(year: number, monthIdx: number) {
-  return new Date(Date.UTC(year, monthIdx + 1, 0, 23, 59, 59, 999));
-}
-
-function startOfCalendarGrid(firstOfMonth: Date) {
-  const js = new Date(firstOfMonth);
-  const day = js.getUTCDay();
-  js.setUTCDate(js.getUTCDate() - day);
-  return js;
-}
-
-function addDays(date: Date, amount: number) {
-  const copy = new Date(date);
-  copy.setUTCDate(copy.getUTCDate() + amount);
-  return copy;
-}
-
-function toLondonDateKey(date: Date) {
-  const london = new Date(date.toLocaleString("en-GB", { timeZone: TIMEZONE }));
-  const y = london.getFullYear();
-  const m = String(london.getMonth() + 1).padStart(2, "0");
-  const d = String(london.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function monthName(year: number, monthIdx: number) {
-  return new Date(year, monthIdx, 1).toLocaleString("en-GB", {
-    month: "long",
-    year: "numeric",
-    timeZone: TIMEZONE,
-  });
-}
-
-function parseParam(value?: string | string[]) {
-  if (Array.isArray(value)) return value[0];
-  return value;
-}
-
-function buildHref(
-  current: SearchParams | undefined,
-  overrides: Record<string, string | undefined>
-) {
-  const params = new URLSearchParams();
-
-  if (current) {
-    Object.entries(current).forEach(([key, raw]) => {
-      if (!raw) return;
-      const value = Array.isArray(raw) ? raw[0] : raw;
-      if (value) params.set(key, value);
-    });
+function parsePageParam(input: string | string[] | undefined): number {
+  const raw = Array.isArray(input) ? input[0] : input;
+  const parsed = parseInt(raw ?? "1", 10);
+  if (Number.isNaN(parsed) || parsed < 1) {
+    return 1;
   }
-
-  Object.entries(overrides).forEach(([key, value]) => {
-    if (!value) {
-      params.delete(key);
-    } else {
-      params.set(key, value);
-    }
-  });
-
-  const qs = params.toString();
-  return qs ? `/?${qs}` : "/";
+  return parsed;
 }
 
-function formatDayLabel(dateString: string) {
-  const date = new Date(`${dateString}T00:00:00Z`);
-  return date.toLocaleDateString("en-GB", {
-    timeZone: TIMEZONE,
-    weekday: "short",
+function formatDateLabel(isoDate: string | null | undefined): string | null {
+  if (!isoDate) return null;
+  const value = new Date(isoDate);
+  if (!Number.isFinite(value.getTime())) return null;
+  return value.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
 }
 
-export default async function HomePage({
+function getPostTimestamp(row: { published_at: string | null; created_at: string | null }) {
+  return row.published_at ?? row.created_at ?? null;
+}
+
+function buildPageHref(page: number) {
+  return page <= 1 ? "/" : `/?page=${page}`;
+}
+
+export default async function HomeHubPage({
   searchParams,
 }: {
-  searchParams?: SearchParams;
+  searchParams?: HomeSearchParams;
 }) {
   const sb = supabaseServer();
 
   const {
-    data: { user } = { user: null },
+    data: userRes,
     error: userError,
   } = await sb.auth.getUser();
 
   if (userError) {
-    console.error('[home] Failed to fetch current user', userError);
+    console.error("[home-hub] failed to fetch user", userError);
   }
 
-  const userId = user?.id ?? null;
-  let earnedBadges: EarnedBadge[] = [];
+  const user = userRes?.user ?? null;
+  const userEmail = user?.email ?? null;
 
-  if (userId) {
-    const { data: badgeRows, error: badgeError } = await sb
-      .from('user_badges')
-      .select('awarded_at, badge:badges(id, name, icon)')
-      .eq('user_id', userId)
-      .order('awarded_at', { ascending: false });
+  const adminEmail =
+    process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "wenyu.yan@gmail.com";
+  const isAdmin =
+    userEmail?.toLowerCase() === adminEmail && adminEmail.length > 0;
 
-    if (badgeError) {
-      console.error('[home] Failed to load earned badges', badgeError);
-    } else {
-      earnedBadges = (badgeRows ?? [])
-        .map((row) => ({
-          id: row.badge?.id ?? '',
-          name: row.badge?.name ?? 'Badge',
-          icon: resolveBadgeIcon(row.badge?.icon),
-          awarded_at: row.awarded_at ?? null,
-        }))
-        .filter((badge): badge is EarnedBadge => Boolean(badge.id));
-    }
-  }
+  const page = parsePageParam(searchParams?.page);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
-  const pageParam = parseParam(searchParams?.page) ?? "1";
-  const page = Math.max(parseInt(pageParam, 10) || 1, 1);
+  let latestPosts: PostSummary[] = [];
+  let latestPostsError: string | null = null;
 
-  const tagSlug = parseParam(searchParams?.tag);
-  const dateParam = parseParam(searchParams?.date);
-
-  const now = new Date();
-  const requestedYear = parseInt(parseParam(searchParams?.y) ?? "", 10);
-  const requestedMonth = parseInt(parseParam(searchParams?.m) ?? "", 10);
-
-  let year = Number.isFinite(requestedYear) ? requestedYear : now.getFullYear();
-  let monthIdx =
-    Number.isFinite(requestedMonth) && requestedMonth >= 1 && requestedMonth <= 12
-      ? requestedMonth - 1
-      : now.getMonth();
-
-  let selectedDate: string | null = null;
-  if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
-    const parsed = new Date(`${dateParam}T00:00:00Z`);
-    if (!Number.isNaN(parsed.getTime())) {
-      selectedDate = dateParam;
-      year = parsed.getUTCFullYear();
-      monthIdx = parsed.getUTCMonth();
-    }
-  }
-
-  const from = (page - 1) * PER_PAGE;
-  const to = from + PER_PAGE - 1;
-
-  const { data: tagsData } = await sb
-    .from("tags")
-    .select("id, name, slug")
-    .order("name", { ascending: true });
-  const tags = (tagsData ?? []) as TagRow[];
-
-  const activeTag = tagSlug
-    ? tags.find((tag) => tag.slug === tagSlug) ?? null
-    : null;
-
-  let tagPostIds: string[] | null = null;
-  if (activeTag) {
-    const { data: links } = await sb
-      .from("post_tags")
-      .select("post_id")
-      .eq("tag_id", activeTag.id);
-    tagPostIds = (links ?? []).map((row: any) => row.post_id as string);
-  }
-
-  const monthStart = startOfMonth(year, monthIdx);
-  const monthEnd = endOfMonth(year, monthIdx);
-  const { data: monthlyPosts } = await sb
+  const {
+    data: latestData,
+    error: latestError,
+  } = await sb
     .from("posts")
-    .select("id, title, created_at")
+    .select(
+      "id, title, content, content_html, published_at, created_at"
+    )
     .eq("status", "approved")
-    .gte("created_at", toISO(monthStart))
-    .lte("created_at", toISO(monthEnd))
-    .order("created_at", { ascending: false });
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
-  const postsByDay = new Map<string, MonthlyPost[]>();
-  ((monthlyPosts ?? []) as MonthlyPostRow[]).forEach((post) => {
-    if (!post.created_at) return;
-    const createdAt = new Date(post.created_at);
-    if (Number.isNaN(createdAt.getTime())) return;
-    const key = toLondonDateKey(createdAt);
-    const bucket = postsByDay.get(key) ?? [];
-    bucket.push({ id: post.id, title: post.title, created_at: post.created_at });
-    postsByDay.set(key, bucket);
-  });
-
-  let postsError: string | null = null;
-  let posts: PostWithTags[] = [];
-
-  if (tagPostIds !== null && tagPostIds.length === 0) {
-    posts = [];
+  if (latestError) {
+    console.error("[home-hub] failed to load latest posts", latestError);
+    latestPostsError = "Unable to load latest posts.";
   } else {
-    let query = sb
-      .from("posts")
-      .select(
-        `
-          id,
-          title,
-          content,
-          content_html,
-          created_at,
-          post_tags:post_tags(tags(id, name, slug))
-        `
-      )
-      .eq("status", "approved")
-      .order("created_at", { ascending: false });
+    latestPosts = ((latestData ?? []) as PostRow[]).map((post) => {
+      const { text } = extractPostContent({
+        content_html: post.content_html,
+        content: post.content,
+      });
 
-    if (tagPostIds && tagPostIds.length > 0) {
-      query = query.in("id", tagPostIds);
-    }
-
-    if (selectedDate) {
-      const startDate = new Date(`${selectedDate}T00:00:00Z`);
-      const endDate = new Date(startDate);
-      endDate.setUTCDate(endDate.getUTCDate() + 1);
-      query = query
-        .gte("created_at", startDate.toISOString())
-        .lt("created_at", endDate.toISOString());
-    }
-
-    const { data, error } = await query.range(from, to);
-    const fetched = (data ?? []) as PostRow[];
-    posts = fetched.map((post) => {
-      const tagList = (post.post_tags ?? [])
-        .map((entry) => entry.tags)
-        .filter((tag): tag is TagSummary => Boolean(tag));
       return {
         id: post.id,
-        title: post.title,
-        content: post.content,
-        content_html: post.content_html,
-        created_at: post.created_at ?? "",
-        tags: tagList,
-      } satisfies PostWithTags;
+        title: post.title || "Untitled",
+        excerpt: buildExcerpt(text),
+        publishedAt: getPostTimestamp(post),
+      } satisfies PostSummary;
     });
-    if (error) {
-      postsError = error.message;
+  }
+
+  const hasNextPage = latestPosts.length === PAGE_SIZE;
+  const hasPrevPage = page > 1;
+
+  let minecraftPosts: MiniPost[] = [];
+  let minecraftError: string | null = null;
+
+  const {
+    data: minecraftTag,
+    error: minecraftTagError,
+  } = await sb
+    .from("tags")
+    .select("id")
+    .eq("slug", MINECRAFT_TAG_SLUG)
+    .maybeSingle();
+
+  if (minecraftTagError) {
+    console.error("[home-hub] failed to load minecraft tag", minecraftTagError);
+    minecraftError = "Unable to load Minecraft posts.";
+  } else if (minecraftTag) {
+    const {
+      data: minecraftData,
+      error: minecraftPostsError,
+    } = await sb
+      .from("posts")
+      .select(
+        "id, title, published_at, created_at, post_tags:post_tags!inner(tag_id)"
+      )
+      .eq("status", "approved")
+      .eq("post_tags.tag_id", minecraftTag.id)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    if (minecraftPostsError) {
+      console.error(
+        "[home-hub] failed to load minecraft posts",
+        minecraftPostsError
+      );
+      minecraftError = "Unable to load Minecraft posts.";
+    } else {
+      minecraftPosts = ((minecraftData ?? []) as MinecraftPostRow[]).map(
+        (post) => ({
+          id: post.id,
+          title: post.title || "Untitled",
+          publishedAt: getPostTimestamp(post),
+        })
+      );
     }
   }
 
-  const postSummaries = posts.map((post) => {
-    const { html, text } = extractPostContent({
-      content_html: post.content_html,
-      content: post.content,
-    });
-    return {
-      id: post.id,
-      title: post.title,
-      html,
-      text,
-      excerpt: buildExcerpt(text),
-      tags: post.tags,
-    };
-  });
+  let scratchProjects: ScratchPreview[] = [];
+  let scratchError: string | null = null;
 
-  const days = Array.from({ length: 42 }, (_, i) => addDays(startOfCalendarGrid(monthStart), i));
-  const monthLabel = monthName(year, monthIdx);
+  const {
+    data: scratchData,
+    error: scratchFetchError,
+  } = await sb
+    .from("scratch_projects")
+    .select("id, title, created_at")
+    .order("created_at", { ascending: false })
+    .limit(3);
 
-  const prev = new Date(Date.UTC(year, monthIdx, 1));
-  prev.setUTCMonth(prev.getUTCMonth() - 1);
-  const next = new Date(Date.UTC(year, monthIdx, 1));
-  next.setUTCMonth(next.getUTCMonth() + 1);
+  if (scratchFetchError) {
+    console.error("[home-hub] failed to load scratch projects", scratchFetchError);
+    scratchError = "Unable to load Scratch projects.";
+  } else {
+    scratchProjects = ((scratchData ?? []) as ScratchProjectRow[]).map(
+      (project) => ({
+        id: project.id,
+        title: project.title?.trim() || "Untitled",
+        createdAt: project.created_at ?? null,
+      })
+    );
+  }
 
-  const prevHref = buildHref(searchParams, {
-    y: String(prev.getUTCFullYear()),
-    m: String(prev.getUTCMonth() + 1),
-    date: undefined,
-    page: undefined,
-  });
+  let badges: BadgePreview[] = [];
+  let badgesError: string | null = null;
 
-  const nextHref = buildHref(searchParams, {
-    y: String(next.getUTCFullYear()),
-    m: String(next.getUTCMonth() + 1),
-    date: undefined,
-    page: undefined,
-  });
+  const {
+    data: badgesData,
+    error: badgesFetchError,
+  } = await sb
+    .from("badges")
+    .select("id, name, icon, description")
+    .order("name", { ascending: true })
+    .limit(6);
 
-  const allHref = buildHref(searchParams, {
-    tag: undefined,
-    date: undefined,
-    page: undefined,
-    y: undefined,
-    m: undefined,
-  });
+  if (badgesFetchError) {
+    console.error("[home-hub] failed to load badges", badgesFetchError);
+    badgesError = "Unable to load badges.";
+  } else {
+    badges = ((badgesData ?? []) as BadgeRow[]).map((badge) => ({
+      id: badge.id,
+      name: badge.name,
+      icon: resolveBadgeIcon(badge.icon),
+      description: badge.description,
+    }));
+  }
 
-  const filtersActive = Boolean(activeTag || selectedDate);
-  const isLoggedIn = Boolean(userId);
-  const hasEarnedBadges = earnedBadges.length > 0;
+  let userBadgeCount: number | null = null;
+  let userBadgesError: string | null = null;
+  let recentBadgeSummaries: EarnedBadgePreview[] = [];
+
+  if (user) {
+    const {
+      count: earnedCount,
+      error: userBadgesFetchError,
+    } = await sb
+      .from("user_badges")
+      .select("badge_id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+
+    if (userBadgesFetchError) {
+      console.error("[home-hub] failed to load user badges", userBadgesFetchError);
+      userBadgesError = "Unable to load your badge progress.";
+    } else {
+      userBadgeCount = earnedCount ?? 0;
+    }
+
+    const {
+      data: recentBadgesData,
+      error: recentBadgesError,
+    } = await sb
+      .from("user_badges")
+      .select("awarded_at, badges:badges(id, name, icon)")
+      .eq("user_id", user.id)
+      .order("awarded_at", { ascending: false })
+      .limit(6);
+
+    if (recentBadgesError) {
+      console.error("[home-hub] failed to load recent user badges", recentBadgesError);
+      userBadgesError = userBadgesError ?? "Unable to load your badge progress.";
+    } else {
+      recentBadgeSummaries = ((recentBadgesData ?? []) as {
+        awarded_at: string | null;
+        badges: { id: string | null; name: string | null; icon: string | null } | null;
+      }[])
+        .map((entry) => {
+          const badge = entry.badges;
+          if (!badge?.id) return null;
+          return {
+            id: badge.id,
+            name: badge.name ?? "Badge",
+            icon: badge.icon ?? null,
+            awardedAt: entry.awarded_at ?? null,
+          } satisfies EarnedBadgePreview;
+        })
+        .filter((badge): badge is EarnedBadgePreview => Boolean(badge));
+    }
+  }
+
+  const homeBadgeIcons = recentBadgeSummaries.slice(0, 4).map((badge) => ({
+    id: badge.id,
+    name: badge.name,
+    icon: resolveBadgeIcon(badge.icon),
+  }));
+
+  let moderationSnapshot: ModerationSnapshot = {
+    pendingPosts: null,
+    pendingComments: null,
+    error: null,
+  };
+
+  if (isAdmin) {
+    const {
+      count: pendingPosts,
+      error: pendingPostsError,
+    } = await sb
+      .from("posts")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending");
+
+    const {
+      count: pendingComments,
+      error: pendingCommentsError,
+    } = await sb
+      .from("comments")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending");
+
+    const errors: string[] = [];
+
+    if (pendingPostsError) {
+      console.error("[home-hub] failed to load pending posts", pendingPostsError);
+      errors.push("posts");
+    } else {
+      moderationSnapshot.pendingPosts = pendingPosts ?? 0;
+    }
+
+    if (pendingCommentsError) {
+      console.error(
+        "[home-hub] failed to load pending comments",
+        pendingCommentsError
+      );
+      errors.push("comments");
+    } else {
+      moderationSnapshot.pendingComments = pendingComments ?? 0;
+    }
+
+    if (errors.length > 0) {
+      moderationSnapshot.error = `Unable to load ${errors.join(" and ")} counts.`;
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      {isLoggedIn && (
+    <div className="space-y-8">
+      <section className="card-block relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-8 right-4 z-0 hidden sm:block">
+          <Bird className="h-14 w-20 opacity-85 sm:h-16 sm:w-24 md:h-20 md:w-28" />
+        </div>
+        <div className="pointer-events-none absolute -bottom-6 left-6 z-0 hidden md:block">
+          <Butterfly className="h-16 w-24 opacity-90" />
+        </div>
+        <div className="pointer-events-none absolute top-4 left-[55%] z-0 rotate-6">
+          <Bird className="h-12 w-16 opacity-70 sm:opacity-90" />
+        </div>
+
+        <div className="relative z-10 space-y-3">
+          <div className="space-y-2">
+            <h1 className="font-mc text-3xl">{"Erik's Hub"}</h1>
+            <p className="text-sm opacity-80">{HUB_SUBTITLE}</p>
+            {userEmail && (
+              <p className="text-xs text-mc-stone">Signed in as {userEmail}</p>
+            )}
+          </div>
+          <XPBar currentXP={120} nextLevelXP={200} className="w-full max-w-md" />
+          <div className="flex flex-wrap gap-2">
+            {user && (
+              <Link href="/post/new" className="btn-mc">
+                New Post
+              </Link>
+            )}
+            <Link href="/badges" className="btn-mc">
+              Badges
+            </Link>
+            <Link href="/minecraft-zone" className="btn-mc">
+              Minecraft Zone
+            </Link>
+            <Link href="/scratch-board" className="btn-mc">
+              Scratch Board
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {user && (
+          <ProfileSummary
+            className="lg:col-span-2"
+            userEmail={userEmail}
+            recentBadges={recentBadgeSummaries}
+            errorMessage={userBadgesError}
+          />
+        )}
+
         <section className="card-block space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-mc text-[0.8rem] uppercase tracking-[0.14em]">
-              My Badges
-            </h2>
-            {hasEarnedBadges && (
-              <span className="text-[0.65rem] uppercase tracking-[0.18em] text-mc-stone">
-                {earnedBadges.length} earned
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-mc text-xl">Badges</h3>
+            {user && (
+              <Link href="/badges" className="text-xs font-semibold uppercase tracking-wide text-mc-stone hover:text-mc-ink">
+                View all →
+              </Link>
+            )}
+          </div>
+
+          {user ? (
+            <div className="space-y-3">
+              <p className="text-sm text-mc-stone">
+                Earned: {typeof userBadgeCount === 'number' ? userBadgeCount : '—'}
+              </p>
+              {userBadgesError ? (
+                <p className="text-sm text-red-500">{userBadgesError}</p>
+              ) : homeBadgeIcons.length > 0 ? (
+                <ul className="flex flex-wrap items-center gap-2">
+                  {homeBadgeIcons.map((badge) => (
+                    <li key={badge.id}>
+                      <span
+                        className="badge-icon badge-icon-earned"
+                        role="img"
+                        aria-label={badge.name}
+                      >
+                        {badge.icon}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-mc-stone">
+                  No badges yet—share a story to earn your first!
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-mc-stone">
+                Log in to start collecting badges.
+              </p>
+              <Link href="/login" className="btn-mc-secondary">
+                Log in
+              </Link>
+            </div>
+          )}
+        </section>
+
+        <section className="card-block space-y-4 lg:col-span-2">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <h2 className="font-mc text-2xl">Latest Posts</h2>
+            <p className="text-xs uppercase tracking-wide text-mc-stone">
+              Page {page}
+            </p>
+          </div>
+
+          {latestPostsError ? (
+            <p className="text-sm text-red-500">{latestPostsError}</p>
+          ) : latestPosts.length === 0 ? (
+            <p className="text-sm text-mc-stone">No posts yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {latestPosts.map((post) => {
+                const label = formatDateLabel(post.publishedAt);
+                return (
+                  <li
+                    key={post.id}
+                    className="rounded border border-mc-wood-dark/50 bg-mc-wood/20 p-3"
+                  >
+                    <Link href={`/post/${post.id}`} className="block space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="font-mc text-lg">{post.title}</h3>
+                        {label && (
+                          <span className="text-xs uppercase text-mc-stone">
+                            {label}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm leading-relaxed text-mc-ink/80">
+                        {post.excerpt}
+                      </p>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {hasPrevPage ? (
+              <Link href={buildPageHref(page - 1)} className="btn-mc-secondary">
+                Previous
+              </Link>
+            ) : (
+              <span className="btn-mc-secondary cursor-not-allowed opacity-50">
+                Previous
+              </span>
+            )}
+            {hasNextPage ? (
+              <Link href={buildPageHref(page + 1)} className="btn-mc-secondary">
+                Next
+              </Link>
+            ) : (
+              <span className="btn-mc-secondary cursor-not-allowed opacity-50">
+                Next
               </span>
             )}
           </div>
-          {hasEarnedBadges ? (
-            <ul className="flex flex-wrap gap-3">
-              {earnedBadges.map((badge) => (
-                <li key={badge.id} title={badge.name} className="flex flex-col items-center text-[0.65rem] text-mc-stone">
-                  <span className="text-2xl" aria-hidden>
-                    {badge.icon}
-                  </span>
-                  <span className="sr-only">{badge.name}</span>
+        </section>
+
+        <section className="card-block space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-mc text-xl">Minecraft Zone</h3>
+            <Link href="/minecraft-zone" className="btn-mc-secondary">
+              View all
+            </Link>
+          </div>
+
+          {minecraftError ? (
+            <p className="text-sm text-red-500">{minecraftError}</p>
+          ) : minecraftPosts.length === 0 ? (
+            <p className="text-sm text-mc-stone">No items yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {minecraftPosts.map((post) => {
+                const label = formatDateLabel(post.publishedAt);
+                return (
+                  <li
+                    key={post.id}
+                    className="rounded border border-mc-wood-dark/50 bg-mc-wood/20 px-3 py-2"
+                  >
+                    <Link href={`/post/${post.id}`} className="block">
+                      <p className="font-mc text-sm">{post.title}</p>
+                      {label && (
+                        <p className="text-xs text-mc-stone">{label}</p>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <section className="card-block space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-mc text-xl">Scratch Board</h3>
+            <Link href="/scratch-board" className="btn-mc-secondary">
+              View all
+            </Link>
+          </div>
+
+          {scratchError ? (
+            <p className="text-sm text-red-500">{scratchError}</p>
+          ) : scratchProjects.length === 0 ? (
+            <p className="text-sm text-mc-stone">No items yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {scratchProjects.map((project) => {
+                const label = formatDateLabel(project.createdAt);
+                return (
+                  <li
+                    key={project.id}
+                    className="rounded border border-mc-wood-dark/50 bg-mc-wood/20 px-3 py-2"
+                  >
+                    <p className="font-mc text-sm">{project.title}</p>
+                    {label && <p className="text-xs text-mc-stone">{label}</p>}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <section className="card-block space-y-4 lg:col-span-2">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <h3 className="font-mc text-xl">Badges</h3>
+              {user && userBadgeCount !== null && (
+                <p className="text-sm text-mc-stone">
+                  You have earned {userBadgeCount} badge{userBadgeCount === 1 ? "" : "s"}.
+                </p>
+              )}
+              {user && userBadgesError && (
+                <p className="text-sm text-red-500">{userBadgesError}</p>
+              )}
+            </div>
+            <Link href="/badges" className="btn-mc-secondary">
+              View all
+            </Link>
+          </div>
+
+          {badgesError ? (
+            <p className="text-sm text-red-500">{badgesError}</p>
+          ) : badges.length === 0 ? (
+            <p className="text-sm text-mc-stone">No badges yet.</p>
+          ) : (
+            <ul className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+              {badges.map((badge) => (
+                <li
+                  key={badge.id}
+                  className="rounded border border-mc-wood-dark/50 bg-mc-wood/20 px-3 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl" aria-hidden>
+                      {badge.icon}
+                    </span>
+                    <div>
+                      <p className="font-mc text-sm">{badge.name}</p>
+                      {badge.description && (
+                        <p className="text-xs text-mc-stone">{badge.description}</p>
+                      )}
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="text-sm text-mc-stone">
-              You haven&apos;t earned any badges yet — keep posting and exploring!
-            </p>
           )}
         </section>
-      )}
 
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <aside className="flex flex-col gap-6 lg:w-72 xl:w-80">
-        <section className="card-block space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-mc text-[0.8rem] uppercase tracking-[0.14em]">
-              Tags
-            </h2>
-            <Link
-              href={allHref}
-              className="text-[0.65rem] uppercase tracking-[0.18em] text-mc-stone hover:underline"
-            >
-              All posts
-            </Link>
-          </div>
+        <section className="card-block space-y-3 lg:col-span-2">
+          <h3 className="font-mc text-xl">Quick Actions</h3>
           <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => {
-              const isActive = activeTag?.id === tag.id;
-              const href = buildHref(searchParams, {
-                tag: tag.slug,
-                page: undefined,
-              });
-              return (
-                <Link
-                  key={tag.id}
-                  href={href}
-                  className={`btn-mc-secondary ${
-                    isActive ? "ring-2 ring-mc-wood-dark" : ""
-                  }`}
-                >
-                  {tag.name}
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="card-block space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-mc text-[0.8rem] uppercase tracking-[0.14em]">
+            {user && (
+              <Link href="/post/new" className="btn-mc">
+                New Post
+              </Link>
+            )}
+            {user && (
+              <Link href="/scratch-board/new" className="btn-mc">
+                New Scratch Project
+              </Link>
+            )}
+            <Link href="/calendar" className="btn-mc-secondary">
               Calendar
-            </h2>
-            <div className="flex items-center gap-1">
-              <Link className="btn-mc px-2" href={prevHref}>
-                ‹
+            </Link>
+            <Link href="/tags" className="btn-mc-secondary">
+              Tags
+            </Link>
+            {isAdmin && (
+              <Link href="/moderation" className="btn-mc-secondary">
+                Moderation
               </Link>
-              <div className="text-[0.7rem] uppercase tracking-[0.12em] text-mc-stone">
-                {monthLabel}
-              </div>
-              <Link className="btn-mc px-2" href={nextHref}>
-                ›
-              </Link>
-            </div>
+            )}
           </div>
-          <div className="grid grid-cols-7 gap-1 text-center text-[0.6rem] uppercase tracking-[0.12em]">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="py-1 text-mc-stone">
-                {day}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {days.map((day) => {
-              const key = toLondonDateKey(day);
-              const inMonth = day.getUTCMonth() === monthIdx;
-              const count = postsByDay.get(key)?.length ?? 0;
-              const displayDay = day.getUTCDate();
-              const dayHref = buildHref(searchParams, {
-                date: key,
-                y: String(year),
-                m: String(monthIdx + 1),
-                page: undefined,
-              });
-              const isSelected = selectedDate === key;
-
-              return (
-                <Link
-                  key={key + String(displayDay)}
-                  href={dayHref}
-                  className={`flex min-h-[52px] flex-col items-center justify-center rounded border-2 border-mc-wood-dark px-1 py-1 text-[0.65rem] transition hover:brightness-105 ${
-                    inMonth ? "bg-mc-parchment" : "bg-mc-sand/40 text-mc-stone"
-                  } ${isSelected ? "ring-2 ring-mc-wood-dark" : ""}`}
-                >
-                  <span>{displayDay}</span>
-                  {count > 0 && (
-                    <span className="mt-1 rounded-sm bg-mc-wood-light px-1 text-[0.55rem] text-mc-parchment">
-                      {count}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-          {selectedDate && (
-            <div className="rounded-md border border-mc-wood-dark bg-mc-parchment px-2 py-1 text-[0.68rem] text-mc-dirt">
-              Selected day: {formatDayLabel(selectedDate)}
-            </div>
-          )}
         </section>
-      </aside>
 
-      <section className="flex-1 space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-mc text-base uppercase tracking-[0.18em] sm:text-lg">
-            Blog Posts
-          </h1>
-          {filtersActive && (
-            <Link href={allHref} className="btn-mc-secondary">
-              Clear filters
-            </Link>
-          )}
-          {activeTag && (
-            <span className="rounded-full border border-mc-wood-dark bg-mc-sand px-3 py-1 text-[0.7rem] uppercase tracking-[0.12em] text-mc-dirt">
-              Tag: {activeTag.name}
-            </span>
-          )}
-          {selectedDate && (
-            <span className="rounded-full border border-mc-wood-dark bg-mc-sand px-3 py-1 text-[0.7rem] uppercase tracking-[0.12em] text-mc-dirt">
-              Date: {formatDayLabel(selectedDate)}
-            </span>
-          )}
-        </div>
-
-        {postsError && (
-          <div className="card-block border-red-500 text-red-700">
-            Failed to load posts: {postsError}
-          </div>
+        {isAdmin && (
+          <section className="card-block space-y-3 lg:col-span-2">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-mc text-xl">{"Parents' Corner"}</h3>
+              <Link href="/moderation" className="btn-mc-secondary">
+                Go to moderation
+              </Link>
+            </div>
+            {moderationSnapshot.error && (
+              <p className="text-sm text-red-500">{moderationSnapshot.error}</p>
+            )}
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center justify-between">
+                <span>Moderation queue</span>
+                <span className="font-mc text-base">
+                  {moderationSnapshot.pendingPosts ?? "--"}
+                </span>
+              </li>
+              <li className="flex items-center justify-between">
+                <span>Pending comments</span>
+                <span className="font-mc text-base">
+                  {moderationSnapshot.pendingComments ?? "--"}
+                </span>
+              </li>
+            </ul>
+          </section>
         )}
-
-        {!postsError && posts.length === 0 && (
-          <div className="card-block text-sm text-mc-stone">
-            No posts found for these filters.
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {postSummaries.map((post) => (
-            <PostCard
-              key={post.id}
-              id={post.id}
-              title={post.title}
-              excerpt={post.excerpt}
-              tags={post.tags}
-            />
-          ))}
-        </div>
-
-        <div className="flex gap-2 pt-2">
-          {page > 1 && (
-            <Link
-              href={buildHref(searchParams, { page: String(page - 1) })}
-              className="btn-mc-secondary"
-            >
-              Previous
-            </Link>
-          )}
-          {posts.length === PER_PAGE && (
-            <Link
-              href={buildHref(searchParams, { page: String(page + 1) })}
-              className="btn-mc-secondary"
-            >
-              Next
-            </Link>
-          )}
-        </div>
-      </section>
+      </div>
     </div>
-  </div>
   );
 }

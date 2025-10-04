@@ -4,6 +4,7 @@ import type { JSONContent } from '@tiptap/core'
 import supabaseServer from "@/lib/supabaseServer";   // uses @supabase/ssr under the hood
 import { markdownToHtml, sanitizeRichText } from '@/lib/postContent'
 import { attachTagsToPost, sanitizeTagNames, type TagRecord } from "@/lib/tagHelpers";
+import { checkAndAwardBadgesForUser } from '@/lib/badges/checkAndAwardForUser'
 import type { TablesRow } from "@/lib/database.types";
 // If you plan to bypass RLS for admin-only actions, you can also use supabaseAdmin.
 // import { supabaseAdmin } from '@/lib/supabaseAdmin'
@@ -147,11 +148,22 @@ export async function POST(request: Request) {
 
   let attachedTags: { id: string; name: string; slug: string }[] = []
   if (insertedPost?.id) {
-    const tagResult = await attachTagsToPost(sb, insertedPost.id, sanitizedTags)
+    const tagResult = await attachTagsToPost(sb, insertedPost.id, sanitizedTags, {
+      authorId: userRes.user.id,
+    })
     if (tagResult.error) {
       return NextResponse.json({ error: tagResult.error }, { status: 500 })
     }
     attachedTags = tagResult.tags
+  }
+
+  try {
+    await checkAndAwardBadgesForUser({ userId: userRes.user.id, reader: sb })
+  } catch (error) {
+    console.error('[badges/check-award] Post API follow-up failed', {
+      userId: userRes.user.id,
+      error,
+    })
   }
 
   return NextResponse.json(

@@ -3,6 +3,8 @@ import "./globals.css";
 import supabaseServer from "@/lib/supabaseServer";
 import AIHelper from "@/components/AIHelper";
 import NavBar from "@/components/navbar";
+import ToastViewport from "@/components/Toast";
+import HomeBackground from "@/components/HomeBackground";
 
 // --- force this layout to run on every request (no caching) ---
 export const dynamic = "force-dynamic";
@@ -37,7 +39,8 @@ export default async function SiteLayout({
 
   return (
     <html lang="en">
-      <body className="theme-wood bg-mc-dirt text-mc-ink min-h-screen flex flex-col">
+      <body className="theme-wood bg-mc-sky text-mc-ink min-h-screen flex flex-col">
+        <HomeBackground />
         <NavBar initialUser={navUser} adminEmail={adminEmail} />
 
         <div className="banner-placeholder">
@@ -49,8 +52,12 @@ export default async function SiteLayout({
         </div>
 
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
-          {children}
+          <div className="site-content-surface">
+            {children}
+          </div>
         </main>
+
+        <ToastViewport />
 
         <AIHelper />
       </body>

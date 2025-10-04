@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, TablesRow } from "./database.types";
+import { checkAndAwardBadgesForUser } from "./badges/checkAndAwardForUser";
 
 export type TagRecord = Pick<TablesRow<"tags">, "id" | "name" | "slug">;
 
@@ -30,13 +31,18 @@ export function slugifyTag(name: string): string {
   return slug.slice(0, 50);
 }
 
+type AttachTagsOptions = {
+  authorId?: string | null;
+};
+
 export async function attachTagsToPost(
   client: SupabaseClient<Database>,
   postId: string,
-  tagNames: string[]
+  tagNames: string[],
+  options?: AttachTagsOptions
 ): Promise<{ tags: TagRecord[]; error: string | null }>
 {
-  if (!postId || tagNames.length === 0) {
+  if (!postId) {
     return { tags: [], error: null };
   }
 
@@ -48,45 +54,60 @@ export async function attachTagsToPost(
     })
     .filter((value): value is { name: string; slug: string } => Boolean(value));
 
-  if (tagPayloads.length === 0) {
-    return { tags: [], error: null };
+  let tags: TagRecord[] = [];
+
+  if (tagPayloads.length > 0) {
+    const { data: upsertedTags, error: upsertError } = await client
+      .from("tags")
+      .upsert(tagPayloads, { onConflict: "slug" })
+      .select("id, name, slug");
+
+    if (upsertError) {
+      return { tags: [], error: upsertError.message };
+    }
+
+    tags = (upsertedTags ?? [])
+      .map((tag) => {
+        if (!tag.id) return null;
+        return {
+          id: tag.id,
+          name: tag.name,
+          slug: tag.slug,
+        } satisfies TagRecord;
+      })
+      .filter((tag): tag is TagRecord => Boolean(tag));
+
+    if (tags.length === 0) {
+      return { tags: [], error: null };
+    }
+
+    const linkPayload = tags.map((tag) => ({
+      post_id: postId,
+      tag_id: tag.id,
+    }));
+
+    const { error: linkError } = await client
+      .from("post_tags")
+      .upsert(linkPayload, { onConflict: "post_id,tag_id" });
+
+    if (linkError) {
+      return { tags, error: linkError.message };
+    }
   }
 
-  const { data: upsertedTags, error: upsertError } = await client
-    .from("tags")
-    .upsert(tagPayloads, { onConflict: "slug" })
-    .select("id, name, slug");
-
-  if (upsertError) {
-    return { tags: [], error: upsertError.message };
-  }
-
-  const tags: TagRecord[] = (upsertedTags ?? [])
-    .map((tag) => {
-      if (!tag.id) return null;
-      return {
-        id: tag.id,
-        name: tag.name,
-        slug: tag.slug,
-      } satisfies TagRecord;
-    })
-    .filter((tag): tag is TagRecord => Boolean(tag));
-
-  if (tags.length === 0) {
-    return { tags: [], error: null };
-  }
-
-  const linkPayload = tags.map((tag) => ({
-    post_id: postId,
-    tag_id: tag.id,
-  }));
-
-  const { error: linkError } = await client
-    .from("post_tags")
-    .upsert(linkPayload, { onConflict: "post_id,tag_id" });
-
-  if (linkError) {
-    return { tags, error: linkError.message };
+  if (options?.authorId) {
+    try {
+      await checkAndAwardBadgesForUser({
+        userId: options.authorId,
+        reader: client,
+      });
+    } catch (error) {
+      console.error('[badges/check-award] Tag update follow-up failed', {
+        postId,
+        userId: options.authorId,
+        error,
+      });
+    }
   }
 
   return { tags, error: null };

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 288" shape-rendering="crispEdges">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8fd6ff" />
+      <stop offset="1" stop-color="#aee4ff" />
+    </linearGradient>
+    <linearGradient id="field" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#6fbf5f" />
+      <stop offset="1" stop-color="#4fa943" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="288" fill="url(#sky)" />
+  <!-- clouds -->
+  <g fill="#ffffff" opacity="0.95">
+    <rect x="64" y="40" width="112" height="24" />
+    <rect x="80" y="24" width="64" height="24" />
+    <rect x="320" y="56" width="96" height="24" />
+    <rect x="344" y="40" width="64" height="24" />
+    <rect x="216" y="72" width="72" height="18" />
+    <rect x="232" y="60" width="48" height="18" />
+  </g>
+  <!-- distant tree line -->
+  <rect x="0" y="152" width="512" height="32" fill="#2f5f37" />
+  <rect x="0" y="144" width="512" height="12" fill="#3c7344" />
+  <!-- tree silhouettes -->
+  <g fill="#25492c">
+    <rect x="32" y="130" width="36" height="34" />
+    <rect x="96" y="126" width="40" height="38" />
+    <rect x="164" y="132" width="32" height="32" />
+    <rect x="228" y="128" width="44" height="36" />
+    <rect x="296" y="134" width="34" height="30" />
+    <rect x="356" y="128" width="40" height="36" />
+    <rect x="420" y="132" width="36" height="34" />
+    <rect x="468" y="130" width="28" height="32" />
+  </g>
+  <!-- field foreground -->
+  <rect x="0" y="184" width="512" height="104" fill="url(#field)" />
+  <!-- path highlights -->
+  <g fill="#7dd871" opacity="0.6">
+    <rect x="48" y="220" width="72" height="16" />
+    <rect x="200" y="232" width="96" height="18" />
+    <rect x="360" y="214" width="84" height="16" />
+  </g>
+  <!-- darker ground strip -->
+  <rect x="0" y="264" width="512" height="24" fill="#3d7a37" />
+</svg>

@@ -2,9 +2,17 @@
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
+const apiKey = process.env.OPENAI_API_KEY
 
 export async function POST(req: Request) {
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: "AI helper unavailable" },
+      { status: 503 }
+    )
+  }
+
+  const client = new OpenAI({ apiKey })
   const { question } = await req.json()
 
   const chat = await client.chat.completions.create({
