@@ -565,6 +565,29 @@ a:hover {
     line-height: 1.4;
   }
 
+  .home-banner__parrot {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 0.25rem;
+  }
+
+  .home-banner__parrot .parrot-sprite {
+    margin-top: 0.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .home-banner__parrot {
+      justify-content: flex-end;
+      align-items: flex-end;
+      padding-bottom: 0;
+    }
+
+    .home-banner__parrot .parrot-sprite {
+      margin-top: 0;
+      transform: translateY(6px);
+    }
+  }
+
   .home-icon {
     display: inline-flex;
     width: 36px;

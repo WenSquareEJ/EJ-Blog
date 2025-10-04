@@ -397,7 +397,6 @@ export default async function HomeHubPage({
     <div className="space-y-10">
       <section className="home-banner relative overflow-hidden rounded-2xl border-[4px] border-[color:var(--mc-wood)] bg-[color:var(--mc-sky)] text-[color:var(--mc-ink)] shadow-mc">
         <PixelBackground />
-        <ParrotSprite className="absolute bottom-16 right-6 hidden sm:block w-20 drop-shadow-[0_4px_0_rgba(35,19,8,0.35)]" />
         <div className="relative z-10 flex flex-col gap-6 px-6 py-8 sm:px-10">
           <div className="flex flex-col gap-6 md:flex-row md:items-end">
             <AvatarTile username={displayName} avatarUrl={avatarUrl} />
@@ -418,26 +417,13 @@ export default async function HomeHubPage({
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="home-banner__tip">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6">
+            <div className="home-banner__tip md:max-w-[65%] md:flex-1">
               <span className="home-banner__tip-label">Tip of the Day</span>
               <p className="home-banner__tip-copy">{HUB_SUBTITLE}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {user && (
-                <Link href="/post/new" className="btn-mc">
-                  New Post
-                </Link>
-              )}
-              <Link href="/badges" className="btn-mc">
-                Badges
-              </Link>
-              <Link href="/minecraft-zone" className="btn-mc">
-                Minecraft Zone
-              </Link>
-              <Link href="/scratch-board" className="btn-mc">
-                Scratch Board
-              </Link>
+            <div className="home-banner__parrot md:flex md:basis-[35%] md:justify-end">
+              <ParrotSprite className="w-20 drop-shadow-[0_4px_0_rgba(35,19,8,0.35)] sm:w-24 md:w-28" />
             </div>
           </div>
         </div>
