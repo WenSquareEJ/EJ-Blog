@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { JSONContent } from "@tiptap/core";
 import supabaseServer from "@/lib/supabaseServer";
 import { markdownToHtml, sanitizeRichText } from "@/lib/postContent";
+import { attachTagsToPost, sanitizeTagNames } from "@/lib/tagHelpers";
 
 type CreatePostPayload = {
   id?: string | null;
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
     contentHtml = markdownToHtml(rawPlain);
   }
 
-  const tags = sanitizeTags(payload.tags);
+  const tags = sanitizeTagNames(payload.tags);
 
   const insertData = {
     id: payload.id ?? undefined,
@@ -65,21 +66,24 @@ export async function POST(req: Request) {
     content: (payload.content ?? rawPlain) || "",
     content_html: contentHtml || null,
     content_json: payload.content_json ?? null,
-    tags,
     status: "pending" as const,
   };
 
-  // TODO: remove debug logs
-  console.log("[api/posts/create] insert payload", {
-    id: insertData.id ?? "(generated)",
-    title: insertData.title,
-    status: insertData.status,
-  });
+  const { data: insertedPost, error: insertError } = await sb
+    .from("posts")
+    .insert(insertData)
+    .select("id")
+    .single();
 
-  const { error } = await sb.from("posts").insert(insertData);
+  if (insertError) {
+    return NextResponse.json({ error: insertError.message }, { status: 400 });
+  }
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+  if (insertedPost?.id) {
+    const tagResult = await attachTagsToPost(sb, insertedPost.id, tags);
+    if (tagResult.error) {
+      return NextResponse.json({ error: tagResult.error }, { status: 500 });
+    }
   }
 
   // For JSON callers return 201, otherwise redirect to homepage.
@@ -97,20 +101,4 @@ function parseJsonSafely(value: string | null | undefined) {
   } catch (error) {
     return null;
   }
-}
-
-function sanitizeTags(input: string[] | null | undefined) {
-  if (!Array.isArray(input)) return null;
-  const seen = new Set<string>();
-  const cleaned: string[] = [];
-  for (const raw of input) {
-    if (typeof raw !== "string") continue;
-    const normalized = raw.trim().toLowerCase();
-    if (!normalized || normalized.length > 20) continue;
-    if (seen.has(normalized)) continue;
-    cleaned.push(normalized);
-    seen.add(normalized);
-    if (cleaned.length >= 12) break;
-  }
-  return cleaned.length ? cleaned : null;
 }

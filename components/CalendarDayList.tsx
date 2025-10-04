@@ -6,6 +6,7 @@ type CalendarPost = {
   title: string;
   content: string | null;
   content_html: string | null;
+  tags?: { id: string; name: string; slug: string }[];
 };
 
 export default function CalendarDayList({ posts }: { posts: CalendarPost[] | null }) {
@@ -26,6 +27,7 @@ export default function CalendarDayList({ posts }: { posts: CalendarPost[] | nul
             id={post.id}
             title={post.title}
             excerpt={buildExcerpt(text)}
+            tags={post.tags}
           />
         );
       })}

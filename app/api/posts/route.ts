@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import type { JSONContent } from '@tiptap/core'
 import supabaseServer from "@/lib/supabaseServer";   // uses @supabase/ssr under the hood
 import { markdownToHtml, sanitizeRichText } from '@/lib/postContent'
+import { attachTagsToPost, sanitizeTagNames, type TagRecord } from "@/lib/tagHelpers";
+import type { TablesRow } from "@/lib/database.types";
 // If you plan to bypass RLS for admin-only actions, you can also use supabaseAdmin.
 // import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
@@ -11,6 +13,10 @@ import { markdownToHtml, sanitizeRichText } from '@/lib/postContent'
  * Returns approved posts (paginated)
  * Query params: ?page=1&pageSize=10
  */
+type PostJoinRow = TablesRow<'posts'> & {
+  post_tags: { tags: TagRecord | null }[] | null;
+};
+
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const page = Math.max(parseInt(url.searchParams.get('page') || '1', 10), 1)
@@ -24,7 +30,24 @@ export async function GET(request: Request) {
   const sb = supabaseServer()
   const { data, error, count } = await sb
     .from('posts')
-    .select('*', { count: 'exact' })
+    .select(
+      `
+        id,
+        title,
+        content,
+        content_html,
+        content_json,
+        image_url,
+        status,
+        created_at,
+        published_at,
+        author,
+        post_tags:post_tags(
+          tags:tags(id, name, slug)
+        )
+      `,
+      { count: 'exact' }
+    )
     .eq('status', 'approved')
     .order('published_at', { ascending: false })
     .range(from, to)
@@ -33,11 +56,21 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  const posts = (data ?? []).map((post) => {
+    const { post_tags, ...rest } = post as PostJoinRow;
+
+    const tagList = (post_tags ?? [])
+      .map((entry) => entry.tags)
+      .filter((tag): tag is TagRecord => Boolean(tag));
+
+    return { ...rest, tags: tagList };
+  });
+
   return NextResponse.json({
     page,
     pageSize,
     total: count ?? 0,
-    posts: data ?? [],
+    posts,
   })
 }
 
@@ -90,7 +123,7 @@ export async function POST(request: Request) {
     html = markdownToHtml(plain)
   }
 
-  const sanitizedTags = sanitizeTags(tags);
+  const sanitizedTags = sanitizeTagNames(tags);
 
   const insert = {
     title,
@@ -99,31 +132,30 @@ export async function POST(request: Request) {
     content_json: content_json ?? null,
     author: userRes.user.id,
     status: 'pending' as const,
-    tags: sanitizedTags,
     images,
   }
 
-  const { data, error } = await sb.from('posts').insert(insert).select().single()
+  const { data: insertedPost, error } = await sb
+    .from('posts')
+    .insert(insert)
+    .select('id, title, content, content_html, content_json, image_url, status, created_at, author')
+    .single()
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ post: data }, { status: 201 })
-}
-
-function sanitizeTags(input: string[] | null | undefined) {
-  if (!Array.isArray(input)) return null;
-  const seen = new Set<string>();
-  const cleaned: string[] = [];
-  for (const raw of input) {
-    if (typeof raw !== 'string') continue;
-    const normalized = raw.trim().toLowerCase();
-    if (!normalized || normalized.length > 20) continue;
-    if (seen.has(normalized)) continue;
-    cleaned.push(normalized);
-    seen.add(normalized);
-    if (cleaned.length >= 12) break;
+  let attachedTags: { id: string; name: string; slug: string }[] = []
+  if (insertedPost?.id) {
+    const tagResult = await attachTagsToPost(sb, insertedPost.id, sanitizedTags)
+    if (tagResult.error) {
+      return NextResponse.json({ error: tagResult.error }, { status: 500 })
+    }
+    attachedTags = tagResult.tags
   }
-  return cleaned.length ? cleaned : null;
+
+  return NextResponse.json(
+    { post: { ...insertedPost, tags: attachedTags } },
+    { status: 201 }
+  )
 }

@@ -45,7 +45,6 @@ export interface Database {
           content_html: string | null;
           content_json: Json | null;
           image_url: string | null;
-          tags: string[] | null;
           visibility: 'family' | 'public';
           status: 'draft' | 'pending' | 'approved' | 'rejected';
           created_at: string | null;
@@ -59,7 +58,6 @@ export interface Database {
           content_html?: string | null;
           content_json?: Json | null;
           image_url?: string | null;
-          tags?: string[] | null;
           visibility?: 'family' | 'public';
           status?: 'draft' | 'pending' | 'approved' | 'rejected';
           created_at?: string | null;
@@ -73,7 +71,6 @@ export interface Database {
           content_html?: string | null;
           content_json?: Json | null;
           image_url?: string | null;
-          tags?: string[] | null;
           visibility?: 'family' | 'public';
           status?: 'draft' | 'pending' | 'approved' | 'rejected';
           created_at?: string | null;
@@ -130,19 +127,19 @@ export interface Database {
       };
       tags: {
         Row: {
-          id: number;
+          id: string;
           name: string;
           slug: string;
           created_at: string | null;
         };
         Insert: {
-          id?: number;
+          id?: string;
           name: string;
           slug: string;
           created_at?: string | null;
         };
         Update: {
-          id?: number;
+          id?: string;
           name?: string;
           slug?: string;
           created_at?: string | null;
@@ -151,19 +148,19 @@ export interface Database {
       };
       post_tags: {
         Row: {
-          id: number;
           post_id: string;
-          tag_id: number;
+          tag_id: string;
+          created_at: string | null;
         };
         Insert: {
-          id?: number;
           post_id: string;
-          tag_id: number;
+          tag_id: string;
+          created_at?: string | null;
         };
         Update: {
-          id?: number;
           post_id?: string;
-          tag_id?: number;
+          tag_id?: string;
+          created_at?: string | null;
         };
         Relationships: [
           {

@@ -7,7 +7,9 @@ import type { TablesRow } from "@/lib/database.types";
 type PostRow = Pick<
   TablesRow<"posts">,
   "id" | "title" | "content" | "content_html" | "content_json" | "image_url" | "created_at"
->;
+> & {
+  post_tags?: { tags: { id: string; name: string; slug: string } | null }[] | null;
+};
 
 type CommentRow = {
   id: string;
@@ -21,7 +23,18 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   const sb = supabaseServer();
   const { data: postData } = await sb
     .from("posts")
-    .select("id, title, content, content_html, content_json, image_url, created_at")
+    .select(
+      `
+        id,
+        title,
+        content,
+        content_html,
+        content_json,
+        image_url,
+        created_at,
+        post_tags:post_tags(tags(id, name, slug))
+      `
+    )
     .eq("id", params.id)
     .single();
   const post = postData as PostRow | null;
@@ -39,10 +52,26 @@ export default async function PostPage({ params }: { params: { id: string } }) {
     content: post.content,
   });
   const safeHtml = html || (text ? markdownToHtml(text) : "<p></p>");
+  const tags = (post.post_tags ?? [])
+    .map((entry) => entry.tags)
+    .filter((tag): tag is { id: string; name: string; slug: string } => Boolean(tag));
 
   return (
     <div className="space-y-4">
       <h1 className="font-mc text-lg">{post.title}</h1>
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.14em] text-mc-stone">
+          {tags.map((tag) => (
+            <Link
+              key={tag.id}
+              href={`/tags/${tag.slug}`}
+              className="rounded-full border border-mc-wood-dark bg-mc-sand px-2 py-1 text-mc-dirt"
+            >
+              #{tag.name}
+            </Link>
+          ))}
+        </div>
+      )}
       <article
         className="prose prose-sm sm:prose-base max-w-none text-mc-dirt"
         dangerouslySetInnerHTML={{ __html: safeHtml }}

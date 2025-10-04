@@ -16,14 +16,18 @@ type SearchParams = {
   m?: string | string[];
 };
 
-type TagRow = { id: number; name: string; slug: string };
-type PostRow = {
-  id: string;
-  title: string;
-  content: string | null;
-  content_html: string | null;
-  created_at: string;
+type TagRow = { id: string; name: string; slug: string };
+type TagSummary = TagRow;
+type PostRow = Pick<
+  TablesRow<"posts">,
+  "id" | "title" | "content" | "content_html" | "created_at"
+> & {
+  post_tags?: { tags: TagSummary | null }[] | null;
 };
+type PostWithTags = Pick<
+  TablesRow<"posts">,
+  "id" | "title" | "content" | "content_html" | "created_at"
+> & { tags: TagSummary[] };
 
 type MonthlyPost = { id: string; title: string; created_at: string };
 type MonthlyPostRow = Pick<TablesRow<"posts">, "id" | "title" | "created_at">;
@@ -188,14 +192,23 @@ export default async function HomePage({
   });
 
   let postsError: string | null = null;
-  let posts: PostRow[] = [];
+  let posts: PostWithTags[] = [];
 
   if (tagPostIds !== null && tagPostIds.length === 0) {
     posts = [];
   } else {
     let query = sb
       .from("posts")
-      .select("id, title, content, content_html, created_at")
+      .select(
+        `
+          id,
+          title,
+          content,
+          content_html,
+          created_at,
+          post_tags:post_tags(tags(id, name, slug))
+        `
+      )
       .eq("status", "approved")
       .order("created_at", { ascending: false });
 
@@ -213,7 +226,20 @@ export default async function HomePage({
     }
 
     const { data, error } = await query.range(from, to);
-    posts = (data ?? []) as PostRow[];
+    const fetched = (data ?? []) as PostRow[];
+    posts = fetched.map((post) => {
+      const tagList = (post.post_tags ?? [])
+        .map((entry) => entry.tags)
+        .filter((tag): tag is TagSummary => Boolean(tag));
+      return {
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        content_html: post.content_html,
+        created_at: post.created_at ?? "",
+        tags: tagList,
+      } satisfies PostWithTags;
+    });
     if (error) {
       postsError = error.message;
     }
@@ -230,6 +256,7 @@ export default async function HomePage({
       html,
       text,
       excerpt: buildExcerpt(text),
+      tags: post.tags,
     };
   });
 
@@ -407,6 +434,7 @@ export default async function HomePage({
               id={post.id}
               title={post.title}
               excerpt={post.excerpt}
+              tags={post.tags}
             />
           ))}
         </div>
