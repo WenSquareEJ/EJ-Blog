@@ -5,9 +5,12 @@ import { extractPostContent, markdownToHtml } from "@/lib/postContent";
 import type { TablesRow } from "@/lib/database.types";
 import AdminDeletePostButton from "@/components/AdminDeletePostButton";
 
+export const dynamic = "force-dynamic";
+
 type PostRow = Pick<
   TablesRow<"posts">,
   | "id"
+  | "author"
   | "title"
   | "content"
   | "content_html"
@@ -28,6 +31,7 @@ type CommentRow = {
 };
 
 export default async function PostPage({ params }: { params: { id: string } }) {
+  const postId = params.id;
   const sb = supabaseServer();
   const { data: authRes } = await sb.auth.getUser();
   const user = authRes?.user ?? null;
@@ -36,11 +40,15 @@ export default async function PostPage({ params }: { params: { id: string } }) {
   const isAdmin = Boolean(
     user?.email && user.email.toLowerCase() === adminEmail,
   );
-  const { data: postData } = await sb
+  const {
+    data: post,
+    error: postError,
+  } = await sb
     .from("posts")
     .select(
       `
         id,
+        author,
         title,
         content,
         content_html,
@@ -51,20 +59,40 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         post_tags:post_tags(tags(id, name, slug))
       `
     )
-    .eq("id", params.id)
-    .neq("status", "deleted")
-    .single();
-  const post = postData as PostRow | null;
-  const { data: commentsData } = await sb
-    .from("comments")
-    .select("id, content, created_at, status, author:profiles(display_name)")
-    .eq("post_id", params.id)
-    .eq("status", "approved");
-  const comments = (commentsData ?? []) as CommentRow[];
+    .eq("id", postId)
+    .maybeSingle<PostRow>();
 
-  if (!post || post.status === "deleted") {
+  if (postError) {
+    console.error(`[post/${postId}] failed to load post`, postError);
+  }
+
+  if (!post) {
+    console.warn(`[post/${postId}] post not found or blocked by RLS`);
     return <div className="p-4">Post not found.</div>;
   }
+
+  if (post.status === "deleted") {
+    console.warn(`[post/${postId}] post marked as deleted`);
+    return <div className="p-4">Post not found.</div>;
+  }
+
+  const isAuthor = user?.id === post.author;
+  const isApproved = post.status === "approved";
+
+  if (!isApproved && !isAuthor) {
+    console.warn(`[post/${postId}] post status '${post.status}' not visible to viewer`);
+    return <div className="p-4">Post not found.</div>;
+  }
+
+  const { data: commentsData, error: commentsError } = await sb
+    .from("comments")
+    .select("id, content, created_at, status, author:profiles(display_name)")
+    .eq("post_id", postId)
+    .eq("status", "approved");
+  if (commentsError) {
+    console.error(`[post/${postId}] failed to load comments`, commentsError);
+  }
+  const comments = (commentsData ?? []) as CommentRow[];
 
   const { html, text } = extractPostContent({
     content_html: post.content_html,
