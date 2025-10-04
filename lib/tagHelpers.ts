@@ -4,6 +4,38 @@ import { checkAndAwardBadgesForUser } from "./badges/checkAndAwardForUser";
 
 export type TagRecord = Pick<TablesRow<"tags">, "id" | "name" | "slug">;
 
+const TAG_SLUG_NORMALIZATION: Record<string, string> = {
+  mincraft: "minecraft",
+  minecrft: "minecraft",
+};
+
+export function normalizeTagSlug(
+  input: string | null | undefined,
+  options?: { defaultSlug?: string }
+): string {
+  const fallback = options?.defaultSlug?.trim().toLowerCase() ?? "";
+  const raw = (input ?? "").trim().toLowerCase();
+  const slug = raw || fallback;
+  if (!slug) return "";
+  const normalized = TAG_SLUG_NORMALIZATION[slug] ?? slug;
+  return normalized.toLowerCase();
+}
+
+export function resolveTagSlugVariants(
+  input: string | null | undefined,
+  options?: { defaultSlug?: string }
+): string[] {
+  const canonical = normalizeTagSlug(input, options);
+  if (!canonical) return [];
+  const variants = new Set<string>([canonical]);
+  for (const [typo, target] of Object.entries(TAG_SLUG_NORMALIZATION)) {
+    if (target === canonical) {
+      variants.add(typo);
+    }
+  }
+  return Array.from(variants);
+}
+
 export function sanitizeTagNames(input: string[] | null | undefined): string[] {
   if (!Array.isArray(input)) return [];
   const seen = new Set<string>();
