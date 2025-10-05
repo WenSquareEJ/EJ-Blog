@@ -1,3 +1,5 @@
+export const ERIK_USER_ID =
+  (process.env.NEXT_PUBLIC_ERIK_USER_ID || "").trim() || "";
 export function normalizeAvatarFilename(input: string): string {
   return String(input || "")
     .trim()

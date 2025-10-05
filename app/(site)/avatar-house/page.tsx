@@ -1,98 +1,78 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+"use client";
 
-import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { createServerClient } from "@supabase/ssr";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-const avatarChoices = [
-  "alex", "bluey", "creeper", "enderman", "erik_steve",
-  "scientist", "skeleton", "villager", "waffle", "zombie", "steve"
-];
+const AVATAR_FILES = ["alex","bluey","creeper","erik_steve","scientist","skeleton","villager","waffle","zombie","steve"];
 
-async function saveAvatar(formData: FormData) {
-  "use server";
+export default function AvatarHousePage() {
+  const supabase = createClientComponentClient();
+  const [user, setUser] = useState<any>(null);
+  const [current, setCurrent] = useState("/avatars/steve.png");
+  const [error, setError] = useState("");
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: cookies() }   // ✅ Correct usage
-  );
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError("Please sign in as Erik to change your avatar.");
+        return;
+      }
+      setUser(user);
+      const { data } = await supabase
+        .from("profile_avatar")
+        .select("avatar")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (data?.avatar) setCurrent(data.avatar);
+    })();
+  }, [supabase]);
 
-  const avatar = String(formData.get("avatar") || "");
-  const ok = avatarChoices.some(s => avatar === `/avatars/${s}.png`);
-  if (!ok) return;
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  await supabase
-    .from("profiles")
-    .upsert({ id: user.id, avatar_url: avatar }, { onConflict: "id" });
-
-  revalidatePath("/site");
-  revalidatePath("/site/avatar-house");
-  redirect("/site/avatar-house?ok=1");
-}
-
-export default async function Page() {
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: cookies() }   // ✅ Correct usage
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("avatar_url")
-    .eq("id", user?.id ?? "")
-    .maybeSingle();
-
-  const currentAvatar = profile?.avatar_url;
+  async function chooseAvatar(file: string) {
+    if (!user) return;
+    await supabase
+      .from("profile_avatar")
+      .upsert({ id: user.id, avatar: `/avatars/${file}.png` });
+    setCurrent(`/avatars/${file}.png`);
+  }
 
   return (
-    <div className="mx-auto max-w-3xl p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-mc text-2xl">Choose Your Avatar</h1>
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="font-mc text-2xl">Avatar House</h1>
         <Link href="/site" className="btn-mc-secondary">← Back to Home</Link>
       </div>
-
-      <p className="text-xs text-mc-stone">
-        Pick an avatar below. Changes save instantly if you’re signed in as Erik (or admin).
-      </p>
-
-      <form action={saveAvatar} method="post" className="home-card p-4">
-        <div className="mt-3 grid grid-cols-5 gap-3 sm:grid-cols-10">
-          {avatarChoices.map((stem) => {
-            const url = `/avatars/${stem}.png`;
-            const selected = currentAvatar === url;
-            return (
+      {error ? (
+        <p className="text-sm text-red-600">{error}</p>
+      ) : (
+        <>
+          <div className="flex items-center gap-3 mb-4">
+            <span>Current:</span>
+            <Image src={current} alt="Current avatar" width={64} height={64} className="rounded-md" />
+          </div>
+          <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
+            {AVATAR_FILES.map((f) => (
               <button
-                key={stem}
-                type="submit"
-                name="avatar"
-                value={url}
-                className={
-                  "relative aspect-square rounded-md border-2 p-1 bg-white/90 hover:brightness-95 transition border-[#5a3d1a]" +
-                  (selected ? " ring-2 ring-[#2f6f32]" : "")
-                }
-                title={stem}
-                aria-label={stem}
+                key={f}
+                onClick={() => chooseAvatar(f)}
+                className={`border-2 rounded-md p-1 ${
+                  current === `/avatars/${f}.png` ? "border-green-600" : "border-[#5a3d1a]"
+                }`}
               >
-                <img
-                  src={url}
-                  alt={stem}
-                  className="object-contain w-full h-full"
-                  style={{ borderRadius: "0.5rem" }}
+                <Image
+                  src={`/avatars/${f}.png`}
+                  alt={f}
+                  width={64}
+                  height={64}
+                  className="object-contain rounded"
                 />
               </button>
-            );
-          })}
-        </div>
-      </form>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

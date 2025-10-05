@@ -7,31 +7,31 @@ import AvatarTile from "@/components/AvatarTile";
 import XPBar from "@/components/XPBar";
 import ParrotSprite from "@/components/ParrotSprite";
 import AvatarHouse from "@/components/AvatarHouse";
-import { getErikProfileAvatar, getErikUserId, AVATAR_OPTIONS, isAvatarFilename, AvatarFilename } from "@/lib/erik";
-import { getUser } from "@/lib/supabaseServer";
+import { ERIK_USER_ID } from "@/lib/erik";
+import { getUser, supabaseServer } from "@/lib/supabaseServer";
 
 export default async function Page() {
-  // Get Erik's avatar
-  let avatarUrl: string = "/avatars/Steve.png";
-  let currentAvatarFilename: string = "Steve.png";
-  try {
-    const avatarUrlRaw = await getErikProfileAvatar();
-    if (avatarUrlRaw && typeof avatarUrlRaw === 'string' && avatarUrlRaw.length > 0) {
-      avatarUrl = avatarUrlRaw;
-      // Extract filename from path
-      const match = avatarUrlRaw.match(/\/avatars\/(.+\.png)$/);
-      if (match && isAvatarFilename(match[1])) {
-        currentAvatarFilename = match[1] as AvatarFilename;
-      }
-    }
-  } catch (error) {
-    console.error('[home] avatar fetch failed', error);
+  if (!ERIK_USER_ID) {
+    console.warn("[home] ERIK_USER_ID is missing; falling back to default avatar");
+  }
+
+  type ProfileAvatarRow = { avatar: string | null };
+
+  const supabase = supabaseServer();
+  let avatarUrl = "/avatars/steve.png";
+
+  if (ERIK_USER_ID) {
+    const { data: profile } = await supabase
+      .from("profile_avatar")
+      .select("avatar")
+      .eq("id", ERIK_USER_ID)
+      .maybeSingle<ProfileAvatarRow>();
+    avatarUrl = profile?.avatar ?? avatarUrl;
   }
 
   // Get logged-in user and Erik's id
   const user = await getUser();
-  const erikUserId = await getErikUserId();
-  const isErik = user?.id === erikUserId;
+  const isErik = user?.id === ERIK_USER_ID;
 
   // Render Home Hub
   return (

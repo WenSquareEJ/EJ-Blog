@@ -123,7 +123,7 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
                 Blog
               </Link>
               {(isErik || isAdmin) && (
-                <Link className="btn-mc" href="/avatar-house">
+                <Link className="btn-mc" href="/site/avatar-house">
                   Avatar
                 </Link>
               )}
