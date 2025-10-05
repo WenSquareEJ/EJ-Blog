@@ -331,8 +331,7 @@ export default async function Page() {
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
             <AvatarTile username="Erik" avatarUrl={avatarUrl} />
             <div className="flex-1 space-y-2">
-              <h1 className="home-card-title text-3xl sm:text-4xl">Erik&apos;s Hub</h1>
-              <p className="home-card-body max-w-xl text-sm sm:text-base">{HUB_SUBTITLE}</p>
+              <h1 className="font-mc text-2xl text-[#f4d68e] drop-shadow-[1px_1px_0_#5a3d1a]">EJ Blocks & Bots</h1>
               <div className="max-w-lg">
                 <XPBar />
               </div>
