@@ -1,3 +1,4 @@
+import PortalRoom from "@/components/PortalRoom";
 // Defensive helpers
 const safeMap = <T, R>(arr: T[] | null | undefined, fn: (t:T)=>R): R[] => Array.isArray(arr) ? arr.map(fn) : [];
 const isValidISO = (s: string | null | undefined) => !!s && !Number.isNaN(new Date(s).getTime());
@@ -404,9 +405,9 @@ export default async function Page() {
           </div>
         </div>
       </section>
-      {/* ...existing home sections... */}
-      {/* Avatar House Card: Only Erik sees editor, at very end */}
-      {/* ...other sections above... */}
+      {/* Portal Room grid below Hero */}
+      <PortalRoom />
+
       {/* Parents' Corner (admin only) */}
       {isAdmin && (
         <section className="home-card">
@@ -429,8 +430,9 @@ export default async function Page() {
           </div>
         </section>
       )}
+
       {/* Avatar House: Only Erik sees, at very end */}
-      {user?.id === ERIK_ID && ERIK_ID && (
+      {user?.id === getErikIdFromEnv() && getErikIdFromEnv() && (
         <section id="avatar-house" className="home-card">
           <div className="home-card__body flex flex-col items-center gap-4">
             <h2 className="home-card-title text-xl mb-2">Avatar House</h2>
