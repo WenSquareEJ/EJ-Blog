@@ -986,4 +986,29 @@ a:hover {
   .xp-bar__badge {
     justify-self: flex-start;
   }
+
+  /* === Avatar Glow Effect === */
+.avatar-tile__frame {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+/* Soft glow when hovering over any avatar */
+.avatar-tile__frame:hover {
+  box-shadow: 0 0 15px 4px rgba(46, 204, 113, 0.6);
+  animation: mc-glow 2s infinite alternate;
+}
+
+/* Pulse animation like an enchanted Minecraft item */
+@keyframes mc-glow {
+  0% {
+    box-shadow: 0 0 15px 4px rgba(46, 204, 113, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 25px 8px rgba(46, 204, 113, 0.8);
+  }
+}
 }
