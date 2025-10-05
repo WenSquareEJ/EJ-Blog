@@ -203,15 +203,15 @@
   --mc-stone: #5b5550;         /* slightly darker meta/body text */
   color: var(--mc-ink);
   border: 0;
-  background-color: rgba(254, 252, 245, 0.93); /* much more solid */
+  background-color: rgba(254, 252, 245, 0.88); /* more solid, barely visible bg */
   box-shadow: 0 18px 42px rgba(20, 20, 20, 0.16);
   padding: clamp(1.5rem, 2vw + 1rem, 2.75rem);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
 }
 
 @media (max-width: 768px) {
   .site-content-surface {
-    background-color: rgba(254, 252, 245, 0.95); /* nearly opaque on mobile */
+    background-color: rgba(254, 252, 245, 0.90); /* nearly opaque on mobile */
     padding: clamp(1.25rem, 4vw + 1rem, 2rem);
   }
 }
@@ -863,15 +863,15 @@ a:hover {
   position: relative;
   border-radius: 1.25rem;
   border: 0; /* remove solid frame */
-  background-color: rgba(254, 252, 245, 0.20); /* ~20% translucency */
+  background-color: rgba(254, 252, 245, 0.88); /* more solid, barely visible bg */
   box-shadow: 0 18px 42px rgba(20, 20, 20, 0.16);
   padding: clamp(1.5rem, 2vw + 1rem, 2.75rem);
-  backdrop-filter: blur(10px); /* slightly stronger blur */
+  backdrop-filter: blur(8px); /* keep blur consistent */
 }
 
 @media (max-width: 768px) {
   .site-content-surface {
-    background-color: rgba(254, 252, 245, 0.28); /* a bit more opaque on mobile */
+    background-color: rgba(254, 252, 245, 0.90); /* nearly opaque on mobile */
     padding: clamp(1.25rem, 4vw + 1rem, 2rem);
   }
 }
