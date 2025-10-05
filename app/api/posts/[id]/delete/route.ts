@@ -25,31 +25,13 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
 
   const postId = params.id;
 
-  const {
-    data: post,
-    error: fetchError,
-  } = await sb
-    .from("posts")
-    .select("id, status")
-    .eq("id", postId)
-    .maybeSingle();
-
-  if (fetchError) {
-    console.error("[posts/delete] failed to load post", fetchError);
-    return Response.json({ error: "Failed to load post" }, { status: 500 });
-  }
-
-  if (!post || post.status === "deleted") {
-    return Response.json({ error: "Post not found" }, { status: 404 });
-  }
-
   const { error: deleteError } = await sb
     .from("posts")
     .delete()
     .eq("id", postId);
 
   if (deleteError) {
-    console.error("[posts/delete] failed to hard-delete post", deleteError);
+    console.error("[posts/delete] failed to delete post", deleteError);
     return Response.json({ error: "Failed to delete post" }, { status: 500 });
   }
 

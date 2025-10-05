@@ -14,7 +14,6 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     .from("posts")
     .update({ status: "approved", published_at: new Date().toISOString() })
     .eq("id", params.id)
-    .neq("status", "deleted")
     .select("id, author")
     .maybeSingle();
 

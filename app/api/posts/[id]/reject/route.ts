@@ -5,8 +5,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const { error } = await sb
     .from("posts")
     .update({ status: "rejected" })
-    .eq("id", params.id)
-    .neq("status", "deleted");
+    .eq("id", params.id);
 
   if (error) {
     return new Response(error.message, { status: 500 });
