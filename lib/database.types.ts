@@ -9,6 +9,29 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      profile_avatar: {
+        Row: {
+          id: string;
+          avatar: string | null;
+        };
+        Insert: {
+          id: string;
+          avatar?: string | null;
+        };
+        Update: {
+          id?: string;
+          avatar?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'profile_avatar_id_fkey';
+            columns: ['id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+            referencedSchema: 'auth';
+          }
+        ];
+      },
       badges: {
         Row: {
           id: string;

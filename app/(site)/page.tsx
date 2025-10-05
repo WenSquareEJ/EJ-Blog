@@ -1,4 +1,3 @@
-
 import TipOfTheDay from "@/components/TipOfTheDay";
 import Link from "next/link";
 import PortalRoom from "@/components/PortalRoom";
@@ -6,7 +5,6 @@ import PixelBackground from "@/components/PixelBackground";
 import AvatarTile from "@/components/AvatarTile";
 import XPBar from "@/components/XPBar";
 import ParrotSprite from "@/components/ParrotSprite";
-import AvatarHouse from "@/components/AvatarHouse";
 import { ERIK_USER_ID } from "@/lib/erik";
 import { getUser, supabaseServer } from "@/lib/supabaseServer";
 
@@ -15,25 +13,25 @@ export default async function Page() {
     console.warn("[home] ERIK_USER_ID is missing; falling back to default avatar");
   }
 
-  type ProfileAvatarRow = { avatar: string | null };
-
   const supabase = supabaseServer();
   let avatarUrl = "/avatars/steve.png";
 
   if (ERIK_USER_ID) {
-    const { data: profile } = await supabase
+    const { data, error } = await supabase
       .from("profile_avatar")
       .select("avatar")
       .eq("id", ERIK_USER_ID)
-      .maybeSingle<ProfileAvatarRow>();
-    avatarUrl = profile?.avatar ?? avatarUrl;
+      .maybeSingle();
+    if (!error && data?.avatar) {
+      avatarUrl = data.avatar;
+    }
   }
 
-  // Get logged-in user and Erik's id
+  // Only show the "Change Avatar" button if Erik is logged in.
+  // (Remove this check if you want everyone to see the link; the page itself is PIN-protected.)
   const user = await getUser();
   const isErik = user?.id === ERIK_USER_ID;
 
-  // Render Home Hub
   return (
     <div className="space-y-10">
       {/* Home Banner */}
@@ -43,7 +41,9 @@ export default async function Page() {
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
             <AvatarTile username="Erik" avatarUrl={avatarUrl} />
             <div className="flex-1 space-y-2">
-              <h1 className="font-mc text-2xl text-[#f4d68e] drop-shadow-[1px_1px_0_#5a3d1a]">EJ Blocks & Bots</h1>
+              <h1 className="font-mc text-2xl text-[#f4d68e] drop-shadow-[1px_1px_0_#5a3d1a]">
+                EJ Blocks & Bots
+              </h1>
               <div className="max-w-lg">
                 <XPBar />
               </div>
@@ -59,12 +59,16 @@ export default async function Page() {
           </div>
         </div>
       </section>
+
       {/* Portal Room grid below Hero */}
       <PortalRoom />
+
       {/* Erik-only: Avatar change button */}
       {isErik && (
         <div className="px-6">
-          <Link href="/site/avatar" className="btn-mc">🧑 Change Avatar</Link>
+          <Link href="/site/avatar-house" className="btn-mc">
+            🧑 Change Avatar
+          </Link>
         </div>
       )}
     </div>
