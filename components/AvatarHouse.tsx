@@ -34,15 +34,19 @@ export default function AvatarHouse({ current = null }: Props) {
 
     startTransition(async () => {
       try {
-        const res = await fetch("/api/settings/avatar/choose", {
+        const res = await fetch("/api/profile/avatar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ filename: `${fileStem}.png` }),
         });
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          throw new Error(text || `Failed (${res.status})`);
+
+        const data = await res.json().catch(() => ({} as any));
+
+        if (!res.ok || !data?.ok) {
+          const msg = (data && data.error) ? data.error : `Failed (${res.status})`;
+          throw new Error(msg);
         }
+
         router.refresh();
       } catch (e: any) {
         setError(e?.message || "Failed to update avatar.");
@@ -86,8 +90,8 @@ export default function AvatarHouse({ current = null }: Props) {
           })}
         </div>
 
-        {pending && <p className="text-xs text-mc-stone">Updating…</p>}
-        {error && <p className="text-xs text-red-600">Failed to update avatar.</p>}
+  {pending && <p className="text-xs text-mc-stone">Updating…</p>}
+  {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
     </section>
   );
