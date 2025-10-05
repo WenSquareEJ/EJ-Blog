@@ -334,7 +334,7 @@ export default async function Page() {
               <h1 className="home-card-title text-3xl sm:text-4xl">Erik&apos;s Hub</h1>
               <p className="home-card-body max-w-xl text-sm sm:text-base">{HUB_SUBTITLE}</p>
               <div className="max-w-lg">
-                <XPBar currentXP={120} nextLevelXP={200} />
+                <XPBar />
               </div>
             </div>
           </div>

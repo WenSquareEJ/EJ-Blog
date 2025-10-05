@@ -1,3 +1,23 @@
+
+/* --- XPBar pixel/animation styles --- */
+.pixel-border { box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+
+@keyframes xpShimmerMove { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.xp-fill > span {
+  background-image: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+}
+.animate-xpShimmer { animation: xpShimmerMove 6s linear infinite; }
+
+@keyframes xpPulse { 0%,100%{box-shadow:0 0 0 rgba(47,111,50,0)} 50%{box-shadow:0 0 8px rgba(47,111,50,0.35)} }
+.animate-xpPulse { animation: xpPulse 4s ease-in-out infinite; }
+
+@keyframes xpRise { 0%{transform:translate(-50%,0);opacity:0} 20%{opacity:1} 100%{transform:translate(-50%,-12px);opacity:0} }
+.animate-xpRise { animation: xpRise 0.8s ease-out forwards; }
+
+.sparkle { width:6px;height:6px;display:inline-block;background:radial-gradient(circle,#fff 0%,#ffe8a3 60%,rgba(255,255,255,0) 70%);filter:drop-shadow(0 0 2px #ffe8a3);border-radius:50% }
+@keyframes sparkFade { 0%{opacity:0;transform:translateY(6px) scale(0.8)} 20%{opacity:1} 100%{opacity:0;transform:translateY(-6px) scale(1.1)} }
+.animate-sparkFade { animation: sparkFade 1.2s ease-out forwards; }
 /* --- Portal Room Minecraft palette --- */
 .portal-tile.portal-tile-mc {
   background: #d8b87a;
