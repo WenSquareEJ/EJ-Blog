@@ -1,7 +1,7 @@
 /* === Hero-only Avatar sizing (scoped to the home banner) === */
 .home-banner .avatar-tile__frame {
-  width: 128px;
-  height: 128px; /* square frame */
+  width: 160px;
+  height: 160px; /* square frame */
 }
 
 @media (min-width: 768px) {
@@ -99,8 +99,8 @@
   z-index: 2;
 }
 .avatar-tile img {
-  width: 56px;
-  height: 56px;
+  width: 160px;
+  height: 160px;
   object-fit: contain;
   border-radius: 6px;
   background: #fff;
