@@ -164,49 +164,70 @@ function formatErikBadgeAwardedAt(isoDate: string | null): string | null {
 }
 
 export default async function Page() {
+  console.log('[home] rendering Home Hub');
+  // Get Erik's avatar from helper (safe fallback)
+  let avatarUrl: string = "/assets/avatars/steve.png";
+  try {
+    const avatarUrlRaw = await getErikProfileAvatar();
+    if (avatarUrlRaw && typeof avatarUrlRaw === 'string' && avatarUrlRaw.length > 0) {
+      avatarUrl = avatarUrlRaw;
+    }
+  } catch (error) {
+    console.error('[home] avatar fetch failed', error);
+  }
 
-  // Get Erik's avatar and userId
-  const avatarUrlRaw = await getErikProfileAvatar();
-  const avatarUrl = avatarUrlRaw ?? "/assets/avatars/steve.png";
+  // Get user info
   const sb = supabaseServer();
-  const { data: userRes } = await sb.auth.getUser();
-  const user = userRes?.user ?? null;
-  const erikUserId = await getErikUserId();
-  const canEditAvatar = Boolean(user?.id && erikUserId && user.id === erikUserId);
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "";
+  let user: any = null;
+  let isAdmin = false;
+  let canEditAvatar = false;
+  let adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "";
+  try {
+    const { data: userRes } = await sb.auth.getUser();
+    user = userRes?.user ?? null;
+    isAdmin = user?.email?.toLowerCase() === adminEmail;
+  } catch (error) {
+    console.error('[home] user fetch failed', error);
+  }
 
-    // Scratch projects (after sb is declared)
+  // Use ERIK_ID from env only
+  const ERIK_ID = process.env.NEXT_PUBLIC_ERIK_USER_ID ?? null;
+  const erikUnavailable = !ERIK_ID || typeof ERIK_ID !== 'string' || ERIK_ID.length === 0;
+  canEditAvatar = Boolean(user?.id && !erikUnavailable && user.id === ERIK_ID);
+
+  // Scratch projects
   let scratchProjects: ScratchPreview[] = [];
   let scratchError: string | null = null;
-  const { data: scratchData, error: scratchFetchError } = await sb
-    .from("scratch_projects")
-    .select("id, title, created_at")
-    .order("created_at", { ascending: false })
-    .limit(3);
-  if (scratchFetchError) {
-    scratchError = "Unable to load Scratch projects.";
-  } else {
+  try {
+    const { data: scratchData, error: scratchFetchError } = await sb
+      .from("scratch_projects")
+      .select("id, title, created_at")
+      .order("created_at", { ascending: false })
+      .limit(3);
+    if (scratchFetchError) throw scratchFetchError;
     scratchProjects = ((scratchData ?? []) as TablesRow<"scratch_projects">[]).map(project => ({
       id: project.id,
       title: project.title?.trim() || "Untitled",
       createdAt: project.created_at ?? null,
     }));
+    console.log('[home] loaded scratchProjects:', scratchProjects.length);
+  } catch (error) {
+    console.error('[home] scratchProjects failed', error);
+    scratchError = "Unable to load Scratch projects.";
   }
-  const isAdmin = user?.email?.toLowerCase() === adminEmail;
 
   // Latest posts
   let latestPosts: PostSummary[] = [];
   let latestPostsError: string | null = null;
-  const { data: latestData, error: latestError } = await sb
-    .from("posts")
-    .select("id, title, content, content_html, published_at, created_at")
-    .eq("status", "approved")
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false })
-    .limit(MESSAGE_WALL_LIMIT);
-  if (latestError) {
-    latestPostsError = "Unable to load latest posts.";
-  } else {
+  try {
+    const { data: latestData, error: latestError } = await sb
+      .from("posts")
+      .select("id, title, content, content_html, published_at, created_at")
+      .eq("status", "approved")
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(MESSAGE_WALL_LIMIT);
+    if (latestError) throw latestError;
     latestPosts = ((latestData ?? []) as TablesRow<"posts">[]).map(post => {
       const { text } = extractPostContent({ content_html: post.content_html, content: post.content });
       return {
@@ -216,60 +237,67 @@ export default async function Page() {
         publishedAt: getPostTimestamp(post),
       };
     });
+    console.log('[home] loaded latestPosts:', latestPosts.length);
+  } catch (error) {
+    console.error('[home] latestPosts failed', error);
+    latestPostsError = "Unable to load latest posts.";
   }
 
   // Minecraft posts
   let minecraftPosts: MiniPost[] = [];
   let minecraftError: string | null = null;
-  const { data: minecraftTag, error: minecraftTagError } = await sb
-    .from("tags")
-    .select("id")
-    .eq("slug", MINECRAFT_TAG_SLUG)
-    .maybeSingle();
-  if (minecraftTagError) {
-    minecraftError = "Unable to load Minecraft posts.";
-  } else if (minecraftTag) {
-    const { data: minecraftData, error: minecraftPostsError } = await sb
-      .from("posts")
-      .select("id, title, published_at, created_at, post_tags:post_tags!inner(tag_id)")
-      .eq("status", "approved")
-      .eq("post_tags.tag_id", minecraftTag.id)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false })
-      .limit(3);
-    if (minecraftPostsError) {
-      minecraftError = "Unable to load Minecraft posts.";
-    } else {
+  try {
+    const { data: minecraftTag, error: minecraftTagError } = await sb
+      .from("tags")
+      .select("id")
+      .eq("slug", MINECRAFT_TAG_SLUG)
+      .maybeSingle();
+    if (minecraftTagError) throw minecraftTagError;
+    if (minecraftTag) {
+      const { data: minecraftData, error: minecraftPostsError } = await sb
+        .from("posts")
+        .select("id, title, published_at, created_at, post_tags:post_tags!inner(tag_id)")
+        .eq("status", "approved")
+        .eq("post_tags.tag_id", minecraftTag.id)
+        .order("published_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(3);
+      if (minecraftPostsError) throw minecraftPostsError;
       minecraftPosts = ((minecraftData ?? []) as Array<{ id: string; title: string | null; published_at: string | null; created_at: string | null }> ).map(post => ({
         id: post.id,
         title: post.title || "Untitled",
         publishedAt: getPostTimestamp({ published_at: post.published_at, created_at: post.created_at }),
       }));
     }
+    console.log('[home] loaded minecraftPosts:', minecraftPosts.length);
+  } catch (error) {
+    console.error('[home] minecraftPosts failed', error);
+    minecraftError = "Unable to load Minecraft posts.";
   }
 
   // Badges widget (Erik only)
   let widgetBadges: WidgetBadge[] = [];
   let badgesError: string | null = null;
-  let erikCollectionUnavailable = false;
-  const { data: badgesData, error: badgesFetchError } = await sb
-    .from("badges")
-    .select("id, name, icon, description, criteria")
-    .order("name", { ascending: true });
-  if (badgesFetchError) {
-    badgesError = "Unable to load badges.";
-  } else {
+  let erikCollectionUnavailable = erikUnavailable;
+  try {
+    const { data: badgesData, error: badgesFetchError } = await sb
+      .from("badges")
+      .select("id, name, icon, description, criteria")
+      .order("name", { ascending: true });
+    if (badgesFetchError) throw badgesFetchError;
     const allBadges = ((badgesData ?? []) as TablesRow<"badges">[]).filter(badge => Boolean(badge.id));
-    if (allBadges.length > 0 && erikUserId) {
-      const { data: erikBadgesData, error: erikBadgesFetchError } = await sb
-        .from("user_badges")
-        .select("badge_id, awarded_at")
-        .eq("user_id", erikUserId);
+    if (allBadges.length > 0 && !erikUnavailable) {
       let erikUserBadges: { badge_id: string; awarded_at: string | null }[] = [];
-      if (erikBadgesFetchError) {
-        erikCollectionUnavailable = true;
-      } else {
+      try {
+        const { data: erikBadgesData, error: erikBadgesFetchError } = await sb
+          .from("user_badges")
+          .select("badge_id, awarded_at")
+          .eq("user_id", ERIK_ID);
+        if (erikBadgesFetchError) throw erikBadgesFetchError;
         erikUserBadges = (erikBadgesData ?? []) as { badge_id: string; awarded_at: string | null }[];
+      } catch (error) {
+        console.error('[home] user_badges fetch failed', error);
+        erikCollectionUnavailable = true;
       }
       const awardedByBadgeId = new Map(erikUserBadges.map(entry => [entry.badge_id, entry] as const));
       widgetBadges = allBadges
@@ -280,7 +308,7 @@ export default async function Page() {
           return {
             id: badge.id,
             name: badge.name ?? "Badge",
-            icon: resolveBadgeIcon(badge.icon),
+            icon: resolveBadgeIcon(badge.icon) ?? '',
             description: badge.description ?? null,
             criteriaSummary,
             awardedAt: award?.awarded_at ?? null,
@@ -293,7 +321,22 @@ export default async function Page() {
           }
           return a.name.localeCompare(b.name);
         });
+    } else {
+      widgetBadges = allBadges.map(badge => ({
+        id: badge.id,
+        name: badge.name ?? "Badge",
+        icon: resolveBadgeIcon(badge.icon) ?? '',
+        description: badge.description ?? null,
+        criteriaSummary: buildBadgeCriteriaSummary(parseBadgeCriteria(badge.criteria)),
+        awardedAt: null,
+        status: "locked" as const,
+      }));
+      if (erikUnavailable) erikCollectionUnavailable = true;
     }
+    console.log('[home] loaded widgetBadges:', widgetBadges.length);
+  } catch (error) {
+    console.error('[home] badges widget failed', error);
+    badgesError = "Unable to load badges.";
   }
 
   // Moderation snapshot (admin only)
@@ -303,27 +346,33 @@ export default async function Page() {
     error: null,
   };
   if (isAdmin) {
-    const { count: pendingPosts, error: pendingPostsError } = await sb
-      .from("posts")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending");
-    const { count: pendingComments, error: pendingCommentsError } = await sb
-      .from("comments")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending");
-    const errors: string[] = [];
-    if (pendingPostsError) {
-      errors.push("posts");
-    } else {
-      moderationSnapshot.pendingPosts = pendingPosts ?? 0;
-    }
-    if (pendingCommentsError) {
-      errors.push("comments");
-    } else {
-      moderationSnapshot.pendingComments = pendingComments ?? 0;
-    }
-    if (errors.length > 0) {
-      moderationSnapshot.error = `Unable to load ${errors.join(" and ")} counts.`;
+    try {
+      const { count: pendingPosts, error: pendingPostsError } = await sb
+        .from("posts")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+      const { count: pendingComments, error: pendingCommentsError } = await sb
+        .from("comments")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+      const errors: string[] = [];
+      if (pendingPostsError) {
+        errors.push("posts");
+      } else {
+        moderationSnapshot.pendingPosts = pendingPosts ?? 0;
+      }
+      if (pendingCommentsError) {
+        errors.push("comments");
+      } else {
+        moderationSnapshot.pendingComments = pendingComments ?? 0;
+      }
+      if (errors.length > 0) {
+        moderationSnapshot.error = `Unable to load ${errors.join(" and ")} counts.`;
+      }
+      console.log('[home] loaded moderationSnapshot:', moderationSnapshot.pendingPosts, moderationSnapshot.pendingComments);
+    } catch (error) {
+      console.error('[home] moderationSnapshot failed', error);
+      moderationSnapshot.error = "Unable to load moderation counts.";
     }
   }
 
