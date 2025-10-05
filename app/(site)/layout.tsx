@@ -12,8 +12,8 @@ export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
 export const metadata = {
-  title: "EJ Blog",
-  description: "Family blog in Minecraft style",
+  title: "EJ Blocks and Bots",
+  description: "EJ Minecraft-inspired world of stories, science, and coding adventures!",
 };
 
 export default async function SiteLayout({
