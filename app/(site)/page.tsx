@@ -64,7 +64,7 @@ export default async function Page() {
       {/* Erik-only: Avatar change button */}
       {isErik && (
         <div className="px-6">
-          <Link href="/avatar" className="btn-mc">🧑 Change Avatar</Link>
+          <Link href="/site/avatar" className="btn-mc">🧑 Change Avatar</Link>
         </div>
       )}
     </div>

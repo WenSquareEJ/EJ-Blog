@@ -120,7 +120,7 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
                 Blog
               </Link>
               {user && (
-                <Link className="btn-mc" href="/avatar">
+                <Link className="btn-mc" href="/site/avatar">
                   Avatar
                 </Link>
               )}
