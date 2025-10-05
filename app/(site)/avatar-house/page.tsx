@@ -1,25 +1,25 @@
 
+
 import { redirect } from "next/navigation";
-import supabaseServer from "@/lib/supabaseServer";
-import { getErikUserId } from "@/lib/erik";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 import AvatarHousePageClient from "./AvatarHousePageClient";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function Page() {
-  const sb = supabaseServer();
-  const { data: { user } } = await sb.auth.getUser();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: cookies() }
+  );
 
-  const erikUserId = await getErikUserId();
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "";
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const isErik = !!(user?.id && erikUserId && user.id === erikUserId);
-  const isAdmin = !!(user?.email && user.email.toLowerCase() === adminEmail);
-
-  if (!isErik && !isAdmin) {
-    redirect("/site");
+  if (!user) {
+    redirect("/login?next=/avatar-house");
   }
 
-  return <AvatarHousePageClient />;
+  return <AvatarHousePageClient initialUser={user} />;
 }
