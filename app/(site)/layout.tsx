@@ -43,13 +43,6 @@ export default async function SiteLayout({
         <HomeBackground />
         <NavBar initialUser={navUser} adminEmail={adminEmail} />
 
-        <div className="banner-placeholder">
-          <div className="mx-auto flex h-full max-w-5xl items-center justify-center px-4">
-            <p className="text-xs font-mc uppercase tracking-[0.18em] text-mc-parchment opacity-80 md:text-sm">
-              BLOCKS AND BOTS
-            </p>
-          </div>
-        </div>
 
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">
           <div className="site-content-surface">
