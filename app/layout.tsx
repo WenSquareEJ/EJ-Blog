@@ -21,8 +21,7 @@ const pixelBody = Pixelify_Sans({
 
 export const metadata: Metadata = {
   title: "EJ Blocks and Bots",
-  description: "EJ Minecraft-inspired world of stories, science, and coding adventures!",
-",
+  description: "EJ Minecraft-inspired world of stories, science, and coding adventures!"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
