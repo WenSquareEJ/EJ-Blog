@@ -1,4 +1,4 @@
-import { getErikUserId, getErikProfileAvatar, setErikProfileAvatar } from "@/lib/erik";
+import { getErikUserId, getErikProfileAvatar } from "@/lib/erik";
 import supabaseServer from "@/lib/supabaseServer";
 import { redirect } from "next/navigation";
 import { useState } from "react";
@@ -28,55 +28,9 @@ export default async function AvatarSettingsPage() {
           style={{ imageRendering: "pixelated" }}
         />
       </div>
-      <form
-        className="space-y-4"
-        encType="multipart/form-data"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const fileInput = e.currentTarget.elements.namedItem("avatar") as HTMLInputElement;
-          if (!fileInput?.files?.[0]) {
-            alert("Please select an image file.");
-            return;
-          }
-          const file = fileInput.files[0];
-          const timestamp = Date.now();
-          const filePath = `avatars/${erikUserId}/${timestamp}-${file.name}`;
-          // Upload to Supabase Storage
-          const { data, error } = await sb.storage.from("avatars").upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: true,
-          });
-          if (error) {
-            alert("Upload failed: " + error.message);
-            return;
-          }
-          // Get public URL
-          const { publicUrl } = sb.storage.from("avatars").getPublicUrl(filePath).data ?? {};
-          if (!publicUrl) {
-            alert("Could not get public URL for avatar.");
-            return;
-          }
-          // Save to profile
-          const ok = await setErikProfileAvatar(publicUrl);
-          if (!ok) {
-            alert("Failed to save avatar URL.");
-            return;
-          }
-          // Redirect to home
-          window.location.href = "/";
-        }}
-      >
-        <input
-          type="file"
-          name="avatar"
-          accept=".png,.jpg,.jpeg"
-          className="block w-full border rounded px-2 py-1"
-          required
-        />
-        <button type="submit" className="btn-mc-primary w-full mt-2">
-          Upload & Save
-        </button>
-      </form>
+      <div className="text-mc-stone text-sm mt-4">
+        Avatar uploads are disabled. Please choose from the available avatars on the Home page (Avatar House).
+      </div>
     </div>
   );
 }

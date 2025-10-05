@@ -31,18 +31,21 @@ const portals = [
 export default function PortalRoom() {
   return (
     <section className="portal-room" aria-label="Portal Room">
+      <header className="mb-4">
+        <h2 className="font-mc text-2xl font-bold text-mc-ink" style={{textShadow: "1px 1px 0 #fff"}}>⚙️ Portal Rooms</h2>
+        <p className="portal-subtitle text-base mt-1">Step through to explore Erik’s worlds.</p>
+      </header>
       <div className="portal-grid">
         {portals.map((p) => (
           <Link
             key={p.href}
             href={p.href}
-            className="portal-tile"
+            className="portal-tile portal-tile-mc"
             aria-label={p.aria}
           >
-            <div className="portal-bg" />
             <div className="portal-content">
-              <h3 className="portal-title">{p.title}</h3>
-              <p className="portal-subtitle">{p.subtitle}</p>
+              <h3 className="portal-title font-mc font-bold text-lg" style={{textShadow: "1px 1px 0 #fff"}}>{p.title}</h3>
+              <p className="portal-subtitle text-base">{p.subtitle}</p>
             </div>
           </Link>
         ))}

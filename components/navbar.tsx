@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
 type SessionUser = { id: string; email?: string | null } | null;
@@ -97,8 +97,10 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
     setLoggingOut(false);
   }
 
+  const pathname = usePathname();
+  const isHome = pathname === "/";
   return (
-    <header className="sticky top-0 z-40 border-b border-mc-wood-dark bg-mc-wood text-mc-parchment shadow-mc">
+    <header className={`sticky top-0 z-40 border-b border-mc-wood-dark bg-mc-wood text-mc-parchment shadow-mc${isHome ? " navbar--compact" : ""}`}>
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3 sm:gap-3">
         <Link
           href="/"
@@ -108,38 +110,40 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
           EJ
         </Link>
 
-        <nav className="flex w-full flex-1 flex-wrap items-center gap-1.5 sm:w-auto sm:gap-2">
-          <Link className="btn-mc" href="/">
-            Home
-          </Link>
-          <Link className="btn-mc" href="/blog">
-            Blog
-          </Link>
-          <Link className="btn-mc" href="/minecraft-zone">
-            Minecraft Zone
-          </Link>
-          <Link className="btn-mc" href="/scratch-board">
-            Scratch Board
-          </Link>
-          <Link className="btn-mc" href="/badges">
-            Badges
-          </Link>
-
-          {isLoggedIn && (
-            <Link className="btn-mc" href="/post/new">
-              New Post
-            </Link>
-          )}
-
-          {isAdmin && (
-            <Link className="btn-mc" href="/moderation">
-              Parent / Moderation
-            </Link>
+        <nav className="navbar-links flex w-full flex-1 flex-wrap items-center gap-1.5 sm:w-auto sm:gap-2">
+          {!isHome && (
+            <>
+              <Link className="btn-mc" href="/">
+                Home
+              </Link>
+              <Link className="btn-mc" href="/blog">
+                Blog
+              </Link>
+              <Link className="btn-mc" href="/minecraft-zone">
+                Minecraft Zone
+              </Link>
+              <Link className="btn-mc" href="/scratch-board">
+                Scratch Board
+              </Link>
+              <Link className="btn-mc" href="/badges">
+                Badges
+              </Link>
+              {isLoggedIn && (
+                <Link className="btn-mc" href="/post/new">
+                  New Post
+                </Link>
+              )}
+              {isAdmin && (
+                <Link className="btn-mc" href="/moderation">
+                  Parent / Moderation
+                </Link>
+              )}
+            </>
           )}
         </nav>
 
         <div className="ms-0 flex shrink-0 items-center gap-2 sm:ms-auto">
-          {isLoggedIn && badgeCount !== null && (
+          {isLoggedIn && badgeCount !== null && !isHome && (
             <span
               className="nav-badge-count"
               aria-label={`Badges earned: ${badgeCount}`}

@@ -60,7 +60,8 @@ try {
 import supabaseAdmin from "@/lib/supabaseAdmin";
 import { resolveBadgeIcon } from "@/lib/badgeIcons";
 // import { getErikProfileAvatar, getErikUserId } from "@/lib/erik";
-import { getErikProfileAvatar, getErikUserId } from "@/lib/erik";
+import { getErikProfileAvatar, getErikUserId, AVATAR_OPTIONS } from "@/lib/erik";
+import AvatarHouse from "@/components/AvatarHouse";
 
 type HomeBadgeIcon = {
   id: string;
@@ -84,18 +85,7 @@ type MiniPost = {
   publishedAt: string | null;
 };
 type ScratchPreview = {
-  id: string;
-  title: string;
-  createdAt: string | null;
-};
-type WidgetBadge = {
-  id: string;
-  name: string;
-  icon: string | null;
-  description: string | null;
-  criteriaSummary: string | null;
-  awardedAt: string | null;
-  status: "earned" | "locked";
+// WidgetBadge type removed, not needed for new layout
 };
 type ModerationSnapshot = {
   pendingPosts: number | null;
@@ -176,11 +166,17 @@ export default async function Page() {
   console.log('[home] render start');
 
   // Get Erik's avatar
-  let avatarUrl: string = "/assets/avatars/steve.png";
+  let avatarUrl: string = "/avatars/Steve.png";
+  let currentAvatarFilename: string = "Steve.png";
   try {
     const avatarUrlRaw = await getErikProfileAvatar();
     if (avatarUrlRaw && typeof avatarUrlRaw === 'string' && avatarUrlRaw.length > 0) {
       avatarUrl = avatarUrlRaw;
+      // Extract filename from path
+      const match = avatarUrlRaw.match(/\/avatars\/(.+\.png)$/);
+      if (match && AVATAR_OPTIONS.includes(match[1])) {
+        currentAvatarFilename = match[1];
+      }
     }
   } catch (error) {
     console.error('[home] avatar fetch failed', error);
@@ -283,59 +279,6 @@ export default async function Page() {
   console.log('[home] minecraft posts:', minecraftPosts.length);
 
   // Badges widget
-  let widgetBadges: WidgetBadge[] = [];
-  let badgesError: string | null = null;
-  let earnedBadges: WidgetBadge[] = [];
-  const ERIK_ID = getErikIdFromEnv();
-  let erikCollectionUnavailable = !ERIK_ID;
-  if (!ERIK_ID) {
-    console.warn('[home] NEXT_PUBLIC_ERIK_USER_ID missing — skipping Erik widgets');
-  }
-  try {
-    if (!ERIK_ID) {
-      widgetBadges = [];
-    } else {
-      const { data: badgesData, error: badgesFetchError } = await sb
-        .from("badges")
-        .select("id, name, icon, description, criteria")
-        .order("name", { ascending: true });
-      if (badgesFetchError) throw badgesFetchError;
-      const allBadges = safeMap(badgesData, badge => badge).filter(badge => Boolean(badge.id));
-      let erikUserBadges: { badge_id: string; awarded_at: string | null }[] = [];
-      try {
-        const { data: erikBadgesData, error: erikBadgesFetchError } = await sb
-          .from("user_badges")
-          .select("badge_id, awarded_at")
-          .eq("user_id", ERIK_ID);
-        if (erikBadgesFetchError) throw erikBadgesFetchError;
-        erikUserBadges = safeMap(erikBadgesData, entry => entry);
-      } catch (error) {
-        console.error('[home] user_badges failed', error);
-        erikUserBadges = [];
-      }
-      const awardedByBadgeId = new Map(erikUserBadges.map(entry => [entry.badge_id, entry] as const));
-      widgetBadges = allBadges.map(badge => {
-        const award = badge.id ? awardedByBadgeId.get(badge.id) : undefined;
-        const details = parseBadgeCriteria(badge.criteria);
-        const criteriaSummary = buildBadgeCriteriaSummary(details);
-        return {
-          id: badge.id,
-          name: badge.name ?? "Badge",
-          icon: resolveBadgeIcon(badge.icon),
-          description: badge.description ?? null,
-          criteriaSummary,
-          awardedAt: award?.awarded_at ?? null,
-          status: award ? "earned" as const : "locked" as const,
-        };
-      });
-      earnedBadges = widgetBadges.filter(b => b.status === "earned");
-    }
-  } catch (error) {
-    console.error('[home] badges query failed', error);
-    widgetBadges = [];
-    earnedBadges = [];
-  }
-  console.log('[home] badges:', widgetBadges.length, 'erikUnavailable:', !ERIK_ID);
 
   // Moderation snapshot (admin only)
   let moderationSnapshot: ModerationSnapshot = {
@@ -375,7 +318,8 @@ export default async function Page() {
   console.log('[home] moderation counts:', moderationSnapshot.pendingPosts, moderationSnapshot.pendingComments);
 
   // Avatar House gating
-  const canEditAvatar = Boolean(user?.id && ERIK_ID && user.id === ERIK_ID);
+  const erikUserId = await getErikUserId();
+  const isErik = !!(user?.id && erikUserId && user.id === erikUserId);
 
   // Render Home Hub
   return (
@@ -408,233 +352,13 @@ export default async function Page() {
       {/* Portal Room grid below Hero */}
       <PortalRoom />
 
-      {/* Parents' Corner (admin only) */}
-      {isAdmin && (
-        <section className="home-card">
-          <div className="home-card__body space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-mc section-title text-xl">Parents&apos; Corner</h3>
-              <Link href="/moderation" className="btn-mc-secondary section-label">Go to moderation</Link>
-            </div>
-            {moderationSnapshot.error && <p className="text-sm text-red-600">{moderationSnapshot.error}</p>}
-            <ul className="space-y-2 text-sm text-[color:var(--mc-ink)]">
-              <li className="flex items-center justify-between">
-                <span>Moderation queue</span>
-                <span className="font-mc text-base">{moderationSnapshot.pendingPosts ?? "--"}</span>
-              </li>
-              <li className="flex items-center justify-between">
-                <span>Pending comments</span>
-                <span className="font-mc text-base">{moderationSnapshot.pendingComments ?? "--"}</span>
-              </li>
-            </ul>
-          </div>
-        </section>
-      )}
-
       {/* Avatar House: Only Erik sees, at very end */}
-      {user?.id === getErikIdFromEnv() && getErikIdFromEnv() && (
-        <section id="avatar-house" className="home-card">
-          <div className="home-card__body flex flex-col items-center gap-4">
-            <h2 className="home-card-title text-xl mb-2">Avatar House</h2>
-            <div className="flex flex-col items-center gap-2">
-              <img
-                src={avatarUrl}
-                alt="Erik's Avatar"
-                className="rounded-xl border-4 border-[color:var(--mc-wood)] bg-[color:var(--mc-parchment)] shadow-mc w-20 h-20 object-cover"
-              />
-              <span className="text-xs text-mc-stone">Current Avatar</span>
-            </div>
-            {/* Avatar options for Erik only */}
-            <form
-              className="flex flex-wrap gap-3 justify-center mt-2"
-              action={"/"}
-              onSubmit={e => e.preventDefault()}
-            >
-              {[
-                { id: "steve", name: "Steve", url: "/assets/avatars/steve.png" },
-                { id: "alex", name: "Alex", url: "/assets/avatars/alex.png" },
-                { id: "creeper", name: "Creeper", url: "/assets/avatars/creeper.png" },
-                { id: "enderman", name: "Enderman", url: "/assets/avatars/enderman.png" },
-                { id: "parrot", name: "Parrot", url: "/assets/avatars/parrot.png" },
-                { id: "wolf", name: "Wolf", url: "/assets/avatars/wolf.png" },
-              ].map(opt => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className={`border-2 rounded-lg p-1 bg-[color:var(--mc-parchment)] border-[color:var(--mc-wood)] shadow-mc focus:outline-mc-wood ${avatarUrl === opt.url ? "ring-2 ring-mc-emerald" : ""}`}
-                  title={opt.name}
-                  aria-label={opt.name}
-                  onClick={async () => {
-                    try {
-                      const res = await fetch("/api/profile/avatar", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ avatar_url: opt.url }),
-                      });
-                      if (res.ok) {
-                        window.location.reload();
-                      } else {
-                        alert("Failed to update avatar. Try again.");
-                      }
-                    } catch (error) {
-                      console.error('[home] avatar update failed', error);
-                    }
-                  }}
-                >
-                  <img
-                    src={opt.url}
-                    alt={opt.name}
-                    className="w-12 h-12 object-cover rounded-md"
-                  />
-                </button>
-              ))}
-            </form>
-          </div>
-        </section>
-      )}
-
-      {/* Main Grid */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        {/* My Projects Card */}
-        <section className="home-card">
-          <div className="home-card__body space-y-6">
-            <h2 className="home-card-title text-2xl">My Projects</h2>
-            {/* Minecraft Zone */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="home-icon home-icon--minecraft" aria-hidden="true" />
-                  <h3 className="home-card-title text-lg">Minecraft Zone</h3>
-                </div>
-                <Link href="/minecraft-zone" className="home-card-meta text-xs uppercase tracking-[0.2em] hover:text-mc-ink">Visit</Link>
-              </div>
-              {minecraftError ? (
-                <p className="text-sm text-red-600">{minecraftError}</p>
-              ) : minecraftPosts.length === 0 ? (
-                <p className="home-card-meta text-sm">No Minecraft adventures yet.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {minecraftPosts.map(post => {
-                    const label = formatDateLabel(post.publishedAt);
-                    return (
-                      <li key={post.id} className="home-list-item">
-                        <Link href={`/post/${post.id}`} className="home-list-link">
-                          <span className="home-list-title">{post.title}</span>
-                          {label && <span className="home-list-meta">{label}</span>}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-            {/* Scratch Board */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="home-icon home-icon--scratch" aria-hidden="true" />
-                  <h3 className="home-card-title text-lg">Scratch Board</h3>
-                </div>
-                <Link href="/scratch-board" className="home-card-meta text-xs uppercase tracking-[0.2em] hover:text-mc-ink">Visit</Link>
-              </div>
-              {scratchError ? (
-                <p className="text-sm text-red-600">{scratchError}</p>
-              ) : scratchProjects.length === 0 ? (
-                <p className="home-card-meta text-sm">No Scratch projects yet.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {scratchProjects.map(project => {
-                    const label = formatDateLabel(project.createdAt);
-                    return (
-                      <li key={project.id} className="home-list-item">
-                        <Link href="/scratch-board" className="home-list-link">
-                          <span className="home-list-title">{project.title}</span>
-                          {label && <span className="home-list-meta">{label}</span>}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Right Column: Badges & Message Wall */}
-        <div className="flex flex-col gap-6">
-          {/* Badges & Achievements */}
-          <section className="home-card">
-            <div className="home-card__body space-y-4">
-              <h2 className="home-card-title text-2xl">Earned Badges</h2>
-              {earnedBadges.length === 0 ? (
-                <p className="home-card-meta text-sm">No badges yet</p>
-              ) : (
-                <ul className="flex flex-wrap gap-2">
-                  {earnedBadges.slice(0, 8).map(badge => (
-                    <li
-                      key={badge.id}
-                      className="inline-flex items-center gap-1 rounded-lg border-2 border-[color:var(--mc-wood)] bg-[color:var(--mc-parchment)] px-2 py-1 shadow-mc"
-                      title={badge.name}
-                      aria-label={badge.name}
-                    >
-                      <span className="text-xl leading-none">{badge.icon ?? "🏅"}</span>
-                      <span className="sr-only">{badge.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
-
-          {/* Stories */}
-          <section className="home-card">
-            <div className="home-card__body space-y-4">
-              <h2 className="home-card-title text-xl">Stories</h2>
-              <Link href="/blog" className="home-card-meta text-xs uppercase tracking-[0.2em] hover:text-mc-ink">View all</Link>
-              {latestPostsError ? (
-                <p className="text-sm text-red-600">{latestPostsError}</p>
-              ) : latestPosts.length === 0 ? (
-                <p className="home-card-meta text-sm">No messages yet. Share a story to kick things off!</p>
-              ) : (
-                <ul className="space-y-2">
-                  {latestPosts.map(post => {
-                    const label = formatDateLabel(post.publishedAt);
-                    return (
-                      <li key={post.id} className="home-message">
-                        <Link href={`/post/${post.id}`} className="home-message__link">
-                          <span className="home-message__title">{post.title}</span>
-                          {label && <span className="home-message__meta">{label}</span>}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </section>
-        </div>
-      </div>
-
-
-      {/* Parents' Corner (admin only) */}
-      {isAdmin && (
-        <section className="home-card">
+      {isErik && (
+        <section className="home-card mt-10">
           <div className="home-card__body space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-mc section-title text-xl">Parents&apos; Corner</h3>
-              <Link href="/moderation" className="btn-mc-secondary section-label">Go to moderation</Link>
-            </div>
-            {moderationSnapshot.error && <p className="text-sm text-red-600">{moderationSnapshot.error}</p>}
-            <ul className="space-y-2 text-sm text-[color:var(--mc-ink)]">
-              <li className="flex items-center justify-between">
-                <span>Moderation queue</span>
-                <span className="font-mc text-base">{moderationSnapshot.pendingPosts ?? "--"}</span>
-              </li>
-              <li className="flex items-center justify-between">
-                <span>Pending comments</span>
-                <span className="font-mc text-base">{moderationSnapshot.pendingComments ?? "--"}</span>
-              </li>
-            </ul>
+            <h3 className="font-mc section-title text-xl">Avatar House</h3>
+            <p className="home-card-meta">Choose your avatar for the site.</p>
+            <AvatarHouse erikUserId={erikUserId} currentAvatarFilename={currentAvatarFilename} />
           </div>
         </section>
       )}
