@@ -17,7 +17,14 @@ export default function AvatarHousePageClient() {
       try {
         const { data, error } = await supabase.auth.getUser();
         if (error) throw error;
-        setUserEmail(data.user?.email ?? null);
+  let user: typeof data.user | null = data.user;
+        // Fallback: if getUser() returns null, try getSession()
+        if (!user) {
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) throw sessionError;
+          user = sessionData.session?.user ?? null;
+        }
+        setUserEmail(user?.email ?? null);
       } catch (e: any) {
         setError(e?.message || "Unable to get session");
       } finally {
