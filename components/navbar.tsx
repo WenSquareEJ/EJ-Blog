@@ -52,6 +52,9 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
   }, [normalizedAdminEmail, router, supabase]);
 
   const isLoggedIn = Boolean(user);
+  // Erik user ID from env
+  const ERIK_USER_ID = process.env.NEXT_PUBLIC_ERIK_USER_ID?.trim();
+  const isErik = !!(user?.id && ERIK_USER_ID && user.id === ERIK_USER_ID);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -122,6 +125,11 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
               {user && (
                 <Link className="btn-mc" href="/site/avatar">
                   Avatar
+                </Link>
+              )}
+              {(isErik || isAdmin) && (
+                <Link className="btn-mc" href="/site/avatar-house">
+                  Avatar House
                 </Link>
               )}
               <Link className="btn-mc" href="/minecraft-zone">
