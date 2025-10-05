@@ -41,12 +41,16 @@ export default function AvatarTile({
           <img
             src={avatarUrl}
             alt={`${username}'s avatar`}
-            className="w-full h-full object-contain p-1"
+            className="w-full h-full object-contain"
+            style={{ imageRendering: "pixelated", padding: "4px" }}
             decoding="async"
             loading="lazy"
           />
         ) : (
-          <div className="flex items-center justify-center text-[#5a3d1a] text-sm" aria-hidden="true">
+          <div
+            className="flex items-center justify-center text-[#5a3d1a] text-sm"
+            aria-hidden="true"
+          >
             No Avatar
           </div>
         )}
