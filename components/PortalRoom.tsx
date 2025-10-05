@@ -5,19 +5,19 @@ const portals = [
   {
     href: "/blog",
     title: "Stories",
-    subtitle: "Read and share adventures",
+    subtitle: "My adventures",
     aria: "Go to Stories section"
   },
   {
     href: "/minecraft-zone",
     title: "Minecraft Zone",
-    subtitle: "Explore builds and games",
+    subtitle: "MC Builds",
     aria: "Go to Minecraft Zone"
   },
   {
     href: "/scratch-board",
     title: "Scratch Board",
-    subtitle: "Code and create projects",
+    subtitle: "Coding work",
     aria: "Go to Scratch Board"
   },
   {
@@ -32,8 +32,8 @@ export default function PortalRoom() {
   return (
     <section className="portal-room" aria-label="Portal Room">
       <header className="mb-4">
-        <h2 className="font-mc text-2xl font-bold text-mc-ink" style={{textShadow: "1px 1px 0 #fff"}}>⚙️ Portal Rooms</h2>
-        <p className="portal-subtitle text-base mt-1">Step through to explore Erik’s worlds.</p>
+        <h2 className="font-mc text-xl font-bold text-[#3b2f23] hover:text-[#5a3d1a] transition-colors" style={{textShadow: "1px 1px 0 #fff"}}>⚙️ Portal Rooms</h2>
+        <p className="portal-subtitle text-xs text-mc-stone mt-1">Step through to explore Erik’s worlds.</p>
       </header>
       <div className="portal-grid">
         {portals.map((p) => (
@@ -44,8 +44,8 @@ export default function PortalRoom() {
             aria-label={p.aria}
           >
             <div className="portal-content">
-              <h3 className="portal-title font-mc font-bold text-lg" style={{textShadow: "1px 1px 0 #fff"}}>{p.title}</h3>
-              <p className="portal-subtitle text-base">{p.subtitle}</p>
+              <h3 className="portal-title font-mc font-bold text-base text-[#3b2f23] hover:text-[#5a3d1a] transition-colors" style={{textShadow: "1px 1px 0 #fff"}}>{p.title}</h3>
+              <p className="portal-subtitle text-xs text-mc-stone">{p.subtitle}</p>
             </div>
           </Link>
         ))}
