@@ -49,4 +49,3 @@ export default function AvatarHousePageClient() {
     </div>
   );
 }
-    </div>
