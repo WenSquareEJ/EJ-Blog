@@ -1,112 +1,82 @@
 
-
 import { cookies } from "next/headers";
-import Image from "next/image";
-import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { createServerActionClient } from "@supabase/auth-helpers-nextjs";
-import type { Database } from "@/lib/database.types";
+import { redirect } from "next/navigation";
+import { createServerClient } from "@supabase/ssr";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+const avatarChoices = [
+  "alex","bluey","creeper","enderman","erik_steve","scientist","skeleton","villager","waffle","zombie","steve"
+];
 
-/** Allowed avatar stems. Corresponding PNGs must exist under /public/avatars/ */
-const AVATAR_STEMS = [
-  "alex",
-  "bluey",
-  "creeper",
-  "enderman",
-  "erik_steve",
-  "scientist",
-  "skeleton",
-  "villager",
-  "waffle",
-  "zombie",
-] as const;
-type AvatarStem = (typeof AVATAR_STEMS)[number];
-
-function isAllowedStem(v: string): v is AvatarStem {
-  return AVATAR_STEMS.includes(v as AvatarStem);
-}
-
-/** Server Action: update Erik's profiles.avatar_url (only Erik can change) */
-async function saveAvatar(formData: FormData): Promise<void> {
+async function saveAvatar(formData: FormData) {
   "use server";
-  const supabase = createServerActionClient({ cookies });
-
-  try {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-
-    if (error || !user) {
-      console.error("Auth error:", error?.message);
-      return;
-    }
-
-    const erikId = process.env.NEXT_PUBLIC_ERIK_USER_ID;
-    if (user.id !== erikId) {
-      console.error("Forbidden: Not Erik");
-      return;
-    }
-
-    const stem = String(formData.get("stem") ?? "").replace(/\.png$/i, "");
-    const allowed = [
-      "steve", "alex", "creeper", "enderman", "skeleton",
-      "parrot-blue", "parrot-red", "miner", "builder", "erik_steve"
-    ];
-    if (!allowed.includes(stem)) {
-      console.error("Invalid avatar choice:", stem);
-      return;
-    }
-
-    await supabase
-      .from("profiles")
-      .update({ avatar_url: `/avatars/${stem}.png` })
-      .eq("id", user.id);
-
-    revalidatePath("/site");
-  } catch (e: any) {
-    console.error("saveAvatar server action error:", e?.message || e);
-  }
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: cookies() }
+  );
+  const avatar = String(formData.get("avatar") || "");
+  const ok = avatarChoices.some(s => avatar === `/avatars/${s}.png`);
+  if (!ok) return;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase
+    .from("profiles")
+    .upsert({ id: user.id, avatar_url: avatar }, { onConflict: "id" });
+  revalidatePath("/site");
+  revalidatePath("/site/avatar-house");
+  redirect("/site/avatar-house?ok=1");
 }
 
-export default async function AvatarHousePage() {
-  // We still render the page even if user isn’t signed in; the form will refuse to save.
+export default async function Page() {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: cookies() }
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", user?.id ?? "")
+    .maybeSingle();
+  const currentAvatar = profile?.avatar_url;
+
   return (
     <div className="mx-auto max-w-3xl p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-mc text-2xl">Choose Your Avatar</h1>
-        <Link href="/site" className="btn-mc">← Back to Home</Link>
+        <Link href="/site" className="btn-mc-secondary">← Back to Home</Link>
       </div>
-
-      <p className="text-xs text-mc-stone">
-        Pick an avatar below. Changes save instantly if you’re signed in as Erik (or admin).
-      </p>
-
-      <form action={saveAvatar}>
-        <div className="grid grid-cols-5 gap-3 sm:grid-cols-8">
-          {AVATAR_STEMS.map((stem) => (
-            <button
-              key={stem}
-              name="stem"
-              value={stem}
-              className={["relative aspect-square rounded-md border-2 p-1",
-                "bg-[color:rgba(255,255,255,0.9)] hover:brightness-95 transition",
-                "border-[color:var(--mc-wood)]",
-              ].join(" ")}
-              title={stem}
-            >
-              <Image
-                src={`/avatars/${stem}.png`}
-                alt={stem}
-                fill
-                sizes="64px"
-                className="object-contain"
-              />
-            </button>
-          ))}
+      <p className="text-xs text-mc-stone">Pick an avatar below. Changes save instantly if you’re signed in as Erik (or admin).</p>
+      <form action={saveAvatar} method="post" className="home-card p-4">
+        <div className="mt-3 grid grid-cols-5 gap-3 sm:grid-cols-10">
+          {avatarChoices.map((stem) => {
+            const url = `/avatars/${stem}.png`;
+            const selected = currentAvatar === url;
+            return (
+              <button
+                key={stem}
+                type="submit"
+                name="avatar"
+                value={url}
+                className={
+                  "relative aspect-square rounded-md border-2 p-1 bg-white/90 hover:brightness-95 transition border-[#5a3d1a]" +
+                  (selected ? " ring-2 ring-mc-green" : "")
+                }
+                title={stem}
+                aria-label={stem}
+              >
+                <img
+                  src={url}
+                  alt={stem}
+                  className="object-contain w-full h-full"
+                  style={{ borderRadius: "0.5rem" }}
+                />
+              </button>
+            );
+          })}
         </div>
       </form>
     </div>
