@@ -56,11 +56,7 @@ export default function AvatarHouse({ current = null }: Props) {
     });
   }
 
-                setSaved(true);
-                setTimeout(() => setSaved(false), 2000);
   return (
-        setSaved(true); // Set saved state to true
-        setTimeout(() => setSaved(false), 2000); // Reset saved state after 2 seconds
     <section className="home-card">
       <div className="home-card__body space-y-3">
         <h3 className="font-mc text-xl">🏠 Avatar House</h3>
