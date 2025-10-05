@@ -1,3 +1,16 @@
+
+/* Hero avatar sizing override */
+.home-banner .avatar-tile img {
+  width: 96px;
+  height: 96px;
+}
+
+@media (min-width: 768px) {
+  .home-banner .avatar-tile img {
+    width: 112px; /* 7rem */
+    height: 112px;
+  }
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

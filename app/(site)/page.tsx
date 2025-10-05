@@ -39,7 +39,7 @@ export default async function Page() {
         <PixelBackground className="absolute inset-0 w-full h-full pointer-events-none select-none" />
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:gap-10 p-6">
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
-            <AvatarTile username="Erik" avatarUrl={avatarUrl} />
+            <AvatarTile username="Erik" avatarUrl={avatarUrl} className="w-24 h-24 md:w-28 md:h-28" />
             <div className="flex-1 space-y-2">
               <h1 className="font-mc text-2xl text-[#f4d68e] drop-shadow-[1px_1px_0_#5a3d1a]">
                 EJ Blocks & Bots
