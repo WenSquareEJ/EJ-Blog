@@ -166,10 +166,79 @@ export default async function Page() {
 
   // Get Erik's avatar and userId
   const avatarUrlRaw = await getErikProfileAvatar();
-  const avatarUrl = avatarUrlRaw ?? "/assets/avatars/erik-default.png";
+  const avatarUrl = avatarUrlRaw ?? "/assets/avatars/steve.png";
   const erikUserId = await getErikUserId();
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "wenyu.yan@gmail.com";
   const sb = supabaseServer();
+
+  // Avatar House options
+  const AVATAR_OPTIONS = [
+    { id: "steve", name: "Steve", url: "/assets/avatars/steve.png" },
+    { id: "alex", name: "Alex", url: "/assets/avatars/alex.png" },
+    { id: "creeper", name: "Creeper", url: "/assets/avatars/creeper.png" },
+    { id: "enderman", name: "Enderman", url: "/assets/avatars/enderman.png" },
+    { id: "parrot", name: "Parrot", url: "/assets/avatars/parrot.png" },
+    { id: "wolf", name: "Wolf", url: "/assets/avatars/wolf.png" },
+  ];
+
+  // Avatar House UI logic
+  let avatarHouseCard: React.ReactNode = null;
+  if (erikUserId) {
+    const { data: userRes } = await sb.auth.getUser();
+    const user = userRes?.user ?? null;
+    const isErik = user?.id === erikUserId;
+    avatarHouseCard = (
+      <section className="home-card mb-2">
+        <div className="home-card__body flex flex-col items-center gap-4">
+          <h2 className="home-card-title text-xl mb-2">Avatar House</h2>
+          <div className="flex flex-col items-center gap-2">
+            <img
+              src={avatarUrl}
+              alt="Erik's Avatar"
+              className="rounded-xl border-4 border-[color:var(--mc-wood)] bg-[color:var(--mc-parchment)] shadow-mc w-20 h-20 object-cover"
+            />
+            <span className="text-xs text-mc-stone">Current Avatar</span>
+          </div>
+          {isErik ? (
+            <form
+              className="flex flex-wrap gap-3 justify-center mt-2"
+              action={"/"}
+              onSubmit={e => e.preventDefault()}
+            >
+              {AVATAR_OPTIONS.map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`border-2 rounded-lg p-1 bg-[color:var(--mc-parchment)] border-[color:var(--mc-wood)] shadow-mc focus:outline-mc-wood ${avatarUrl === opt.url ? "ring-2 ring-mc-emerald" : ""}`}
+                  title={opt.name}
+                  aria-label={opt.name}
+                  onClick={async () => {
+                    // Update avatar_url for Erik
+                    const res = await fetch("/api/profile/avatar", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ avatar_url: opt.url }),
+                    });
+                    if (res.ok) {
+                      window.location.reload();
+                    } else {
+                      alert("Failed to update avatar. Try again.");
+                    }
+                  }}
+                >
+                  <img
+                    src={opt.url}
+                    alt={opt.name}
+                    className="w-12 h-12 object-cover rounded-md"
+                  />
+                </button>
+              ))}
+            </form>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
 
     // Scratch projects (after sb is declared)
   let scratchProjects: ScratchPreview[] = [];
@@ -363,6 +432,8 @@ export default async function Page() {
           </div>
         </div>
       </section>
+      {/* Avatar House Card */}
+      {avatarHouseCard}
 
       {/* Main Grid */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
