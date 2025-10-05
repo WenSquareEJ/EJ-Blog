@@ -1,4 +1,4 @@
-// components/NavBar.tsx
+// components/
 "use client";
 
 import Link from "next/link";
@@ -122,14 +122,9 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
               <Link className="btn-mc" href="/blog">
                 Blog
               </Link>
-              {user && (
-                <Link className="btn-mc" href="/site/avatar">
-                  Avatar
-                </Link>
-              )}
               {(isErik || isAdmin) && (
                 <Link className="btn-mc" href="/site/avatar-house">
-                  Avatar House
+                  Avatar
                 </Link>
               )}
               <Link className="btn-mc" href="/minecraft-zone">

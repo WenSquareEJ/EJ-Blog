@@ -26,6 +26,12 @@ const nextConfig = {
   },
   images: {
     remotePatterns
+  },
+  async redirects() {
+    return [
+      { source: "/site/avatar", destination: "/site/avatar-house", permanent: false },
+      { source: "/avatar", destination: "/site/avatar-house", permanent: false },
+    ];
   }
 }
 
