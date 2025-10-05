@@ -119,6 +119,11 @@ export default function NavBar({ initialUser, adminEmail }: NavBarProps) {
               <Link className="btn-mc" href="/blog">
                 Blog
               </Link>
+              {user && (
+                <Link className="btn-mc" href="/avatar">
+                  Avatar
+                </Link>
+              )}
               <Link className="btn-mc" href="/minecraft-zone">
                 Minecraft Zone
               </Link>

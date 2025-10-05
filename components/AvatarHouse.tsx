@@ -24,9 +24,10 @@ type Props = {
 
 export default function AvatarHouse({ current = null }: Props) {
   const router = useRouter();
-  const [selected, setSelected] = useState<string | null>(current);
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+    const [selected, setSelected] = useState<string | null>(current);
+    const [pending, startTransition] = useTransition();
+    const [error, setError] = useState<string | null>(null);
+    const [saved, setSaved] = useState(false);
 
   async function chooseAvatar(fileStem: string) {
     setSelected(fileStem);
@@ -55,6 +56,8 @@ export default function AvatarHouse({ current = null }: Props) {
     });
   }
 
+                setSaved(true);
+                setTimeout(() => setSaved(false), 2000);
   return (
     <section className="home-card">
       <div className="home-card__body space-y-3">
@@ -64,6 +67,15 @@ export default function AvatarHouse({ current = null }: Props) {
         <div className="grid grid-cols-5 gap-3 sm:grid-cols-8">
           {AVATAR_FILES.map((stem) => {
             const isActive = selected === stem;
+              {/* Success Toast */}
+              {saved && (
+                <div className="toast-stack" aria-live="polite">
+                  <div className="toast-card">
+                    <span className="toast-emoji">✅</span>
+                    <span className="toast-message">Saved! Avatar updated.</span>
+                  </div>
+                </div>
+              )}
             return (
               <button
                 key={stem}

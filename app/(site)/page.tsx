@@ -1,5 +1,6 @@
 
 import TipOfTheDay from "@/components/TipOfTheDay";
+import Link from "next/link";
 import PortalRoom from "@/components/PortalRoom";
 import PixelBackground from "@/components/PixelBackground";
 import AvatarTile from "@/components/AvatarTile";
@@ -60,8 +61,12 @@ export default async function Page() {
       </section>
       {/* Portal Room grid below Hero */}
       <PortalRoom />
-      {/* Avatar House: Only Erik sees, at very end */}
-      {isErik && <AvatarHouse current={currentAvatarFilename?.replace(/\.png$/, "")} />}
+      {/* Erik-only: Avatar change button */}
+      {isErik && (
+        <div className="px-6">
+          <Link href="/avatar" className="btn-mc">🧑 Change Avatar</Link>
+        </div>
+      )}
     </div>
   );
 }
