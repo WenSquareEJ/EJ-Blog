@@ -6,7 +6,7 @@ import AvatarTile from "@/components/AvatarTile";
 import XPBar from "@/components/XPBar";
 import ParrotSprite from "@/components/ParrotSprite";
 import AvatarHouse from "@/components/AvatarHouse";
-import { getErikProfileAvatar, getErikUserId, AVATAR_OPTIONS } from "@/lib/erik";
+import { getErikProfileAvatar, getErikUserId, AVATAR_OPTIONS, isAvatarFilename, AvatarFilename } from "@/lib/erik";
 import { getUser } from "@/lib/supabaseServer";
 
 export default async function Page() {
@@ -19,8 +19,8 @@ export default async function Page() {
       avatarUrl = avatarUrlRaw;
       // Extract filename from path
       const match = avatarUrlRaw.match(/\/avatars\/(.+\.png)$/);
-      if (match && AVATAR_OPTIONS.includes(match[1])) {
-        currentAvatarFilename = match[1];
+      if (match && isAvatarFilename(match[1])) {
+        currentAvatarFilename = match[1] as AvatarFilename;
       }
     }
   } catch (error) {

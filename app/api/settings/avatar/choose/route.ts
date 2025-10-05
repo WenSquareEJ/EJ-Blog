@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AVATAR_OPTIONS, getErikUserId } from "@/lib/erik";
+import { AVATAR_OPTIONS, getErikUserId, isAvatarFilename, AvatarFilename } from "@/lib/erik";
 
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
@@ -8,9 +8,11 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { filename } = body;
-    if (!filename || typeof filename !== "string" || !AVATAR_OPTIONS.includes(filename)) {
-      return NextResponse.json({ error: "Invalid avatar filename" }, { status: 400 });
+    const raw = String(body?.filename ?? "");
+    const normalized = raw.trim().toLowerCase().replace(/^.*[\\/]/, ""); // remove paths if any
+
+    if (!isAvatarFilename(normalized)) {
+      return NextResponse.json({ ok: false, error: "Invalid avatar filename." }, { status: 400 });
     }
 
     // Get requester user
@@ -45,7 +47,7 @@ export async function POST(req: Request) {
 
     // Update Erik's user_metadata.avatar
     const { error: updateError } = await supabase.auth.admin.updateUserById(erikUserId, {
-      user_metadata: { avatar: filename },
+  user_metadata: { avatar: normalized as AvatarFilename },
     });
     if (updateError) {
       return NextResponse.json({ error: "Failed to update avatar" }, { status: 500 });

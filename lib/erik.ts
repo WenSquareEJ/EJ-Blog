@@ -1,11 +1,38 @@
+export function normalizeAvatarFilename(input: string): string {
+  return String(input || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^.*[\\/]/, ""); // strip any path
+}
+
+export function toAvatarFilename(input: string): AvatarFilename | null {
+  const n = normalizeAvatarFilename(input);
+  return isAvatarFilename(n) ? (n as AvatarFilename) : null;
+}
 
 import supabaseAdmin from "./supabaseAdmin";
 import supabaseServer from "./supabaseServer";
 
+
+
 export const AVATAR_OPTIONS = [
-  "Steve.png","Alex.png","Creeper.png","Enderman.png","Skeleton.png","Zombie.png","Villager.png","Pig.png","Bee.png","Fox.png",
-  "Parrot_Red.png","Parrot_Blue.png","Parrot_Green.png","Parrot_Cyan.png","Parrot_Yellow.png","Wolf.png"
-];
+  "alex.png",
+  "bluey.png",
+  "creeper.png",
+  "enderman.png",
+  "erik_steve.png",
+  "scientist.png",
+  "skeleton.png",
+  "villager.png",
+  "waffle.png",
+  "zombie.png",
+] as const;
+
+export type AvatarFilename = (typeof AVATAR_OPTIONS)[number];
+
+export function isAvatarFilename(s: string): s is AvatarFilename {
+  return (AVATAR_OPTIONS as readonly string[]).includes(s);
+}
 
 const ERIK_EMAIL = "erik.ys.johansson@gmail.com";
 const ERIK_PROFILE_TABLE = "profiles";
@@ -34,8 +61,11 @@ export async function getErikProfileAvatar(): Promise<string> {
     const { data, error } = await supabaseAdmin().auth.admin.getUserById(erikUserId);
     if (error || !data || !data.user) return "/avatars/Steve.png";
     const filename = data.user.user_metadata?.avatar;
-    if (typeof filename === "string" && AVATAR_OPTIONS.includes(filename)) {
-      return `/avatars/${filename}`;
+    if (typeof filename === "string") {
+      const normalized = normalizeAvatarFilename(filename);
+      if (isAvatarFilename(normalized)) {
+        return `/avatars/${normalized}`;
+      }
     }
     return "/avatars/Steve.png";
   } catch {
