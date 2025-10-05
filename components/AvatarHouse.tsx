@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -16,9 +16,11 @@ const AVATAR_FILES = [
   "villager",
   "waffle",
   "zombie",
+  "steve",
 ];
 
 type Props = {
+  /** Current avatar stem (no .png), or null/undefined if none */
   current?: string | null;
 };
 
@@ -28,6 +30,11 @@ export default function AvatarHouse({ current = null }: Props) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  // Keep local selection in sync if parent prop changes
+  useEffect(() => {
+    setSelected(current ?? null);
+  }, [current]);
 
   async function chooseAvatar(fileStem: string) {
     setSelected(fileStem);
@@ -45,10 +52,13 @@ export default function AvatarHouse({ current = null }: Props) {
         const data = await res.json().catch(() => ({} as any));
 
         if (!res.ok || !data?.ok) {
-          const msg = (data && data.error) ? data.error : `Failed (${res.status})`;
+          const msg = data?.error ? data.error : `Failed (${res.status})`;
           throw new Error(msg);
         }
 
+        // ✅ Success: show toast briefly and refresh
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
         router.refresh();
       } catch (e: any) {
         setError(e?.message || "Failed to update avatar.");
@@ -65,24 +75,6 @@ export default function AvatarHouse({ current = null }: Props) {
         <div className="grid grid-cols-5 gap-3 sm:grid-cols-8">
           {AVATAR_FILES.map((stem) => {
             const isActive = selected === stem;
-              {/* Success Toast */}
-      {/* Success Toast */}
-      {saved && (
-        <div className="toast-stack" aria-live="polite">
-          <div className="toast-card">
-            <span className="toast-emoji">✅</span>
-            <span className="toast-message">Saved! Avatar updated.</span>
-          </div>
-        </div>
-      )}
-              {saved && (
-                <div className="toast-stack" aria-live="polite">
-                  <div className="toast-card">
-                    <span className="toast-emoji">✅</span>
-                    <span className="toast-message">Saved! Avatar updated.</span>
-                  </div>
-                </div>
-              )}
             return (
               <button
                 key={stem}
@@ -98,6 +90,12 @@ export default function AvatarHouse({ current = null }: Props) {
                 ].join(" ")}
                 title={stem}
               >
+                {/* optional tiny 'Saved!' chip when the selected tile was just saved */}
+                {isActive && saved && (
+                  <span className="absolute -top-2 -right-2 rounded-md border border-[#5a3d1a] bg-white/90 px-1.5 py-0.5 text-[10px] font-mc shadow-pixel">
+                    Saved!
+                  </span>
+                )}
                 <Image
                   src={`/avatars/${stem}.png`}
                   alt={stem}
@@ -110,10 +108,19 @@ export default function AvatarHouse({ current = null }: Props) {
           })}
         </div>
 
-  {pending && <p className="text-xs text-mc-stone">Updating…</p>}
-  {error && <p className="text-xs text-red-600">{error}</p>}
+        {pending && <p className="text-xs text-mc-stone">Updating…</p>}
+        {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
+
+      {/* ✅ One toast, outside the map, only when save succeeded */}
+      {saved && (
+        <div className="toast-stack" aria-live="polite">
+          <div className="toast-card">
+            <span className="toast-emoji">✅</span>
+            <span className="toast-message">Saved! Avatar updated.</span>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
-// ...existing code ends above, remove all below...
