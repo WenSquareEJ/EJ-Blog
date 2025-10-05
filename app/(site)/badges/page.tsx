@@ -460,7 +460,6 @@ export default async function BadgesPage() {
               badgeName={badges[0]?.name ?? null}
             />
           )}
-          {isAdmin && <CheckBadgeProgressButton />}
         </div>
       </header>
 
