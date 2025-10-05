@@ -53,3 +53,22 @@ export function createServerClient() {
 
 /** Default export so `import x from "@/lib/supabaseServer"` also works */
 export default supabaseServer;
+
+/**
+ * Returns the currently signed-in user (or null if none).
+ * Uses the cookie-based Supabase server client.
+ */
+export async function getUser() {
+  const sb = supabaseServer();
+  try {
+    const { data, error } = await sb.auth.getUser();
+    if (error) {
+      console.warn("[getUser] auth.getUser failed:", error.message);
+      return null;
+    }
+    return data?.user ?? null;
+  } catch (err) {
+    console.error("[getUser] unexpected error:", err);
+    return null;
+  }
+}
