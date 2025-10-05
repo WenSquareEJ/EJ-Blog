@@ -79,7 +79,6 @@ type BadgeRow = TablesRow<'badges'>;
 type UserBadgeRow = TablesRow<'user_badges'>;
 
 type BadgeTier = 'emerald' | 'diamond' | 'gold' | 'iron' | null;
-type ProgressType = 'post_count' | 'minecraft_tag_posts' | 'project_posts' | 'daily_streak';
 
 const TRACKED_CRITERIA_TYPES = new Set<ProgressType>([
   'post_count',
