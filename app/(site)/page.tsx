@@ -164,8 +164,9 @@ function formatErikBadgeAwardedAt(isoDate: string | null): string | null {
 }
 
 export default async function Page() {
-  console.log('[home] rendering Home Hub');
-  // Get Erik's avatar from helper (safe fallback)
+  console.log('[home] render start');
+
+  // Get Erik's avatar
   let avatarUrl: string = "/assets/avatars/steve.png";
   try {
     const avatarUrlRaw = await getErikProfileAvatar();
@@ -176,24 +177,24 @@ export default async function Page() {
     console.error('[home] avatar fetch failed', error);
   }
 
-  // Get user info
+  // Supabase server client
   const sb = supabaseServer();
+
+  // Auth block
   let user: any = null;
   let isAdmin = false;
-  let canEditAvatar = false;
   let adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "";
   try {
     const { data: userRes } = await sb.auth.getUser();
     user = userRes?.user ?? null;
     isAdmin = user?.email?.toLowerCase() === adminEmail;
   } catch (error) {
-    console.error('[home] user fetch failed', error);
+    console.error('[home] auth.getUser failed', error);
   }
 
-  // Use ERIK_ID from env only
-  const ERIK_ID = process.env.NEXT_PUBLIC_ERIK_USER_ID ?? null;
-  const erikUnavailable = !ERIK_ID || typeof ERIK_ID !== 'string' || ERIK_ID.length === 0;
-  canEditAvatar = Boolean(user?.id && !erikUnavailable && user.id === ERIK_ID);
+  // Erik ID
+  const ERIK_ID = (process.env.NEXT_PUBLIC_ERIK_USER_ID ?? "").trim() || null;
+  let erikCollectionUnavailable = !ERIK_ID;
 
   // Scratch projects
   let scratchProjects: ScratchPreview[] = [];
@@ -210,11 +211,11 @@ export default async function Page() {
       title: project.title?.trim() || "Untitled",
       createdAt: project.created_at ?? null,
     }));
-    console.log('[home] loaded scratchProjects:', scratchProjects.length);
   } catch (error) {
-    console.error('[home] scratchProjects failed', error);
+    console.error('[home] scratch projects failed', error);
     scratchError = "Unable to load Scratch projects.";
   }
+  console.log('[home] scratch projects:', scratchProjects.length);
 
   // Latest posts
   let latestPosts: PostSummary[] = [];
@@ -237,11 +238,11 @@ export default async function Page() {
         publishedAt: getPostTimestamp(post),
       };
     });
-    console.log('[home] loaded latestPosts:', latestPosts.length);
   } catch (error) {
-    console.error('[home] latestPosts failed', error);
+    console.error('[home] latest posts failed', error);
     latestPostsError = "Unable to load latest posts.";
   }
+  console.log('[home] latest posts:', latestPosts.length);
 
   // Minecraft posts
   let minecraftPosts: MiniPost[] = [];
@@ -269,16 +270,15 @@ export default async function Page() {
         publishedAt: getPostTimestamp({ published_at: post.published_at, created_at: post.created_at }),
       }));
     }
-    console.log('[home] loaded minecraftPosts:', minecraftPosts.length);
   } catch (error) {
-    console.error('[home] minecraftPosts failed', error);
+    console.error('[home] minecraft posts failed', error);
     minecraftError = "Unable to load Minecraft posts.";
   }
+  console.log('[home] minecraft posts:', minecraftPosts.length);
 
-  // Badges widget (Erik only)
+  // Badges widget
   let widgetBadges: WidgetBadge[] = [];
   let badgesError: string | null = null;
-  let erikCollectionUnavailable = erikUnavailable;
   try {
     const { data: badgesData, error: badgesFetchError } = await sb
       .from("badges")
@@ -286,17 +286,20 @@ export default async function Page() {
       .order("name", { ascending: true });
     if (badgesFetchError) throw badgesFetchError;
     const allBadges = ((badgesData ?? []) as TablesRow<"badges">[]).filter(badge => Boolean(badge.id));
-    if (allBadges.length > 0 && !erikUnavailable) {
+    if (allBadges.length > 0 && !erikCollectionUnavailable) {
       let erikUserBadges: { badge_id: string; awarded_at: string | null }[] = [];
       try {
-        const { data: erikBadgesData, error: erikBadgesFetchError } = await sb
-          .from("user_badges")
-          .select("badge_id, awarded_at")
-          .eq("user_id", ERIK_ID);
-        if (erikBadgesFetchError) throw erikBadgesFetchError;
-        erikUserBadges = (erikBadgesData ?? []) as { badge_id: string; awarded_at: string | null }[];
+        // Only call .eq if ERIK_ID is a string
+        if (typeof ERIK_ID === 'string' && ERIK_ID) {
+          const { data: erikBadgesData, error: erikBadgesFetchError } = await sb
+            .from("user_badges")
+            .select("badge_id, awarded_at")
+            .eq("user_id", ERIK_ID);
+          if (erikBadgesFetchError) throw erikBadgesFetchError;
+          erikUserBadges = (erikBadgesData ?? []) as { badge_id: string; awarded_at: string | null }[];
+        }
       } catch (error) {
-        console.error('[home] user_badges fetch failed', error);
+        console.error('[home] badges user_badges failed', error);
         erikCollectionUnavailable = true;
       }
       const awardedByBadgeId = new Map(erikUserBadges.map(entry => [entry.badge_id, entry] as const));
@@ -331,13 +334,13 @@ export default async function Page() {
         awardedAt: null,
         status: "locked" as const,
       }));
-      if (erikUnavailable) erikCollectionUnavailable = true;
+      if (!ERIK_ID) erikCollectionUnavailable = true;
     }
-    console.log('[home] loaded widgetBadges:', widgetBadges.length);
   } catch (error) {
-    console.error('[home] badges widget failed', error);
+    console.error('[home] badges failed', error);
     badgesError = "Unable to load badges.";
   }
+  console.log('[home] badges:', widgetBadges.length, 'erikUnavailable:', erikCollectionUnavailable);
 
   // Moderation snapshot (admin only)
   let moderationSnapshot: ModerationSnapshot = {
@@ -369,12 +372,15 @@ export default async function Page() {
       if (errors.length > 0) {
         moderationSnapshot.error = `Unable to load ${errors.join(" and ")} counts.`;
       }
-      console.log('[home] loaded moderationSnapshot:', moderationSnapshot.pendingPosts, moderationSnapshot.pendingComments);
     } catch (error) {
-      console.error('[home] moderationSnapshot failed', error);
+      console.error('[home] moderation counts failed', error);
       moderationSnapshot.error = "Unable to load moderation counts.";
     }
   }
+  console.log('[home] moderation counts:', moderationSnapshot.pendingPosts, moderationSnapshot.pendingComments);
+
+  // Avatar House gating
+  const canEditAvatar = Boolean(user?.id && ERIK_ID && user.id === ERIK_ID);
 
   // Render Home Hub
   return (
