@@ -1,3 +1,55 @@
+/* Badge strip widget styles */
+.badge-strip-card {
+  border: 2px solid var(--mc-wood, #4f2f13);
+  background: var(--mc-parchment, #f8f5e9);
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 8px rgba(47,39,28,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.badge-strip-row {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  min-height: 2.5rem;
+}
+.badge-strip-icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  font-size: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--mc-ink, #1f1b14);
+  box-shadow: 0 1px 2px rgba(47,39,28,0.10);
+  transition: box-shadow 120ms;
+}
+.badge-strip-icon:focus {
+  outline: 2px solid var(--mc-wood, #4f2f13);
+}
+.badge-strip-extra {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: var(--mc-stone, #7c6f57);
+  background: none;
+  border-radius: 0.5rem;
+  padding: 0 0.5rem;
+}
+.badge-strip-link {
+  font-size: 0.95rem;
+  color: var(--mc-wood, #4f2f13);
+  text-decoration: underline;
+  margin-top: 2px;
+  align-self: flex-end;
+}
 /* Ensure readable text on light parchment surfaces */
 .site-content-surface {
   --mc-ink: #2f2618;           /* darker brown text for readability */

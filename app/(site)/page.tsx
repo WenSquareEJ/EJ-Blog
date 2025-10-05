@@ -3,6 +3,7 @@
 import supabaseServer from "@/lib/supabaseServer";
 import { buildExcerpt, extractPostContent } from "@/lib/postContent";
 import { resolveBadgeIcon } from "@/lib/badgeIcons";
+import BadgesStrip from "@/components/BadgesStrip";
 import type { TablesRow } from "@/lib/database.types";
 import AvatarTile from "@/components/AvatarTile";
 import { getErikProfileAvatar, getErikUserId } from "@/lib/erik";
@@ -34,7 +35,7 @@ type ScratchPreview = {
 type WidgetBadge = {
   id: string;
   name: string;
-  icon: string;
+  icon: React.ReactNode;
   description: string | null;
   criteriaSummary: string | null;
   awardedAt: string | null;
@@ -389,47 +390,7 @@ export default async function Page() {
           <section className="home-card">
             <div className="home-card__body space-y-4">
               <h2 className="home-card-title text-2xl">Badges &amp; Achievements</h2>
-              {badgesError ? (
-                <p className="text-sm text-red-600">{badgesError}</p>
-              ) : widgetBadges.length === 0 ? (
-                <p className="home-card-meta text-sm">Badges will appear here once they&apos;re configured.</p>
-              ) : (
-                <div className="space-y-3">
-                  {erikCollectionUnavailable && (
-                    <p className="home-card-meta text-xs">Erik&apos;s collection unavailable right now — showing badges as locked.</p>
-                  )}
-                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {widgetBadges.map(badge => {
-                      const awardedLabel = formatErikBadgeAwardedAt(badge.awardedAt);
-                      const cardClasses = [
-                        "badge-card space-y-3 rounded-xl p-4",
-                        badge.status === "earned" ? "badge-card-earned" : "badge-card-locked",
-                      ].join(" ");
-                      const iconClasses = [
-                        "badge-icon",
-                        badge.status === "earned" ? "badge-icon-earned" : "badge-icon-locked",
-                      ].join(" ");
-                      return (
-                        <li key={badge.id} className={cardClasses}>
-                          <div className="flex items-start gap-3">
-                            <span className={iconClasses} aria-hidden>{badge.icon}</span>
-                            <div className="space-y-2">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="badge-title text-base font-semibold sm:text-lg">{badge.name}</h3>
-                                <span className={`badge-status-chip ${badge.status === "earned" ? "badge-status-earned" : "badge-status-locked"}`}>{badge.status === "earned" ? "Earned ✓" : "Locked"}</span>
-                              </div>
-                              {badge.description && <p className="badge-description text-sm">{badge.description}</p>}
-                              {badge.criteriaSummary && <p className="text-xs text-[color:rgba(47,39,28,0.75)]">{badge.criteriaSummary}</p>}
-                              {badge.status === "earned" && awardedLabel && <p className="text-xs text-[color:rgba(47,39,28,0.75)]">Awarded {awardedLabel}</p>}
-                            </div>
-                          </div>
-                          <span className="badge-card-outline" aria-hidden />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
+              <BadgesStrip />
             </div>
           </section>
 
