@@ -2,15 +2,14 @@
 
 import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
-import DeleteScratchProjectButton from "./DeleteScratchProjectButton";
+import DeleteScratchButton from "@/components/DeleteScratchButton";
 
 type ScratchProject = {
   id: string;
   scratch_id: string;
   title: string | null;
   created_at: string | null;
-  created_by?: string | null;
-  image_path?: string | null;
+  user_id: string;
 };
 
 export default async function ScratchBoardPage() {
@@ -23,7 +22,7 @@ export default async function ScratchBoardPage() {
   // Load projects with owner and thumbnail info
   const { data: rawProjects, error } = await sb
     .from("scratch_projects")
-    .select("id, scratch_id, title, created_at, created_by, image_path")
+    .select("id, scratch_id, title, created_at, user_id")
     .order("created_at", { ascending: false });
 
   let projects: ScratchProject[] = [];
@@ -33,8 +32,7 @@ export default async function ScratchBoardPage() {
       scratch_id: p.scratch_id,
       title: p.title ?? null,
       created_at: p.created_at ?? null,
-      created_by: p.created_by ?? null,
-      image_path: p.image_path ?? null,
+      user_id: p.user_id,
     }));
   }
 
@@ -72,7 +70,7 @@ export default async function ScratchBoardPage() {
           {projects.map((p) => {
             // Only show delete button to admin or owner
             const isAdmin = user?.email?.toLowerCase() === process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase();
-            const isOwner = p.created_by && user?.id === p.created_by;
+            const isOwner = user?.id === p.user_id;
             return (
               <li key={p.id} className="card-block space-y-2">
                 <h3 className="font-mc text-sm">{p.title || `Project ${p.scratch_id}`}</h3>
@@ -97,7 +95,7 @@ export default async function ScratchBoardPage() {
                   Open on Scratch ↗
                 </a>
                 {(isAdmin || isOwner) && (
-                  <DeleteScratchProjectButton projectId={p.id} />
+                  <DeleteScratchButton projectId={p.id} />
                 )}
               </li>
             );
