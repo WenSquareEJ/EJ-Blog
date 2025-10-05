@@ -29,8 +29,9 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      { source: "/site/avatar", destination: "/site/avatar-house", permanent: false },
-      { source: "/avatar", destination: "/site/avatar-house", permanent: false },
+      { source: "/site/avatar", destination: "/avatar-house", permanent: false },
+      { source: "/avatar", destination: "/avatar-house", permanent: false },
+      { source: "/site/avatar-house", destination: "/avatar-house", permanent: false },
     ];
   }
 }
