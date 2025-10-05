@@ -7,12 +7,9 @@ const ICON_MAP: Record<string, string> = {
   shield: '🛡️',
 };
 
-export function resolveBadgeIcon(icon: string | null | undefined) {
-  if (!icon) return '🏅';
-  const trimmed = icon.trim();
-  if (!trimmed) return '🏅';
-
-  const normalized = trimmed.toLowerCase();
-  return ICON_MAP[normalized] ?? trimmed;
+export function resolveBadgeIcon(icon: string | null | undefined): string | null {
+  if (!icon) return null;
+  const key = icon.trim().toLowerCase();
+  return ICON_MAP[key] ?? null;
 }
 

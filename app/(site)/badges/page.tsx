@@ -366,18 +366,23 @@ export default async function BadgesPage() {
           Badges will appear here once they&apos;re configured.
         </div>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+  <ul className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
           {badges.map((badge) => {
             const earned = earnedByBadgeId.get(badge.id);
             const awardedLabel = formatAwardedAt(earned?.awarded_at ?? null);
-            const icon = resolveBadgeIcon(badge.icon);
             const criteriaDetails = parseBadgeCriteria(badge.criteria);
             const criteriaSummary = buildCriteriaSummary(criteriaDetails);
             const tier = determineBadgeTier(badge.name ?? '');
             const cardClasses = [
-              'card-block badge-card space-y-3 relative flex h-full flex-col',
+              'card-block badge-card space-y-3 relative flex h-full flex-col min-h-[240px] min-w-0',
               earned ? 'badge-card-earned' : 'badge-card-locked',
             ].join(' ');
+            const fallbackIcon =
+              tier === 'diamond' ? '💎' :
+              tier === 'emerald' ? '💚' :
+              (criteriaDetails.type === 'project_posts' ? '🛠️' :
+                criteriaDetails.type === 'minecraft_tag_posts' ? '⛏️' : '🏅');
+            const icon = resolveBadgeIcon(badge.icon) ?? fallbackIcon;
             const iconClasses = [
               'badge-icon',
               earned ? 'badge-icon-earned' : 'badge-icon-locked',
@@ -410,16 +415,16 @@ export default async function BadgesPage() {
                   />
                 )}
                 <div className="flex flex-wrap items-start gap-3">
-                  <span className={iconClasses} aria-hidden>
+                  <span className={iconClasses + ' shrink-0'} aria-hidden>
                     {icon}
                   </span>
                   <div className="flex-1 space-y-2 min-w-[55%]">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="font-semibold text-base sm:text-lg badge-title">
+                      <h2 className="badge-title text-base sm:text-[1.05rem] leading-tight line-clamp-2 break-words hyphens-auto font-semibold min-w-0">
                         {badge.name}
                       </h2>
                       <span
-                        className={`badge-status-chip ${earned ? 'badge-status-earned' : 'badge-status-locked'}`}
+                        className={`badge-status-chip whitespace-nowrap overflow-hidden text-ellipsis ${earned ? 'badge-status-earned' : 'badge-status-locked'}`}
                       >
                         {earned ? 'Earned ✓' : 'Locked'}
                       </span>
