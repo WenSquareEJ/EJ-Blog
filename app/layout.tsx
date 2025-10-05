@@ -1,5 +1,6 @@
 // /app/layout.tsx
 import type { Metadata } from "next";
+import SupabaseProvider from "@/components/supabase-provider";
 import "./globals.css";
 
 import { Press_Start_2P, Pixelify_Sans } from "next/font/google";
@@ -25,9 +26,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${mcFont.variable} ${pixelBody.variable}`}>
+    <html lang="en" className={`${mcFont.variable} ${pixelBody.variable}`}> 
       <body className="bg-mc-grass text-mc-ink">
-        {children}
+        <SupabaseProvider>
+          {children}
+        </SupabaseProvider>
       </body>
     </html>
   );
