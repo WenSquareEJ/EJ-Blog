@@ -17,6 +17,17 @@ export async function POST(req: Request) {
     if (userError || !user) {
       return NextResponse.json({ ok: false, error: "Not authenticated." }, { status: 401 });
     }
+    // Restrict updates to Erik only
+    const { data: erikProfile, error: erikError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", "Erik")
+      .single();
+
+    if (erikError || !erikProfile || user.id !== erikProfile.id) {
+      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
+
     const { error: upsertError } = await supabase
       .from("profiles")
       .upsert({ id: user.id, avatar: normalized as AvatarFilename }, { onConflict: "id" });
