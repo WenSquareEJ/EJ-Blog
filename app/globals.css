@@ -1,3 +1,9 @@
+/* Ensure readable text on light parchment surfaces */
+.site-content-surface {
+  --mc-ink: #2f2618;           /* darker brown text for readability */
+  --mc-stone: #5b5550;         /* slightly darker meta/body text */
+  color: var(--mc-ink);
+}
 
 
 /* Centralized home widget text utilities (Minecraft readable ink) */
@@ -36,8 +42,8 @@
 :root {
   --mc-grass: #4CAF50;   /* background */
   --mc-sky:   #87CEEB;   /* accents / buttons */
-  --mc-ink:   #2E2E2E;   /* text */
-  --mc-stone: #6B7280;   /* neutral panels, improved contrast */
+  --mc-ink:   #2f2618;   /* dark brown for readable text */
+  --mc-stone: #5b5550;   /* slightly darker meta/body text */
 .home-card-title {
   font-family: var(--font-mc), monospace;
   color: var(--mc-ink);
@@ -56,13 +62,18 @@
   /* optional extras (kept neutral by default) */
   --mc-parchment: #f4e7c6;  /* light parchment beige */
   --mc-cloud: #eae0b9;      /* slightly darker highlight */
-  --mc-ink: #2f2618;        /* dark brown for readable text */
   --mc-wood: #4b2e05;       /* brown frame border */
 
   /* extended sky/field palette for scenic backgrounds */
   --mc-sky-deep: #7fc2ff;
   --mc-sky-light: #bde4ff;
-  --mc-cloud: #fdfcf6;
+  /* Only one --mc-cloud definition, above */
+/* Targeted tweak for readable text inside content surface */
+.site-content-surface .home-card-title,
+.site-content-surface .section-title {
+  color: var(--mc-ink);
+  text-shadow: none;
+}
   --mc-tree-dark: #2f5f37;
   --mc-tree-soft: #3c7344;
   --mc-field: #6fbf5f;
