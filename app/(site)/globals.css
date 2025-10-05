@@ -1,16 +1,26 @@
-
-/* Hero avatar sizing override */
-.home-banner .avatar-tile img {
-  width: 96px;
-  height: 96px;
+/* === Hero-only Avatar sizing (scoped to the home banner) === */
+.home-banner .avatar-tile__frame {
+  width: 128px;
+  height: 128px; /* square frame */
 }
 
 @media (min-width: 768px) {
-  .home-banner .avatar-tile img {
-    width: 112px; /* 7rem */
-    height: 112px;
+  .home-banner .avatar-tile__frame {
+    width: 160px;  /* md: 10rem */
+    height: 160px; /* md: 10rem */
   }
 }
+
+.home-banner .avatar-tile__image {
+  object-fit: contain; /* avoid cropping */
+  padding: 6px;        /* breathing room inside frame */
+}
+
+.home-banner .avatar-tile__nameplate {
+  margin-top: 0.5rem;  /* ensure no overlap with frame */
+}
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
