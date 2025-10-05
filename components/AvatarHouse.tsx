@@ -34,8 +34,9 @@ export default function AvatarHouse({ current = null }: Props) {
 
     startTransition(async () => {
       try {
-        const res = await fetch("/api/profile/avatar", {
+        const res = await fetch("/api/settings/avatar/choose", {
           method: "POST",
+          credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ filename: `${fileStem}.png` }),
         });

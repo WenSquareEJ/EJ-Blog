@@ -11,7 +11,7 @@ const portals = [
   {
     href: "/minecraft-zone",
     title: "Minecraft Zone",
-    subtitle: "MC Builds",
+    subtitle: "MC build",
     aria: "Go to Minecraft Zone"
   },
   {

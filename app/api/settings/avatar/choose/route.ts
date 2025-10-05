@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { AVATAR_OPTIONS, getErikUserId } from "@/lib/erik";
-import supabaseAdmin from "@/lib/supabaseAdmin";
+
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
@@ -11,15 +14,14 @@ export async function POST(req: Request) {
     }
 
     // Get requester user
-    const sb = supabaseAdmin();
+    const supabase = createRouteHandlerClient({ cookies });
     let requesterUserId: string | null = null;
     let requesterEmail: string | null = null;
     try {
-      // Try to get session from cookies
-      const { data: { user }, error } = await sb.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (user) {
         requesterUserId = user.id;
-  requesterEmail = user.email ?? null;
+        requesterEmail = user.email ?? null;
       }
     } catch {}
 
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
     }
 
     // Update Erik's user_metadata.avatar
-    const { error: updateError } = await sb.auth.admin.updateUserById(erikUserId, {
+    const { error: updateError } = await supabase.auth.admin.updateUserById(erikUserId, {
       user_metadata: { avatar: filename },
     });
     if (updateError) {
