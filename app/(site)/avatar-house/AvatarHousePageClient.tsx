@@ -2,53 +2,51 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import AvatarHouse from "@/components/AvatarHouse";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
-type Props = {
-  initialUser: { id: string; email?: string | null } | null;
-};
-
-export default function AvatarHousePageClient({ initialUser }: Props) {
-  const [user] = useState(initialUser);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+export default function AvatarHousePageClient() {
+  const supabase = createClientComponentClient();
+  const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let alive = true;
+    let ok = true;
     (async () => {
+      setLoading(true);
       try {
-        const res = await fetch("/api/profile/avatar/current", { credentials: "same-origin" });
-        if (!alive) return;
-        if (res.ok) {
-          const json = await res.json();
-          setAvatarUrl((json?.avatarUrl as string) ?? null);
-        }
-      } catch {}
+        const { data, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        setUserEmail(data.user?.email ?? null);
+      } catch (e: any) {
+        setError(e?.message || "Unable to get session");
+      } finally {
+        if (ok) setLoading(false);
+      }
     })();
-    return () => { alive = false; };
-  }, []);
+    return () => { ok = false; };
+  }, [supabase]);
 
   return (
     <div className="mx-auto max-w-3xl p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-mc text-2xl">Choose Your Avatar</h1>
-        <Link href="/site" className="btn-mc-secondary">← Back to Home</Link>
+        <Link href="/site" className="btn-mc">← Back to Home</Link>
       </div>
 
-      {!user && <p className="text-sm text-red-600">Please sign in to change your avatar.</p>}
-
-      {!!user && (
-        <>
-          {avatarUrl && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-mc-stone">Current:</span>
-              <Image src={avatarUrl} alt="Current avatar" width={48} height={48} className="rounded-md" />
-            </div>
-          )}
-          {/* Re-use the grid; it posts to /api/settings/avatar/choose */}
-          <AvatarHouse />
-        </>
+      {loading && <p className="text-sm text-mc-stone">Loading…</p>}
+      {!loading && !userEmail && (
+        <p className="text-sm text-red-600">Please sign in to change your avatar.</p>
+      )}
+      {!loading && userEmail && (
+        <div className="space-y-4">
+          <p className="text-sm text-mc-stone">Signed in as: {userEmail}</p>
+          <div className="home-card p-4">
+            <p className="text-sm">Auth OK. Next: mount the Avatar grid.</p>
+          </div>
+        </div>
       )}
     </div>
   );
 }
+    </div>
