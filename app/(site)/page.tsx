@@ -50,6 +50,7 @@ try {
 
 import supabaseAdmin from "@/lib/supabaseAdmin";
 import { resolveBadgeIcon } from "@/lib/badgeIcons";
+// import { getErikProfileAvatar, getErikUserId } from "@/lib/erik";
 import { getErikProfileAvatar, getErikUserId } from "@/lib/erik";
 
 type HomeBadgeIcon = {
@@ -167,78 +168,12 @@ export default async function Page() {
   // Get Erik's avatar and userId
   const avatarUrlRaw = await getErikProfileAvatar();
   const avatarUrl = avatarUrlRaw ?? "/assets/avatars/steve.png";
-  const erikUserId = await getErikUserId();
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "wenyu.yan@gmail.com";
   const sb = supabaseServer();
-
-  // Avatar House options
-  const AVATAR_OPTIONS = [
-    { id: "steve", name: "Steve", url: "/assets/avatars/steve.png" },
-    { id: "alex", name: "Alex", url: "/assets/avatars/alex.png" },
-    { id: "creeper", name: "Creeper", url: "/assets/avatars/creeper.png" },
-    { id: "enderman", name: "Enderman", url: "/assets/avatars/enderman.png" },
-    { id: "parrot", name: "Parrot", url: "/assets/avatars/parrot.png" },
-    { id: "wolf", name: "Wolf", url: "/assets/avatars/wolf.png" },
-  ];
-
-  // Avatar House UI logic
-  let avatarHouseCard: React.ReactNode = null;
-  if (erikUserId) {
-    const { data: userRes } = await sb.auth.getUser();
-    const user = userRes?.user ?? null;
-    const isErik = user?.id === erikUserId;
-    avatarHouseCard = (
-      <section className="home-card mb-2">
-        <div className="home-card__body flex flex-col items-center gap-4">
-          <h2 className="home-card-title text-xl mb-2">Avatar House</h2>
-          <div className="flex flex-col items-center gap-2">
-            <img
-              src={avatarUrl}
-              alt="Erik's Avatar"
-              className="rounded-xl border-4 border-[color:var(--mc-wood)] bg-[color:var(--mc-parchment)] shadow-mc w-20 h-20 object-cover"
-            />
-            <span className="text-xs text-mc-stone">Current Avatar</span>
-          </div>
-          {isErik ? (
-            <form
-              className="flex flex-wrap gap-3 justify-center mt-2"
-              action={"/"}
-              onSubmit={e => e.preventDefault()}
-            >
-              {AVATAR_OPTIONS.map(opt => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className={`border-2 rounded-lg p-1 bg-[color:var(--mc-parchment)] border-[color:var(--mc-wood)] shadow-mc focus:outline-mc-wood ${avatarUrl === opt.url ? "ring-2 ring-mc-emerald" : ""}`}
-                  title={opt.name}
-                  aria-label={opt.name}
-                  onClick={async () => {
-                    // Update avatar_url for Erik
-                    const res = await fetch("/api/profile/avatar", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ avatar_url: opt.url }),
-                    });
-                    if (res.ok) {
-                      window.location.reload();
-                    } else {
-                      alert("Failed to update avatar. Try again.");
-                    }
-                  }}
-                >
-                  <img
-                    src={opt.url}
-                    alt={opt.name}
-                    className="w-12 h-12 object-cover rounded-md"
-                  />
-                </button>
-              ))}
-            </form>
-          ) : null}
-        </div>
-      </section>
-    );
-  }
+  const { data: userRes } = await sb.auth.getUser();
+  const user = userRes?.user ?? null;
+  const erikUserId = await getErikUserId();
+  const canEditAvatar = Boolean(user?.id && erikUserId && user.id === erikUserId);
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "";
 
     // Scratch projects (after sb is declared)
   let scratchProjects: ScratchPreview[] = [];
@@ -257,9 +192,6 @@ export default async function Page() {
       createdAt: project.created_at ?? null,
     }));
   }
-
-  const { data: userRes } = await sb.auth.getUser();
-  const user = userRes?.user ?? null;
   const isAdmin = user?.email?.toLowerCase() === adminEmail;
 
   // Latest posts
@@ -297,31 +229,22 @@ export default async function Page() {
   if (minecraftTagError) {
     minecraftError = "Unable to load Minecraft posts.";
   } else if (minecraftTag) {
-    const { data: minecraftTag, error: minecraftTagError } = await sb
-      .from("tags")
-      .select("id")
-      .eq("slug", MINECRAFT_TAG_SLUG)
-      .maybeSingle();
-    if (minecraftTagError) {
+    const { data: minecraftData, error: minecraftPostsError } = await sb
+      .from("posts")
+      .select("id, title, published_at, created_at, post_tags:post_tags!inner(tag_id)")
+      .eq("status", "approved")
+      .eq("post_tags.tag_id", minecraftTag.id)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(3);
+    if (minecraftPostsError) {
       minecraftError = "Unable to load Minecraft posts.";
-    } else if (minecraftTag) {
-      const { data: minecraftData, error: minecraftPostsError } = await sb
-        .from("posts")
-        .select("id, title, published_at, created_at, post_tags:post_tags!inner(tag_id)")
-        .eq("status", "approved")
-        .eq("post_tags.tag_id", minecraftTag.id)
-        .order("published_at", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false })
-        .limit(3);
-      if (minecraftPostsError) {
-        minecraftError = "Unable to load Minecraft posts.";
-      } else {
-        minecraftPosts = ((minecraftData ?? []) as Array<{ id: string; title: string | null; published_at: string | null; created_at: string | null }> ).map(post => ({
-          id: post.id,
-          title: post.title || "Untitled",
-          publishedAt: getPostTimestamp({ published_at: post.published_at, created_at: post.created_at }),
-        }));
-      }
+    } else {
+      minecraftPosts = ((minecraftData ?? []) as Array<{ id: string; title: string | null; published_at: string | null; created_at: string | null }> ).map(post => ({
+        id: post.id,
+        title: post.title || "Untitled",
+        publishedAt: getPostTimestamp({ published_at: post.published_at, created_at: post.created_at }),
+      }));
     }
   }
 
@@ -432,8 +355,89 @@ export default async function Page() {
           </div>
         </div>
       </section>
-      {/* Avatar House Card */}
-      {avatarHouseCard}
+      {/* ...existing home sections... */}
+      {/* Avatar House Card: Only Erik sees editor, at very end */}
+      {/* ...other sections above... */}
+      {/* Parents' Corner (admin only) */}
+      {isAdmin && (
+        <section className="home-card">
+          <div className="home-card__body space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-mc section-title text-xl">Parents&apos; Corner</h3>
+              <Link href="/moderation" className="btn-mc-secondary section-label">Go to moderation</Link>
+            </div>
+            {moderationSnapshot.error && <p className="text-sm text-red-600">{moderationSnapshot.error}</p>}
+            <ul className="space-y-2 text-sm text-[color:var(--mc-ink)]">
+              <li className="flex items-center justify-between">
+                <span>Moderation queue</span>
+                <span className="font-mc text-base">{moderationSnapshot.pendingPosts ?? "--"}</span>
+              </li>
+              <li className="flex items-center justify-between">
+                <span>Pending comments</span>
+                <span className="font-mc text-base">{moderationSnapshot.pendingComments ?? "--"}</span>
+              </li>
+            </ul>
+          </div>
+        </section>
+      )}
+      {/* Avatar House: Only Erik sees, at very end */}
+      {canEditAvatar && (
+        <section id="avatar-house" className="home-card">
+          <div className="home-card__body flex flex-col items-center gap-4">
+            <h2 className="home-card-title text-xl mb-2">Avatar House</h2>
+            <div className="flex flex-col items-center gap-2">
+              <img
+                src={avatarUrl}
+                alt="Erik's Avatar"
+                className="rounded-xl border-4 border-[color:var(--mc-wood)] bg-[color:var(--mc-parchment)] shadow-mc w-20 h-20 object-cover"
+              />
+              <span className="text-xs text-mc-stone">Current Avatar</span>
+            </div>
+            {/* Avatar options for Erik only */}
+            <form
+              className="flex flex-wrap gap-3 justify-center mt-2"
+              action={"/"}
+              onSubmit={e => e.preventDefault()}
+            >
+              {[
+                { id: "steve", name: "Steve", url: "/assets/avatars/steve.png" },
+                { id: "alex", name: "Alex", url: "/assets/avatars/alex.png" },
+                { id: "creeper", name: "Creeper", url: "/assets/avatars/creeper.png" },
+                { id: "enderman", name: "Enderman", url: "/assets/avatars/enderman.png" },
+                { id: "parrot", name: "Parrot", url: "/assets/avatars/parrot.png" },
+                { id: "wolf", name: "Wolf", url: "/assets/avatars/wolf.png" },
+              ].map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`border-2 rounded-lg p-1 bg-[color:var(--mc-parchment)] border-[color:var(--mc-wood)] shadow-mc focus:outline-mc-wood ${avatarUrl === opt.url ? "ring-2 ring-mc-emerald" : ""}`}
+                  title={opt.name}
+                  aria-label={opt.name}
+                  onClick={async () => {
+                    // Update avatar_url for Erik
+                    const res = await fetch("/api/profile/avatar", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ avatar_url: opt.url }),
+                    });
+                    if (res.ok) {
+                      window.location.reload();
+                    } else {
+                      alert("Failed to update avatar. Try again.");
+                    }
+                  }}
+                >
+                  <img
+                    src={opt.url}
+                    alt={opt.name}
+                    className="w-12 h-12 object-cover rounded-md"
+                  />
+                </button>
+              ))}
+            </form>
+          </div>
+        </section>
+      )}
 
       {/* Main Grid */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
