@@ -1,3 +1,11 @@
+// Defensive helpers
+const safeMap = <T, R>(arr: T[] | null | undefined, fn: (t:T)=>R): R[] => Array.isArray(arr) ? arr.map(fn) : [];
+const isValidISO = (s: string | null | undefined) => !!s && !Number.isNaN(new Date(s).getTime());
+
+function getErikIdFromEnv(): string | null {
+  const id = process.env.NEXT_PUBLIC_ERIK_USER_ID?.trim();
+  return id && id.length > 0 ? id : null;
+}
 import supabaseServer from "@/lib/supabaseServer";
 import type { TablesRow } from "@/lib/database.types";
 import { extractPostContent, buildExcerpt } from "@/lib/postContent";
@@ -82,7 +90,7 @@ type ScratchPreview = {
 type WidgetBadge = {
   id: string;
   name: string;
-  icon: React.ReactNode;
+  icon: string | null;
   description: string | null;
   criteriaSummary: string | null;
   awardedAt: string | null;
@@ -192,9 +200,6 @@ export default async function Page() {
     console.error('[home] auth.getUser failed', error);
   }
 
-  // Erik ID
-  const ERIK_ID = (process.env.NEXT_PUBLIC_ERIK_USER_ID ?? "").trim() || null;
-  let erikCollectionUnavailable = !ERIK_ID;
 
   // Scratch projects
   let scratchProjects: ScratchPreview[] = [];
@@ -279,68 +284,57 @@ export default async function Page() {
   // Badges widget
   let widgetBadges: WidgetBadge[] = [];
   let badgesError: string | null = null;
+  let earnedBadges: WidgetBadge[] = [];
+  const ERIK_ID = getErikIdFromEnv();
+  let erikCollectionUnavailable = !ERIK_ID;
+  if (!ERIK_ID) {
+    console.warn('[home] NEXT_PUBLIC_ERIK_USER_ID missing — skipping Erik widgets');
+  }
   try {
-    const { data: badgesData, error: badgesFetchError } = await sb
-      .from("badges")
-      .select("id, name, icon, description, criteria")
-      .order("name", { ascending: true });
-    if (badgesFetchError) throw badgesFetchError;
-    const allBadges = ((badgesData ?? []) as TablesRow<"badges">[]).filter(badge => Boolean(badge.id));
-    if (allBadges.length > 0 && !erikCollectionUnavailable) {
+    if (!ERIK_ID) {
+      widgetBadges = [];
+    } else {
+      const { data: badgesData, error: badgesFetchError } = await sb
+        .from("badges")
+        .select("id, name, icon, description, criteria")
+        .order("name", { ascending: true });
+      if (badgesFetchError) throw badgesFetchError;
+      const allBadges = safeMap(badgesData, badge => badge).filter(badge => Boolean(badge.id));
       let erikUserBadges: { badge_id: string; awarded_at: string | null }[] = [];
       try {
-        // Only call .eq if ERIK_ID is a string
-        if (typeof ERIK_ID === 'string' && ERIK_ID) {
-          const { data: erikBadgesData, error: erikBadgesFetchError } = await sb
-            .from("user_badges")
-            .select("badge_id, awarded_at")
-            .eq("user_id", ERIK_ID);
-          if (erikBadgesFetchError) throw erikBadgesFetchError;
-          erikUserBadges = (erikBadgesData ?? []) as { badge_id: string; awarded_at: string | null }[];
-        }
+        const { data: erikBadgesData, error: erikBadgesFetchError } = await sb
+          .from("user_badges")
+          .select("badge_id, awarded_at")
+          .eq("user_id", ERIK_ID);
+        if (erikBadgesFetchError) throw erikBadgesFetchError;
+        erikUserBadges = safeMap(erikBadgesData, entry => entry);
       } catch (error) {
-        console.error('[home] badges user_badges failed', error);
-        erikCollectionUnavailable = true;
+        console.error('[home] user_badges failed', error);
+        erikUserBadges = [];
       }
       const awardedByBadgeId = new Map(erikUserBadges.map(entry => [entry.badge_id, entry] as const));
-      widgetBadges = allBadges
-        .map(badge => {
-          const award = badge.id ? awardedByBadgeId.get(badge.id) : undefined;
-          const details = parseBadgeCriteria(badge.criteria);
-          const criteriaSummary = buildBadgeCriteriaSummary(details);
-          return {
-            id: badge.id,
-            name: badge.name ?? "Badge",
-            icon: resolveBadgeIcon(badge.icon) ?? '',
-            description: badge.description ?? null,
-            criteriaSummary,
-            awardedAt: award?.awarded_at ?? null,
-            status: award ? "earned" as const : "locked" as const,
-          };
-        })
-        .sort((a, b) => {
-          if (a.status !== b.status) {
-            return a.status === "earned" ? -1 : 1;
-          }
-          return a.name.localeCompare(b.name);
-        });
-    } else {
-      widgetBadges = allBadges.map(badge => ({
-        id: badge.id,
-        name: badge.name ?? "Badge",
-        icon: resolveBadgeIcon(badge.icon) ?? '',
-        description: badge.description ?? null,
-        criteriaSummary: buildBadgeCriteriaSummary(parseBadgeCriteria(badge.criteria)),
-        awardedAt: null,
-        status: "locked" as const,
-      }));
-      if (!ERIK_ID) erikCollectionUnavailable = true;
+      widgetBadges = allBadges.map(badge => {
+        const award = badge.id ? awardedByBadgeId.get(badge.id) : undefined;
+        const details = parseBadgeCriteria(badge.criteria);
+        const criteriaSummary = buildBadgeCriteriaSummary(details);
+        return {
+          id: badge.id,
+          name: badge.name ?? "Badge",
+          icon: resolveBadgeIcon(badge.icon),
+          description: badge.description ?? null,
+          criteriaSummary,
+          awardedAt: award?.awarded_at ?? null,
+          status: award ? "earned" as const : "locked" as const,
+        };
+      });
+      earnedBadges = widgetBadges.filter(b => b.status === "earned");
     }
   } catch (error) {
-    console.error('[home] badges failed', error);
-    badgesError = "Unable to load badges.";
+    console.error('[home] badges query failed', error);
+    widgetBadges = [];
+    earnedBadges = [];
   }
-  console.log('[home] badges:', widgetBadges.length, 'erikUnavailable:', erikCollectionUnavailable);
+  console.log('[home] badges:', widgetBadges.length, 'erikUnavailable:', !ERIK_ID);
 
   // Moderation snapshot (admin only)
   let moderationSnapshot: ModerationSnapshot = {
@@ -436,7 +430,7 @@ export default async function Page() {
         </section>
       )}
       {/* Avatar House: Only Erik sees, at very end */}
-      {canEditAvatar && (
+      {user?.id === ERIK_ID && ERIK_ID && (
         <section id="avatar-house" className="home-card">
           <div className="home-card__body flex flex-col items-center gap-4">
             <h2 className="home-card-title text-xl mb-2">Avatar House</h2>
@@ -469,16 +463,19 @@ export default async function Page() {
                   title={opt.name}
                   aria-label={opt.name}
                   onClick={async () => {
-                    // Update avatar_url for Erik
-                    const res = await fetch("/api/profile/avatar", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ avatar_url: opt.url }),
-                    });
-                    if (res.ok) {
-                      window.location.reload();
-                    } else {
-                      alert("Failed to update avatar. Try again.");
+                    try {
+                      const res = await fetch("/api/profile/avatar", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ avatar_url: opt.url }),
+                      });
+                      if (res.ok) {
+                        window.location.reload();
+                      } else {
+                        alert("Failed to update avatar. Try again.");
+                      }
+                    } catch (error) {
+                      console.error('[home] avatar update failed', error);
                     }
                   }}
                 >
@@ -566,21 +563,20 @@ export default async function Page() {
           {/* Badges & Achievements */}
           <section className="home-card">
             <div className="home-card__body space-y-4">
-              <h2 className="home-card-title text-2xl">Badges &amp; Achievements</h2>
-              {/* Erik's earned badges (public icon strip) */}
-              {homeBadgeIcons.length === 0 ? (
+              <h2 className="home-card-title text-2xl">Earned Badges</h2>
+              {earnedBadges.length === 0 ? (
                 <p className="home-card-meta text-sm">No badges yet</p>
               ) : (
                 <ul className="flex flex-wrap gap-2">
-                  {homeBadgeIcons.slice(0, 10).map(b => (
+                  {earnedBadges.slice(0, 8).map(badge => (
                     <li
-                      key={b.id}
+                      key={badge.id}
                       className="inline-flex items-center gap-1 rounded-lg border-2 border-[color:var(--mc-wood)] bg-[color:var(--mc-parchment)] px-2 py-1 shadow-mc"
-                      title={b.name}
-                      aria-label={b.name}
+                      title={badge.name}
+                      aria-label={badge.name}
                     >
-                      <span className="text-xl leading-none">{b.icon}</span>
-                      <span className="sr-only">{b.name}</span>
+                      <span className="text-xl leading-none">{badge.icon ?? "🏅"}</span>
+                      <span className="sr-only">{badge.name}</span>
                     </li>
                   ))}
                 </ul>
