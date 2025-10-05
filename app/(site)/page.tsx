@@ -433,11 +433,11 @@ export default async function Page() {
             </div>
           </section>
 
-          {/* Message Wall */}
+          {/* Stories */}
           <section className="home-card">
             <div className="home-card__body space-y-4">
-              <h2 className="home-card-title text-xl">Message Wall</h2>
-              <Link href="#latest-posts" className="home-card-meta text-xs uppercase tracking-[0.2em] hover:text-mc-ink">See all</Link>
+              <h2 className="home-card-title text-xl">Stories</h2>
+              <Link href="/blog" className="home-card-meta text-xs uppercase tracking-[0.2em] hover:text-mc-ink">View all</Link>
               {latestPostsError ? (
                 <p className="text-sm text-red-600">{latestPostsError}</p>
               ) : latestPosts.length === 0 ? (
@@ -462,17 +462,6 @@ export default async function Page() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <section className="home-card">
-        <div className="home-card__body space-y-3">
-          <h3 className="font-mc section-title text-xl">Quick Actions</h3>
-          <div className="flex flex-wrap gap-2">
-            {user && <Link href="/post/new" className="btn-mc">New Post</Link>}
-            {user && <Link href="/scratch-board/new" className="btn-mc">New Scratch Project</Link>}
-            {isAdmin && <Link href="/moderation" className="btn-mc-secondary section-label">Moderation</Link>}
-          </div>
-        </div>
-      </section>
 
       {/* Parents' Corner (admin only) */}
       {isAdmin && (
