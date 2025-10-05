@@ -4,7 +4,76 @@ import type { TablesRow } from '@/lib/database.types';
 import { resolveBadgeIcon } from '@/lib/badgeIcons';
 import { AwardBadgeButton } from './AwardBadgeButton';
 import { SelfAwardDevButton } from './SelfAwardDevButton';
-import CheckBadgeProgressButton from './CheckBadgeProgressButton';
+
+// --- Auto-award helper -------------------------------------------------------
+type ProgressType =
+  | "post_count"
+  | "minecraft_tag_posts"
+  | "project_posts"
+  | "daily_streak";
+
+type ProgressByType = Record<ProgressType, number | null>;
+
+function parseThreshold(badge: TablesRow<"badges">): number | null {
+  const c = badge.criteria as Record<string, unknown> | null;
+  if (!c || typeof c !== "object") return null;
+  const t = (c as any).threshold;
+  const n = typeof t === "number" ? t : Number(t);
+  return Number.isFinite(n) ? (n as number) : null;
+}
+
+function parseType(badge: TablesRow<"badges">): ProgressType | null {
+  const c = badge.criteria as Record<string, unknown> | null;
+  const type = c && typeof (c as any).type === "string" ? (c as any).type : null;
+  if (
+    type === "post_count" ||
+    type === "minecraft_tag_posts" ||
+    type === "project_posts" ||
+    type === "daily_streak"
+  ) {
+    return type as ProgressType;
+  }
+  return null;
+}
+
+async function autoAwardEarnedBadges(opts: {
+  admin: ReturnType<typeof supabaseAdmin>;
+  erikUserId: string;
+  badges: TablesRow<"badges">[];
+  earnedByBadgeId: Map<string, TablesRow<"user_badges">>;
+  progress: ProgressByType;
+}) {
+  const { admin, erikUserId, badges, earnedByBadgeId, progress } = opts;
+
+  const toAward: { user_id: string; badge_id: string; awarded_at: string }[] = [];
+
+  for (const badge of badges) {
+    if (!badge.id || earnedByBadgeId.has(badge.id)) continue;
+
+    const type = parseType(badge);
+    const threshold = parseThreshold(badge);
+    if (!type || !threshold || threshold <= 0) continue;
+
+    const value = progress[type] ?? 0;
+    if (value >= threshold) {
+      toAward.push({
+        user_id: erikUserId,
+        badge_id: badge.id,
+        awarded_at: new Date().toISOString(),
+      });
+    }
+  }
+
+  if (toAward.length === 0) return;
+
+  const { error } = await admin
+    .from("user_badges")
+    .upsert(toAward, { onConflict: "user_id,badge_id" });
+
+  if (error) {
+    console.error("[badges/autoAward] upsert failed", error);
+  }
+}
 
 type BadgeRow = TablesRow<'badges'>;
 type UserBadgeRow = TablesRow<'user_badges'>;
@@ -336,6 +405,44 @@ export default async function BadgesPage() {
           progressByType.daily_streak = calculateLongestDailyStreak(posts);
         }
       }
+    }
+    // --- Auto-award any newly-earned badges, then refresh Erik's earned list ---
+    try {
+      const admin = supabaseAdmin();
+
+      await autoAwardEarnedBadges({
+        admin,
+        erikUserId,
+        badges,
+        earnedByBadgeId, // current mapping (used to avoid re-awarding)
+        progress: progressByType,
+      });
+
+      // Re-fetch Erik's earned badges so UI updates immediately if anything was awarded
+      {
+        const { data: refreshed, error: refreshErr } = await supabaseServer()
+          .from("user_badges")
+          .select("user_id, badge_id, awarded_at")
+          .eq("user_id", erikUserId);
+
+        if (!refreshErr && refreshed) {
+          const freshMap = new Map<string, TablesRow<"user_badges">>();
+          for (const row of refreshed as TablesRow<"user_badges">[]) {
+            freshMap.set(row.badge_id, row);
+          }
+          // Reassign local mapping used by render below
+          (earnedByBadgeId as any).clear?.();
+          // If Map#clear isn't available in this context, rebuild:
+          // earnedByBadgeId = new Map(freshMap); // and update references below.
+          for (const [k, v] of freshMap) {
+            earnedByBadgeId.set(k, v);
+          }
+        } else if (refreshErr) {
+          console.warn("[badges/page] refresh of earned badges failed", refreshErr);
+        }
+      }
+    } catch (e) {
+      console.error("[badges/page] auto-award flow failed", e);
     }
   }
 
