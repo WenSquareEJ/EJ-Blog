@@ -1,16 +1,62 @@
-
-
 import supabaseServer from "@/lib/supabaseServer";
-import { buildExcerpt, extractPostContent } from "@/lib/postContent";
-import { resolveBadgeIcon } from "@/lib/badgeIcons";
-import BadgesStrip from "@/components/BadgesStrip";
 import type { TablesRow } from "@/lib/database.types";
-import AvatarTile from "@/components/AvatarTile";
-import { getErikProfileAvatar, getErikUserId } from "@/lib/erik";
-import Link from "next/link";
-import ParrotSprite from "@/components/ParrotSprite";
+import { extractPostContent, buildExcerpt } from "@/lib/postContent";
 import PixelBackground from "@/components/PixelBackground";
+import AvatarTile from "@/components/AvatarTile";
 import XPBar from "@/components/XPBar";
+import ParrotSprite from "@/components/ParrotSprite";
+import Link from "next/link";
+/* --- Home: Erik’s earned badges (public icons-only widget) --- */
+let homeBadgeIcons: HomeBadgeIcon[] = [];
+
+try {
+  const admin = supabaseAdmin();
+  const erikId = await getErikUserId(); // already implemented in lib/erik
+
+  if (erikId) {
+    // 1) Get earned badge ids for Erik
+    const { data: earnedRows, error: earnedErr } = await admin
+      .from("user_badges")
+      .select("badge_id, awarded_at")
+      .eq("user_id", erikId);
+
+    if (!earnedErr && earnedRows?.length) {
+      const badgeIds = earnedRows.map(r => r.badge_id).filter(Boolean);
+
+      // 2) Load badge names + icon keys
+      const { data: badgeRows, error: badgeErr } = await admin
+      .from("badges")
+      .select("id, name, icon")
+      .in("id", badgeIds);
+
+      if (!badgeErr && badgeRows) {
+        homeBadgeIcons = badgeRows
+          .map(b => ({
+            id: b.id,
+            name: b.name ?? "Badge",
+            icon: resolveBadgeIcon(b.icon) // returns a React node; never null
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+      }
+    }
+  }
+} catch (e) {
+  if (process.env.NODE_ENV !== "production") {
+    console.warn("[home] failed to load Erik's badges for widget", e);
+  }
+}
+
+
+
+import supabaseAdmin from "@/lib/supabaseAdmin";
+import { resolveBadgeIcon } from "@/lib/badgeIcons";
+import { getErikProfileAvatar, getErikUserId } from "@/lib/erik";
+
+type HomeBadgeIcon = {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+};
 
 const MESSAGE_WALL_LIMIT = 3;
 const HUB_SUBTITLE = "Welcome to the base camp for Erik's stories, games, and projects.";
@@ -119,7 +165,8 @@ function formatErikBadgeAwardedAt(isoDate: string | null): string | null {
 export default async function Page() {
 
   // Get Erik's avatar and userId
-  const avatarUrl = await getErikProfileAvatar();
+  const avatarUrlRaw = await getErikProfileAvatar();
+  const avatarUrl = avatarUrlRaw ?? "/assets/avatars/erik-default.png";
   const erikUserId = await getErikUserId();
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase() ?? "wenyu.yan@gmail.com";
   const sb = supabaseServer();
@@ -390,7 +437,24 @@ export default async function Page() {
           <section className="home-card">
             <div className="home-card__body space-y-4">
               <h2 className="home-card-title text-2xl">Badges &amp; Achievements</h2>
-              <BadgesStrip />
+              {/* Erik's earned badges (public icon strip) */}
+              {homeBadgeIcons.length === 0 ? (
+                <p className="home-card-meta text-sm">No badges yet</p>
+              ) : (
+                <ul className="flex flex-wrap gap-2">
+                  {homeBadgeIcons.slice(0, 10).map(b => (
+                    <li
+                      key={b.id}
+                      className="inline-flex items-center gap-1 rounded-lg border-2 border-[color:var(--mc-wood)] bg-[color:var(--mc-parchment)] px-2 py-1 shadow-mc"
+                      title={b.name}
+                      aria-label={b.name}
+                    >
+                      <span className="text-xl leading-none">{b.icon}</span>
+                      <span className="sr-only">{b.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </section>
 
