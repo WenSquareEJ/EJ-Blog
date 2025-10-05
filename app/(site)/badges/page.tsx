@@ -4,14 +4,10 @@ import type { TablesRow } from '@/lib/database.types';
 import { resolveBadgeIcon } from '@/lib/badgeIcons';
 import { AwardBadgeButton } from './AwardBadgeButton';
 import { SelfAwardDevButton } from './SelfAwardDevButton';
+// Cleaned up imports, no duplicate types or unused imports
 
 // --- Auto-award helper -------------------------------------------------------
-type ProgressType =
-  | "post_count"
-  | "minecraft_tag_posts"
-  | "project_posts"
-  | "daily_streak";
-
+type ProgressType = "post_count" | "minecraft_tag_posts" | "project_posts" | "daily_streak";
 type ProgressByType = Record<ProgressType, number | null>;
 
 function parseThreshold(badge: TablesRow<"badges">): number | null {
@@ -44,16 +40,12 @@ async function autoAwardEarnedBadges(opts: {
   progress: ProgressByType;
 }) {
   const { admin, erikUserId, badges, earnedByBadgeId, progress } = opts;
-
   const toAward: { user_id: string; badge_id: string; awarded_at: string }[] = [];
-
   for (const badge of badges) {
     if (!badge.id || earnedByBadgeId.has(badge.id)) continue;
-
     const type = parseType(badge);
     const threshold = parseThreshold(badge);
     if (!type || !threshold || threshold <= 0) continue;
-
     const value = progress[type] ?? 0;
     if (value >= threshold) {
       toAward.push({
@@ -63,13 +55,10 @@ async function autoAwardEarnedBadges(opts: {
       });
     }
   }
-
   if (toAward.length === 0) return;
-
   const { error } = await admin
     .from("user_badges")
     .upsert(toAward, { onConflict: "user_id,badge_id" });
-
   if (error) {
     console.error("[badges/autoAward] upsert failed", error);
   }
@@ -445,6 +434,7 @@ export default async function BadgesPage() {
     }
   }
 
+  // ...existing code...
   return (
     <div className="space-y-6">
       <header className="space-y-2">
@@ -461,7 +451,6 @@ export default async function BadgesPage() {
           )}
         </div>
       </header>
-
       {badgesError ? (
         <div className="card-block border border-red-400 bg-red-50 text-red-700">
           We couldn&apos;t load badges right now. Please try again later.
@@ -471,7 +460,7 @@ export default async function BadgesPage() {
           Badges will appear here once they&apos;re configured.
         </div>
       ) : (
-  <ul className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+        <ul className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
           {badges.map((badge) => {
             const earned = earnedByBadgeId.get(badge.id);
             const awardedLabel = formatAwardedAt(earned?.awarded_at ?? null);
@@ -510,7 +499,6 @@ export default async function BadgesPage() {
             const clampedPercent = effectiveThreshold
               ? Math.max(0, Math.min(100, (progressValue / effectiveThreshold) * 100))
               : 0;
-
             return (
               <li key={badge.id} className={cardClasses}>
                 {tier && (
