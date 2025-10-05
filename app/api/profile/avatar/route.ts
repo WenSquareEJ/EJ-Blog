@@ -41,17 +41,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: upsertError.message }, { status: 500 });
   }
 
+  // Success response
   return NextResponse.json({ ok: true });
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    // If form POST, redirect to home with toast
-    if (!contentType.includes("application/json")) {
-      return NextResponse.redirect("/", 303);
-    }
-    return NextResponse.json({ ok: true, avatarUrl });
-  } catch (e) {
-    console.warn('[api/profile/avatar] Unexpected error', e);
-    return NextResponse.json({ error: 'Unexpected error' }, { status: 500 });
-  }
 }
