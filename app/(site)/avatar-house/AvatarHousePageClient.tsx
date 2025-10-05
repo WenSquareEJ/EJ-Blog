@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import type { User } from "@supabase/supabase-js";
 
 export default function AvatarHousePageClient() {
   const supabase = createClientComponentClient();
@@ -11,27 +12,39 @@ export default function AvatarHousePageClient() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let ok = true;
+    let isMounted = true;
+
     (async () => {
       setLoading(true);
       try {
+        // Try to get the current user
         const { data, error } = await supabase.auth.getUser();
         if (error) throw error;
-  let user: typeof data.user | null = data.user;
-        // Fallback: if getUser() returns null, try getSession()
+
+        let user: User | null = data.user ?? null;
+
+        // Fallback to session if no user is found
         if (!user) {
           const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
           if (sessionError) throw sessionError;
           user = sessionData.session?.user ?? null;
         }
-        setUserEmail(user?.email ?? null);
+
+        if (isMounted) {
+          setUserEmail(user?.email ?? null);
+        }
       } catch (e: any) {
-        setError(e?.message || "Unable to get session");
+        if (isMounted) {
+          setError(e?.message || "Unable to get session");
+        }
       } finally {
-        if (ok) setLoading(false);
+        if (isMounted) setLoading(false);
       }
     })();
-    return () => { ok = false; };
+
+    return () => {
+      isMounted = false;
+    };
   }, [supabase]);
 
   return (
@@ -42,16 +55,22 @@ export default function AvatarHousePageClient() {
       </div>
 
       {loading && <p className="text-sm text-mc-stone">Loading…</p>}
+
       {!loading && !userEmail && (
         <p className="text-sm text-red-600">Please sign in to change your avatar.</p>
       )}
+
       {!loading && userEmail && (
         <div className="space-y-4">
           <p className="text-sm text-mc-stone">Signed in as: {userEmail}</p>
           <div className="home-card p-4">
-            <p className="text-sm">Auth OK. Next: mount the Avatar grid.</p>
+            <p className="text-sm">✅ Auth OK — next step: mount the Avatar grid here.</p>
           </div>
         </div>
+      )}
+
+      {error && (
+        <p className="text-sm text-red-600">Error: {error}</p>
       )}
     </div>
   );
