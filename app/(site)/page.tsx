@@ -353,15 +353,7 @@ export default async function Page() {
       <PortalRoom />
 
       {/* Avatar House: Only Erik sees, at very end */}
-      {isErik && (
-        <section className="home-card mt-10">
-          <div className="home-card__body space-y-3">
-            <h3 className="font-mc section-title text-xl">Avatar House</h3>
-            <p className="home-card-meta">Choose your avatar for the site.</p>
-            <AvatarHouse erikUserId={erikUserId} currentAvatarFilename={currentAvatarFilename} />
-          </div>
-        </section>
-      )}
+      {isErik && <AvatarHouse current={currentAvatarFilename?.replace(/\.png$/, "")} />}
     </div>
   );
 }
