@@ -1,3 +1,4 @@
+import TipOfTheDay from "@/components/TipOfTheDay";
 import PortalRoom from "@/components/PortalRoom";
 // Defensive helpers
 const safeMap = <T, R>(arr: T[] | null | undefined, fn: (t:T)=>R): R[] => Array.isArray(arr) ? arr.map(fn) : [];
@@ -339,13 +340,12 @@ export default async function Page() {
           </div>
         </div>
         <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6 px-6 pb-6">
-          <div className="home-banner__tip md:max-w-[65%] md:flex-1">
-            <span className="home-banner__tip-label">Tip of the Day</span>
-            <p className="home-banner__tip-copy">{HUB_SUBTITLE}</p>
-          </div>
-          <div className="home-banner__parrot md:flex md:basis-[35%] md:justify-end">
-            <ParrotSprite className="w-20 sm:w-24 md:w-28" />
-          </div>
+            <div className="md:max-w-[65%] md:flex-1">
+              <TipOfTheDay />
+            </div>
+            <div className="home-banner__parrot md:flex md:basis-[35%] md:justify-end">
+              <ParrotSprite className="w-20 sm:w-24 md:w-28" />
+            </div>
         </div>
       </section>
       {/* Portal Room grid below Hero */}
