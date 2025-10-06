@@ -5,11 +5,27 @@ export default function TipOfTheDay() {
   const [tip, setTip] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  function todayLondon() {
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const parts = fmt.formatToParts(now);
+    const y = parts.find(p => p.type === "year")?.value;
+    const m = parts.find(p => p.type === "month")?.value;
+    const d = parts.find(p => p.type === "day")?.value;
+    return `${y}-${m}-${d}`;
+  }
+
   useEffect(() => {
     let alive = true;
+    const date = todayLondon();
     (async () => {
       try {
-        const res = await fetch("/api/tips/daily", { cache: "no-store" });
+        const res = await fetch(`/api/tips/daily?date=${date}`, { cache: "no-store" });
         const data = await res.json();
         if (!res.ok || !data?.tip) throw new Error(data?.error || "Failed");
         if (alive) setTip(data.tip);

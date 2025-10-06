@@ -4,14 +4,12 @@ import Link from "next/link";
 import supabaseServer from "@/lib/supabaseServer";
 import { buildExcerpt, extractPostContent } from "@/lib/postContent";
 import type { TablesRow } from "@/lib/database.types";
-import { normalizeTagSlug, resolveTagSlugVariants } from "@/lib/tagHelpers";
 
 const PAGE_SIZE = 3;
-const DEFAULT_TAG_SLUG = "minecraft";
+const TAG_SLUG = "minecraft" as const;
 
 type SearchParams = {
   page?: string;
-  tag?: string;
 };
 
 type PostRow = Pick<
@@ -72,16 +70,10 @@ function parsePageParam(raw?: string): number {
   return parsed;
 }
 
-function buildPageHref(
-  targetPage: number,
-  options: { includeTagParam: boolean; tagSlug: string }
-): string {
+function buildPageHref(targetPage: number): string {
   const params = new URLSearchParams();
   if (targetPage > 1) {
     params.set("page", String(targetPage));
-  }
-  if (options.includeTagParam && options.tagSlug) {
-    params.set("tag", options.tagSlug);
   }
   const query = params.toString();
   return query ? `/minecraft-zone?${query}` : "/minecraft-zone";
@@ -95,15 +87,6 @@ export default async function MinecraftZonePage({
   const sb = supabaseServer();
 
   const page = parsePageParam(searchParams?.page);
-  const normalizedSlug = normalizeTagSlug(searchParams?.tag, {
-    defaultSlug: DEFAULT_TAG_SLUG,
-  });
-  const slugVariants = resolveTagSlugVariants(normalizedSlug, {
-    defaultSlug: DEFAULT_TAG_SLUG,
-  });
-  const slugFilter = slugVariants.length > 0 ? slugVariants : [DEFAULT_TAG_SLUG];
-  const includeTagParam = Boolean(searchParams?.tag?.trim());
-
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
@@ -124,7 +107,7 @@ export default async function MinecraftZonePage({
       { count: "exact" }
     )
     .eq("status", "approved")
-    .in("post_tags.tags.slug", slugFilter)
+    .eq("post_tags.tags.slug", TAG_SLUG)
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -132,8 +115,6 @@ export default async function MinecraftZonePage({
   if (postsError) {
     console.error("[minecraft-zone] failed to load posts", {
       error: postsError,
-      slug: normalizedSlug,
-      variants: slugVariants,
       page,
     });
   }
@@ -142,8 +123,6 @@ export default async function MinecraftZonePage({
 
   if (!postsError) {
     console.log("[minecraft-zone] loaded posts", {
-      slug: normalizedSlug,
-      variants: slugFilter,
       page,
       count,
       sample: typedRows.slice(0, 5).map((row) => row.id),
@@ -183,7 +162,6 @@ export default async function MinecraftZonePage({
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
   const prevPage = page > 1 ? page - 1 : null;
   const nextPage = page < totalPages ? page + 1 : null;
-  const tagHrefOptions = { includeTagParam, tagSlug: normalizedSlug };
 
   return (
     <div className="space-y-6">
@@ -255,14 +233,14 @@ export default async function MinecraftZonePage({
 
       <div className="flex justify-between gap-2">
         {prevPage ? (
-          <Link href={buildPageHref(prevPage, tagHrefOptions)} className="btn-mc-secondary">
+          <Link href={buildPageHref(prevPage)} className="btn-mc-secondary">
             ← Newer
           </Link>
         ) : (
           <span />
         )}
         {nextPage && (
-          <Link href={buildPageHref(nextPage, tagHrefOptions)} className="btn-mc">
+          <Link href={buildPageHref(nextPage)} className="btn-mc">
             Older →
           </Link>
         )}

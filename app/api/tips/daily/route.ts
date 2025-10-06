@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { getServiceClient } from "@/lib/supabaseService";
@@ -17,11 +17,20 @@ const curatedFallback: string[] = [
   "Bottom slabs stop mob spawns—great for floors and paths.",
 ];
 
-function todayUTC() {
+
+function todayLondon() {
   const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-    .toISOString()
-    .slice(0, 10); // YYYY-MM-DD
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = fmt.formatToParts(now);
+  const y = parts.find(p => p.type === "year")?.value;
+  const m = parts.find(p => p.type === "month")?.value;
+  const d = parts.find(p => p.type === "day")?.value;
+  return `${y}-${m}-${d}`;
 }
 
 function cleanTip(text: string): string {
@@ -58,9 +67,17 @@ async function generateTip(): Promise<{ tip: string; source: "ai" | "fallback" }
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const dateStr = todayUTC();
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: "Server misconfigured." }, { status: 500 });
+    }
+    const url = req?.nextUrl || (typeof req === 'object' && 'url' in req ? new URL(req.url, 'http://localhost') : undefined);
+    let dateParam = url?.searchParams?.get("date") || "";
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      dateParam = todayLondon();
+    }
+    const effectiveDate = dateParam;
 
     // Read client for read-only (cookies ok)
     const supabase = createRouteHandlerClient({ cookies });
@@ -69,7 +86,7 @@ export async function GET() {
     const { data: existing, error: selErr } = await supabase
       .from("daily_tips")
       .select("text, source, tip_date")
-      .eq("tip_date", dateStr)
+      .eq("tip_date", effectiveDate)
       .maybeSingle();
 
     if (existing && !selErr) {
@@ -84,10 +101,10 @@ export async function GET() {
 
     const { error: insErr } = await serverSupabase
       .from("daily_tips")
-      .insert({ tip_date: dateStr, text: gen.tip, source: gen.source });
+      .insert({ tip_date: effectiveDate, text: gen.tip, source: gen.source });
 
     // Even if insert fails (race condition), return the tip we generated
-    return NextResponse.json({ date: dateStr, tip: gen.tip, source: gen.source, stored: !insErr });
+    return NextResponse.json({ date: effectiveDate, tip: gen.tip, source: gen.source, stored: !insErr });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? "unknown error" }, { status: 500 });
   }

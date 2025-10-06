@@ -1,7 +1,8 @@
 // /app/(site)/post/[id]/page.tsx
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import LikeButton from "@/components/LikeButton";
+// ...existing code...
+import ReactionsBar from "@/components/ReactionsBar";
 import supabaseServer from "@/lib/supabaseServer";
 import { extractPostContent, markdownToHtml } from "@/lib/postContent";
 import type { TablesRow } from "@/lib/database.types";
@@ -148,7 +149,8 @@ export default async function PostPage({ params }: { params: { id: string } }) {
       />
 
   {/* Likes */}
-  <LikeButton postId={post.id} />
+  {/* <LikeButton postId={post.id} /> */}
+  <ReactionsBar postId={post.id} />
 
       {/* Comments */}
       <section>

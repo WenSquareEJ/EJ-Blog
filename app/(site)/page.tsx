@@ -37,6 +37,14 @@ export default async function Page() {
       {/* Home Banner */}
       <section className="home-banner relative overflow-hidden rounded-2xl border-[4px] border-[color:var(--mc-wood)] text-[color:var(--mc-ink)] shadow-mc">
         <PixelBackground className="absolute inset-0 w-full h-full pointer-events-none select-none" />
+        <div className="pixel-float pf-1" aria-hidden="true" />
+        <div className="pixel-float pf-2" aria-hidden="true" />
+        <div className="pixel-float pf-3" aria-hidden="true" />
+        <div className="pixel-float pf-4" aria-hidden="true" />
+        <div className="pixel-float pf-5" aria-hidden="true" />
+        <div className="pixel-float pf-6" aria-hidden="true" />
+        <div className="pixel-float pf-7" aria-hidden="true" />
+        <div className="pixel-float pf-8" aria-hidden="true" />
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:gap-10 p-6">
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
             <AvatarTile username="Erik" avatarUrl={avatarUrl} />
