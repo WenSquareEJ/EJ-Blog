@@ -1,6 +1,7 @@
 // /app/(site)/post/[id]/page.tsx
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import LikeButton from "@/components/LikeButton";
 import supabaseServer from "@/lib/supabaseServer";
 import { extractPostContent, markdownToHtml } from "@/lib/postContent";
 import type { TablesRow } from "@/lib/database.types";
@@ -146,10 +147,8 @@ export default async function PostPage({ params }: { params: { id: string } }) {
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
 
-      {/* Likes */}
-      <form action={`/api/posts/${post.id}/like`} method="post">
-        <button className="btn-mc mt-3">❤️ Like</button>
-      </form>
+  {/* Likes */}
+  <LikeButton postId={post.id} />
 
       {/* Comments */}
       <section>
@@ -183,5 +182,5 @@ export default async function PostPage({ params }: { params: { id: string } }) {
 
       <Link href="/" className="btn-mc-secondary mt-4">← Back to Home</Link>
     </div>
-  )
+  );
 }
