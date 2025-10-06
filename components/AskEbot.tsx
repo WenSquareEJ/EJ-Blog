@@ -6,74 +6,35 @@ import { useState } from "react"
 export default function AskEbot() {
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<{ role: string; text: string }[]>([])
-  const [open, setOpen] = useState(false) // start collapsed
 
   async function askAI(e: React.FormEvent) {
     e.preventDefault()
-    if (!input.trim()) return
-    const q = input
-    setMessages((prev) => [...prev, { role: "user", text: q }])
+    setMessages((prev) => [...prev, { role: "user", text: input }])
     setInput("")
 
+    // Call your API route to get AI response
     const res = await fetch("/api/ai", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: q }),
+      body: JSON.stringify({ question: input }),
     })
     const data = await res.json()
     setMessages((prev) => [...prev, { role: "assistant", text: data.answer }])
   }
 
-  // Collapsed bubble (minimal footprint)
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Open Ask Ebot"
-        className="fixed bottom-2 right-2 z-[9999] btn-mc rounded-full px-4 py-2 text-sm font-mc"
-        style={{
-          right: "max(0.5rem, env(safe-area-inset-right))",
-          bottom: "max(0.5rem, env(safe-area-inset-bottom))",
-        }}
-      >
-        💬 Ask Ebot
-      </button>
-    )
-  }
-
-  // Expanded panel (keeps your Minecraft classes)
   return (
     <div
       aria-label="Ask Ebot chat widget"
-      className="card-block fixed bottom-2 right-2 w-72 bg-mc-sky/90 z-[9999]"
-      style={{
-        right: "max(0.5rem, env(safe-area-inset-right))",
-        bottom: "max(0.5rem, env(safe-area-inset-bottom))",
-      }}
+      className="card-block fixed bottom-2 right-2 w-72 bg-mc-sky/90"
     >
-      {/* Header with minimize */}
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-mc text-sm">Ask Ebot</h2>
-        <button
-          onClick={() => setOpen(false)}
-          aria-label="Minimize Ask Ebot"
-          className="text-xs rounded-md px-2 py-1 bg-mc-wood/10 hover:bg-mc-wood/20"
-          title="Minimize"
-        >
-          ─
-        </button>
-      </div>
-
+      <h2 className="mb-2 font-mc text-sm">Ask Ebot</h2>
       <div className="mb-2 h-40 overflow-y-auto bg-white/70 p-2 text-xs">
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "text-right" : "text-left"}>
-            <p>
-              <strong>{m.role === "user" ? "You" : "Ebot"}:</strong> {m.text}
-            </p>
+            <p><strong>{m.role === "user" ? "You" : "Ebot"}:</strong> {m.text}</p>
           </div>
         ))}
       </div>
-
       <form aria-label="Ask Ebot input" className="flex gap-1" onSubmit={askAI}>
         <input
           value={input}
