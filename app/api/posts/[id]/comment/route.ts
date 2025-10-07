@@ -1,46 +1,60 @@
 // /app/api/posts/[id]/comment/route.ts
 import { NextResponse } from "next/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import supabaseServer from "@/lib/supabaseServer";
 
-function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+export const runtime = "nodejs"; // ensure Node runtime, not edge
+
+function isUuid(v: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
 }
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const postId = params.id;
-  // Cast the client to "any" once so TS stops treating table types as "never"
-  const sb = supabaseServer() as unknown as SupabaseClient<any>;
+  const postId = String(params?.id || "").trim();
 
-  // Read form data
-  const form = await req.formData();
-  const raw = form.get("content");
-  const content = typeof raw === "string" ? raw.trim() : "";
+  // Build absolute URLs from the **actual request origin** (works locally & on Vercel)
+  const origin = (() => {
+    try {
+      return new URL(req.url).origin;
+    } catch {
+      return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    }
+  })();
 
-  // Basic validation
-  if (!postId || !content) {
-    // Always redirect back to the post page with an error
-    return NextResponse.redirect(new URL(`/post/${postId}?err=empty_comment`, siteUrl()));
-  }
-  if (content.length > 2000) {
-    return NextResponse.redirect(new URL(`/post/${postId}?err=too_long`, siteUrl()));
-  }
+  const to = (path: string) => new URL(path, origin);
 
   try {
-    // Insert comment as pending review (bypass TS generics here too)
-    await (sb.from("comments") as any).insert([
-      { post_id: postId, content, status: "pending" } as any,
-    ]);
-  } catch (e: any) {
-    // Redirect back with a generic error
-    return NextResponse.redirect(new URL(`/post/${postId}?err=insert_failed`, siteUrl()));
+    // 1) Validate post id
+    if (!postId || !isUuid(postId)) {
+      return NextResponse.redirect(to(`/post/${postId}?err=bad_post`), { status: 302 });
+    }
+
+    // 2) Parse form body
+    const form = await req.formData();
+    const raw = form.get("content");
+    const content = (typeof raw === "string" ? raw : "").trim();
+
+    if (!content) {
+      return NextResponse.redirect(to(`/post/${postId}?err=empty`), { status: 302 });
+    }
+    if (content.length > 2000) {
+      return NextResponse.redirect(to(`/post/${postId}?err=toolong`), { status: 302 });
+    }
+
+    // 3) Insert (RLS must allow pending inserts)
+    const sb = supabaseServer();
+    const { error: insertError } = await sb
+      .from("comments")
+      .insert([{ post_id: postId, content, status: "pending" }]);
+
+    if (insertError) {
+      console.error("[comments] insert failed:", insertError);
+      return NextResponse.redirect(to(`/post/${postId}?err=db`), { status: 302 });
+    }
+
+    // 4) Success -> back to post
+    return NextResponse.redirect(to(`/post/${postId}?ok=1`), { status: 302 });
+  } catch (e) {
+    console.error("[comments] route crashed:", e);
+    return NextResponse.redirect(to(`/post/${postId}?err=server`), { status: 302 });
   }
-
-  // Success → redirect back to post
-  return NextResponse.redirect(new URL(`/post/${postId}?ok=1`, siteUrl()));
-}
-
-// Optional: guard against accidental GET navigations (never show raw JSON)
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  return NextResponse.redirect(new URL(`/post/${params.id}`, siteUrl()));
 }
