@@ -33,7 +33,13 @@ type CommentRow = {
   status: "pending" | "approved" | "rejected";
 };
 
-export default async function PostPage({ params }: { params: { id: string } }) {
+export default async function PostPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams?: { ok?: string; err?: string };
+}) {
   const postId = params.id;
   const sb = supabaseServer();
   const { data: authRes } = await sb.auth.getUser();
@@ -155,6 +161,12 @@ export default async function PostPage({ params }: { params: { id: string } }) {
       {/* Comments */}
       <section>
         <h2 className="font-mc text-base mb-2">Comments</h2>
+        {searchParams?.ok === "1" && (
+          <div className="text-green-600 text-xs mb-2">✅ Comment submitted for approval!</div>
+        )}
+        {searchParams?.err && (
+          <div className="text-red-600 text-xs mb-2">⚠️ Something went wrong. Please try again.</div>
+        )}
         {comments.length ? (
           comments.map((comment) => (
             <div key={comment.id} className="card-block mb-2 space-y-1">
