@@ -53,10 +53,10 @@ export default async function Page() {
               <h1 className="font-mc text-2xl text-[#f4d68e] drop-shadow-[1px_1px_0_#5a3d1a]">
                 EJ Blocks & Bots
               </h1>
-              <div className="max-w-lg">
+              <div className="max-w-lg relative">
                 <XPBar />
+                <BreakTheBlockAtXP />
               </div>
-              <BreakTheBlockAtXP />
             </div>
           </div>
         </div>
