@@ -10,14 +10,18 @@ export default function BreakTheBlockFollowerLeft() {
     if (!el) return;
 
     const BRICK = 96;          // px (h-24 w-24)
-    const GAP_X = 28;          // space between hero border and brick (to the LEFT)
+    const GAP_X = 48;          // space between main content area and brick (to the LEFT)
     const BELOW = 32;          // distance below hero bottom (aligns near "Portal Rooms")
     const SAFE = 16;           // viewport padding for clamping
     
     const update = () => {
-      const r = el.getBoundingClientRect();
-      let x = r.left - GAP_X;
-      let y = r.bottom + BELOW;
+      const heroRect = el.getBoundingClientRect();
+      // Find the main content container (.max-w-5xl)
+      const mainElement = el.closest('main');
+      const mainRect = mainElement?.getBoundingClientRect() || heroRect;
+      
+      let x = mainRect.left - GAP_X;
+      let y = heroRect.bottom + BELOW;
 
       // Clamp to viewport
       const minX = SAFE + BRICK/2;
