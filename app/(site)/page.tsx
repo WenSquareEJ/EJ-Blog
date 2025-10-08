@@ -5,7 +5,6 @@ import PixelBackground from "@/components/PixelBackground";
 import AvatarTile from "@/components/AvatarTile";
 import XPBar from "@/components/XPBar";
 import ParrotSprite from "@/components/ParrotSprite";
-import BreakTheBlockFollowerLeft from "@/components/BreakTheBlockFollowerLeft";
 import { ERIK_USER_ID } from "@/lib/erik";
 import { getUser, supabaseServer } from "@/lib/supabaseServer";
 
@@ -80,9 +79,6 @@ export default async function Page() {
           </Link>
         </div>
       )}
-
-      {/* Break-the-Block in left gutter */}
-      <BreakTheBlockFollowerLeft />
     </div>
   );
 }
