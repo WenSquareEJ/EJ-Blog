@@ -186,42 +186,31 @@ export default function BreakTheBlock({
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <button
-        onClick={handleClick}
+      <div
         role="button"
         aria-label={`Hit count: ${hits} of 10`}
-        aria-pressed={revealed}
         className={`
-          relative w-24 h-24 border-4 border-gray-700 rounded-lg shadow-lg
-          hover:scale-105 active:scale-95 transition-transform
+          h-24 w-24 rounded-lg border-4 border-mc-ink/40 shadow-[inset_0_0_0_4px_rgba(0,0,0,0.3)] bg-mc-stone
+          hover:scale-105 active:scale-95 transition-transform cursor-pointer
           ${shakeClass}
-          ${!textureLoaded ? 'bg-gradient-to-b from-gray-400 to-gray-600' : ''}
         `}
         style={{
-          backgroundImage: textureLoaded 
-            ? `
-              linear-gradient(45deg, transparent 40%, rgba(0,0,0,0.1) 50%, transparent 60%),
-              ${crackIntensity > 0.3 ? 'linear-gradient(135deg, transparent 20%, rgba(0,0,0,0.2) 30%, transparent 40%),' : ''}
-              ${crackIntensity > 0.6 ? 'linear-gradient(-45deg, transparent 60%, rgba(0,0,0,0.3) 70%, transparent 80%),' : ''}
-              url(${blockTextureSrc})
-            `
-            : `
-              linear-gradient(45deg, transparent 40%, rgba(0,0,0,0.1) 50%, transparent 60%),
-              ${crackIntensity > 0.3 ? 'linear-gradient(135deg, transparent 20%, rgba(0,0,0,0.2) 30%, transparent 40%),' : ''}
-              ${crackIntensity > 0.6 ? 'linear-gradient(-45deg, transparent 60%, rgba(0,0,0,0.3) 70%, transparent 80%),' : ''}
-              linear-gradient(to bottom, #9ca3af, #6b7280)
-            `,
-          backgroundSize: textureLoaded ? 'cover' : 'auto',
-          imageRendering: textureLoaded ? 'pixelated' : 'auto',
+          backgroundImage: `
+            ${crackIntensity > 0.3 ? 'linear-gradient(135deg, transparent 20%, rgba(0,0,0,0.2) 30%, transparent 40%),' : ''}
+            ${crackIntensity > 0.6 ? 'linear-gradient(-45deg, transparent 60%, rgba(0,0,0,0.3) 70%, transparent 80%),' : ''}
+            url(${blockTextureSrc})
+          `,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          imageRendering: "pixelated",
         }}
+        onClick={handleClick}
       >
-        <div className="absolute inset-2 bg-gradient-to-br from-gray-300 to-gray-500 rounded">
-          <div className="absolute inset-1 bg-gradient-to-br from-gray-200 to-gray-400 rounded flex items-center justify-center">
-            {crackIntensity > 0.8 && (
-              <div className="text-gray-800 font-bold text-lg">💥</div>
-            )}
+        {crackIntensity > 0.8 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-white font-bold text-lg drop-shadow-md">💥</div>
           </div>
-        </div>
+        )}
         
         {/* Progress indicator */}
         <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-300 rounded">
@@ -230,7 +219,7 @@ export default function BreakTheBlock({
             style={{ width: `${(hits / 10) * 100}%` }}
           />
         </div>
-      </button>
+      </div>
       
       <p className="text-xs italic text-mc-stone text-center max-w-48">
         💬 Ebot whispers: What happens if you tap this block?
