@@ -12,9 +12,9 @@ export default function BreakTheBlockFollowerLeft() {
     const update = () => {
       const heroRect = el.getBoundingClientRect();
       
-      // Simple approach: position in the left gutter area
-      // Place it to the left of the hero card, below its bottom edge
-      const x = Math.max(80, heroRect.left - 120); // 120px to the left of hero card, minimum 80px from edge
+      // Position further left to ensure brick and message stay outside main container
+      // Place it well to the left of the hero card, below its bottom edge
+      const x = Math.max(120, heroRect.left - 160); // 160px to the left of hero card, minimum 120px from edge
       const y = heroRect.bottom + 50; // 50px below hero card bottom
 
       // Ensure it stays on screen
