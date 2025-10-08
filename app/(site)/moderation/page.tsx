@@ -17,6 +17,7 @@ type ModComment = {
   post_id: string;
   post_title: string | null;
   content: string;
+  commenter_name: string | null;
   created_at: string | null;
 };
 
@@ -24,7 +25,7 @@ type RawPost = Pick<TablesRow<"posts">, "id" | "title" | "created_at" | "status"
   author: { display_name: string | null } | null;
 };
 
-type RawComment = Pick<TablesRow<"comments">, "id" | "post_id" | "content" | "created_at" | "status"> & {
+type RawComment = Pick<TablesRow<"comments">, "id" | "post_id" | "content" | "created_at" | "commenter_name"> & {
   post: { title: string | null } | null;
 };
 
@@ -50,7 +51,7 @@ export default async function ModerationPage() {
 
   const { data: commentData, error: commentError } = await sb
     .from("comments")
-    .select("id,content,created_at,post_id,post:posts(title)")
+    .select("id,content,created_at,commenter_name,post_id,post:posts(title)")
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
@@ -60,6 +61,7 @@ export default async function ModerationPage() {
       id: typed.id,
       post_id: typed.post_id,
       content: typed.content,
+      commenter_name: typed.commenter_name,
       created_at: typed.created_at,
       post_title: typed.post?.title ?? null,
     };
@@ -129,6 +131,9 @@ export default async function ModerationPage() {
               <li key={comment.id} className="border p-3 rounded bg-white/70 space-y-2">
                 <div className="text-xs opacity-70">
                   On post: {comment.post_title ?? comment.post_id}
+                </div>
+                <div className="text-sm font-medium">
+                  {comment.commenter_name ?? "Anonymous"}
                 </div>
                 <p className="text-sm">{comment.content}</p>
                 <div className="text-xs opacity-60">

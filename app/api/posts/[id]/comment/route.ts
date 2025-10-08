@@ -30,8 +30,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     // 2) Parse form body
     const form = await req.formData();
-    const raw = form.get("content");
-    const content = (typeof raw === "string" ? raw : "").trim();
+    const rawContent = form.get("content");
+    const rawName = form.get("name");
+    const content = (typeof rawContent === "string" ? rawContent : "").trim();
+    const name = (typeof rawName === "string" ? rawName : "").trim();
 
     if (!content) {
       return NextResponse.redirect(to(`/post/${postId}?err=empty`), { status: 302 });
@@ -39,12 +41,18 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (content.length > 2000) {
       return NextResponse.redirect(to(`/post/${postId}?err=toolong`), { status: 302 });
     }
+    if (!name) {
+      return NextResponse.redirect(to(`/post/${postId}?err=noname`), { status: 302 });
+    }
+    if (name.length > 50) {
+      return NextResponse.redirect(to(`/post/${postId}?err=namelong`), { status: 302 });
+    }
 
     // 3) Insert (RLS must allow pending inserts)
     const sb = supabaseServer();
     const { error: insertError } = await sb
       .from("comments")
-      .insert([{ post_id: postId, content, status: "pending" }]);
+      .insert([{ post_id: postId, content, commenter_name: name, status: "pending" }]);
 
     if (insertError) {
       console.error("[comments] insert failed:", insertError);

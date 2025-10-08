@@ -173,6 +173,7 @@ export interface Database {
           post_id: string;
           author: string | null;
           content: string;
+          commenter_name: string | null;
           status: 'pending' | 'approved' | 'rejected';
           created_at: string | null;
         };
@@ -181,6 +182,7 @@ export interface Database {
           post_id: string;
           author?: string | null;
           content: string;
+          commenter_name?: string | null;
           status?: 'pending' | 'approved' | 'rejected';
           created_at?: string | null;
         };
@@ -189,6 +191,7 @@ export interface Database {
           post_id?: string;
           author?: string | null;
           content?: string;
+          commenter_name?: string | null;
           status?: 'pending' | 'approved' | 'rejected';
           created_at?: string | null;
         };

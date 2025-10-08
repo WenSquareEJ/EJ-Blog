@@ -29,6 +29,7 @@ type CommentRow = {
   id: string;
   content: string;
   created_at: string | null;
+  commenter_name: string | null;
   author: { display_name: string | null } | null;
   status: "pending" | "approved" | "rejected";
 };
@@ -95,7 +96,7 @@ export default async function PostPage({
 
   const { data: commentsData, error: commentsError } = await sb
     .from("comments")
-    .select("id, content, created_at, status, author:profiles(display_name)")
+    .select("id, content, created_at, status, commenter_name, author:profiles(display_name)")
     .eq("post_id", postId)
     .eq("status", "approved");
   if (commentsError) {
@@ -164,7 +165,19 @@ export default async function PostPage({
         {searchParams?.ok === "1" && (
           <div className="text-green-600 text-xs mb-2">✅ Comment submitted for approval!</div>
         )}
-        {searchParams?.err && (
+        {searchParams?.err === "empty" && (
+          <div className="text-red-600 text-xs mb-2">⚠️ Please write a comment before submitting.</div>
+        )}
+        {searchParams?.err === "noname" && (
+          <div className="text-red-600 text-xs mb-2">⚠️ Please provide your name.</div>
+        )}
+        {searchParams?.err === "namelong" && (
+          <div className="text-red-600 text-xs mb-2">⚠️ Name must be 50 characters or less.</div>
+        )}
+        {searchParams?.err === "toolong" && (
+          <div className="text-red-600 text-xs mb-2">⚠️ Comment is too long (max 2000 characters).</div>
+        )}
+        {searchParams?.err && !["empty", "noname", "namelong", "toolong"].includes(searchParams.err) && (
           <div className="text-red-600 text-xs mb-2">⚠️ Something went wrong. Please try again.</div>
         )}
         {comments.length ? (
@@ -172,7 +185,7 @@ export default async function PostPage({
             <div key={comment.id} className="card-block mb-2 space-y-1">
               <p className="text-xs">{comment.content}</p>
               <div className="text-[10px] opacity-70">
-                {(comment.author?.display_name ?? "Guest") +
+                {(comment.author?.display_name ?? comment.commenter_name ?? "Anonymous") +
                   " • " +
                   (comment.created_at
                     ? new Date(comment.created_at).toLocaleString()
@@ -185,10 +198,19 @@ export default async function PostPage({
         )}
 
         <form action={`/api/posts/${post.id}/comment`} method="post" className="mt-2 space-y-2">
+          <input
+            name="name"
+            type="text"
+            placeholder="Your name..."
+            className="w-full rounded border p-2 text-xs"
+            required
+            maxLength={50}
+          />
           <textarea
             name="content"
             placeholder="Write a comment..."
             className="w-full rounded border p-2 text-xs"
+            required
           />
           <button type="submit" className="btn-mc">Submit for approval</button>
         </form>
