@@ -190,7 +190,7 @@ export default function BreakTheBlock({
         role="button"
         aria-label={`Hit count: ${hits} of 10`}
         className={`
-          h-24 w-24 rounded-lg border-4 border-mc-ink/40 shadow-[inset_0_0_0_4px_rgba(0,0,0,0.3)] bg-mc-stone
+          h-24 w-24 select-none
           hover:scale-105 active:scale-95 transition-transform cursor-pointer
           ${shakeClass}
         `}
@@ -203,6 +203,7 @@ export default function BreakTheBlock({
           backgroundSize: "cover",
           backgroundPosition: "center",
           imageRendering: "pixelated",
+          filter: "drop-shadow(0 2px 0 rgba(0,0,0,0.35))"
         }}
         onClick={handleClick}
       >
