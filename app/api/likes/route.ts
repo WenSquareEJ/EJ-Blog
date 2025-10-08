@@ -86,10 +86,12 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const total = Object.values(counts).reduce((a, b) => a + (b || 0), 0);
   const response = NextResponse.json({ 
     ok: true, 
     count: counts["diamond"] || 0, // legacy compatibility
-    counts 
+    counts,
+    total
   });
   response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
   return response;
@@ -136,13 +138,14 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const total = Object.values(counts).reduce((a, b) => a + (b || 0), 0);
   if (aggregate === "byType") {
-    const response = NextResponse.json({ counts });
+    const response = NextResponse.json({ counts, total });
     response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
     return response;
   } else {
     // Legacy: just return diamond count
-    const response = NextResponse.json({ count: counts["diamond"] || 0 });
+    const response = NextResponse.json({ count: counts["diamond"] || 0, total });
     response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
     return response;
   }

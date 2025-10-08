@@ -21,6 +21,15 @@ type Props = {
   choices?: typeof DEFAULT_CHOICES;
 };
 
+// Ensure all 8 reaction keys exist with 0 default
+function fillMissingReactions(counts: Counts): Counts {
+  const result: Counts = {};
+  for (const choice of DEFAULT_CHOICES) {
+    result[choice.key] = counts[choice.key] || 0;
+  }
+  return result;
+}
+
 export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Props) {
   const [counts, setCounts] = useState<Counts>({});
   const [pending, setPending] = useState<string | null>(null);
@@ -38,11 +47,11 @@ export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Prop
         const data = await res.json();
         if (!ignore) {
           if (data?.counts && typeof data.counts === "object") {
-            setCounts(data.counts);
+            setCounts(fillMissingReactions(data.counts));
           } else if (typeof data.count === "number") {
-            setCounts({ diamond: data.count }); // legacy fallback
+            setCounts(fillMissingReactions({ diamond: data.count })); // legacy fallback
           } else {
-            setCounts({});
+            setCounts(fillMissingReactions({}));
           }
         }
       } catch {
@@ -69,9 +78,9 @@ export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Prop
       });
       const data = await res.json();
       if (res.ok && data?.counts) {
-        setCounts(data.counts);
+        setCounts(fillMissingReactions(data.counts));
       } else if (res.ok && typeof data.count === "number") {
-        setCounts((prev) => ({ ...prev, diamond: data.count }));
+        setCounts((prev) => fillMissingReactions({ ...prev, diamond: data.count }));
       } else {
         console.error("POST /api/likes failed:", data);
         setCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] || 1) - 1) }));
