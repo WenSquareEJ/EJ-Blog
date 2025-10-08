@@ -10,7 +10,11 @@ export default function LikeButton({ postId }: { postId: string }) {
     let ignore = false;
     async function fetchCount() {
       try {
-        const res = await fetch(`/api/likes?postId=${encodeURIComponent(postId)}`)
+        const url = `/api/likes?postId=${encodeURIComponent(postId)}&ts=${Date.now()}`;
+        const res = await fetch(url, { 
+          cache: "no-store",
+          headers: { "Cache-Control": "no-store" }
+        });
         if (!res.ok) throw new Error("Failed to fetch count")
         const data = await res.json()
         if (!ignore && typeof data.count === "number") setCount(data.count)
@@ -30,7 +34,11 @@ export default function LikeButton({ postId }: { postId: string }) {
     try {
       const res = await fetch("/api/likes", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store"
+        },
+        cache: "no-store",
         body: JSON.stringify({ postId }),
       })
       const data = await res.json()
