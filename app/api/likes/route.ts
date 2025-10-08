@@ -31,13 +31,13 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = getServiceClient();
   
-    // Insert anonymous reaction - use postId as target_id (UUID) and type as kind
+    // Insert anonymous reaction - use "like" for kind, encode type in target_type
     const { error: insertError, data: insertData } = await supabase
       .from("reactions")
       .insert({ 
-        target_type: "post",
+        target_type: `post_${type}`, // Encode reaction type in target_type
         target_id: postId, // Use actual post UUID
-        kind: type, // Use reaction type as kind (diamond, emerald, etc.)
+        kind: "like", // Use allowed enum value
         user_id: null // Anonymous
       })
       .select();
@@ -58,9 +58,10 @@ export async function POST(req: NextRequest) {
     // Fetch all reactions for this post and calculate counts
     const { data: allReactions, error: fetchError } = await supabase
       .from("reactions")
-      .select("kind")
-      .eq("target_type", "post")
+      .select("target_type")
       .eq("target_id", postId)
+      .like("target_type", "post_%")
+      .eq("kind", "like")
       .is("user_id", null); // Only anonymous reactions
 
     if (fetchError) {
@@ -79,10 +80,13 @@ export async function POST(req: NextRequest) {
   
     if (allReactions) {
       for (const reaction of allReactions) {
-        // Count by kind (reaction type)
-        const reactionType = reaction.kind;
-        if (REACTION_KEYS.includes(reactionType)) {
-          counts[reactionType] = (counts[reactionType] || 0) + 1;
+        // Extract reaction type from target_type format: "post_diamond", "post_coin", etc.
+        const targetType = reaction.target_type;
+        if (targetType.startsWith("post_")) {
+          const reactionType = targetType.replace("post_", "");
+          if (REACTION_KEYS.includes(reactionType)) {
+            counts[reactionType] = (counts[reactionType] || 0) + 1;
+          }
         }
       }
     }
@@ -122,9 +126,10 @@ export async function GET(req: NextRequest) {
   // Fetch all reactions for this post
   const { data: allReactions, error: fetchError } = await supabase
     .from("reactions")
-    .select("kind")
-    .eq("target_type", "post")
+    .select("target_type")
     .eq("target_id", postId)
+    .like("target_type", "post_%")
+    .eq("kind", "like")
     .is("user_id", null); // Only anonymous reactions
 
   if (fetchError) {
@@ -137,10 +142,13 @@ export async function GET(req: NextRequest) {
   
   if (allReactions) {
     for (const reaction of allReactions) {
-      // Count by kind (reaction type)
-      const reactionType = reaction.kind;
-      if (REACTION_KEYS.includes(reactionType)) {
-        counts[reactionType] = (counts[reactionType] || 0) + 1;
+      // Extract reaction type from target_type format: "post_diamond", "post_coin", etc.
+      const targetType = reaction.target_type;
+      if (targetType.startsWith("post_")) {
+        const reactionType = targetType.replace("post_", "");
+        if (REACTION_KEYS.includes(reactionType)) {
+          counts[reactionType] = (counts[reactionType] || 0) + 1;
+        }
       }
     }
   }

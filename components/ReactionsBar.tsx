@@ -46,15 +46,11 @@ export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Prop
         });
         const data = await res.json();
         if (!ignore) {
-          console.log("🔍 GET response:", data);
           if (data?.counts && typeof data.counts === "object") {
-            console.log("✅ Setting counts from GET response:", data.counts);
             setCounts(fillMissingReactions(data.counts));
           } else if (typeof data.count === "number") {
-            console.log("⚠️ Using legacy count format on GET:", data.count);
             setCounts(fillMissingReactions({ diamond: data.count })); // legacy fallback
           } else {
-            console.log("⚠️ No valid counts in GET response, using empty");
             setCounts(fillMissingReactions({}));
           }
         }
@@ -81,12 +77,10 @@ export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Prop
         body: JSON.stringify({ postId, type: key }),
       });
       const data = await res.json();
-      console.log("🔍 POST response:", { res: res.ok, data, key });
+      console.log("POST result:", { status: res.status, ok: res.ok, data }); // DEBUG
       if (res.ok && data?.counts) {
-        console.log("✅ Setting counts from POST response:", data.counts);
         setCounts(fillMissingReactions(data.counts));
       } else if (res.ok && typeof data.count === "number") {
-        console.log("⚠️ Using legacy count format:", data.count);
         setCounts((prev) => fillMissingReactions({ ...prev, diamond: data.count }));
       } else {
         console.error("❌ POST /api/likes failed:", data);
