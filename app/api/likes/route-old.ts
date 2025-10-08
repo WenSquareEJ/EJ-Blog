@@ -31,71 +31,74 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = getServiceClient();
   
-    // Insert anonymous reaction - use postId as target_id (UUID) and type as kind
-    const { error: insertError, data: insertData } = await supabase
-      .from("reactions")
-      .insert({ 
-        target_type: "post",
-        target_id: postId, // Use actual post UUID
-        kind: type, // Use reaction type as kind (diamond, emerald, etc.)
-        user_id: null // Anonymous
-      })
-      .select();
+  // Insert anonymous reaction - use postId as target_id (UUID) and type as kind
+  const { error: insertError, data: insertData } = await supabase
+    .from("reactions")
+    .insert({ 
+      target_type: "post",
+      target_id: postId, // Use actual post UUID
+      kind: type, // Use reaction type as kind (diamond, emerald, etc.)
+      user_id: null // Anonymous
+    })
+    .select();
   
-    if (insertError) {
-      console.error("❌ Error inserting reaction:", insertError);
-      const response = NextResponse.json({ 
-        error: "insert_failed", 
-        details: insertError, 
-        hint: "Check RLS and NOT NULL/constraints"
-      }, { status: 400 });
-      response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
-      return response;
-    }
+  if (insertError) {
+    console.error("❌ Error inserting reaction:", insertError);
+    const response = NextResponse.json({ 
+      error: "insert_failed", 
+      details: insertError, 
+      hint: "Check RLS and NOT NULL/constraints"
+    }, { status: 400 });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
+  }
   
-    console.log("✅ Successfully inserted reaction:", insertData);
+  console.log("✅ Successfully inserted reaction:", insertData);
 
-    // Fetch all reactions for this post and calculate counts
-    const { data: allReactions, error: fetchError } = await supabase
-      .from("reactions")
-      .select("kind")
-      .eq("target_type", "post")
-      .eq("target_id", postId)
-      .is("user_id", null); // Only anonymous reactions
+  // Fetch all reactions for this post and calculate counts
+  const { data: allReactions, error: fetchError } = await supabase
+    .from("reactions")
+    .select("kind")
+    .eq("target_type", "post")
+    .eq("target_id", postId)
+    .is("user_id", null); // Only anonymous reactions
 
-    if (fetchError) {
-      console.error("❌ Error fetching reactions:", fetchError);
-      const response = NextResponse.json({ 
-        error: "fetch_failed", 
-        details: fetchError 
-      }, { status: 400 });
-      response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
-      return response;
-    }
+  if (fetchError) {
+    console.error("❌ Error fetching reactions:", fetchError);
+    const response = NextResponse.json({ 
+      error: "fetch_failed", 
+      details: fetchError 
+    }, { status: 400 });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
+  }
 
-    // Count reactions by type
-    const counts: Record<string, number> = {};
-    for (const key of REACTION_KEYS) counts[key] = 0;
+  // Count reactions by type
+  const counts: Record<string, number> = {};
+  for (const key of REACTION_KEYS) counts[key] = 0;
   
-    if (allReactions) {
-      for (const reaction of allReactions) {
-        // Count by kind (reaction type)
-        const reactionType = reaction.kind;
+  if (allReactions) {
+    for (const reaction of allReactions) {
+      // Extract reaction type from target_id format: "post:postId:type"
+      const parts = reaction.target_id.split(":");
+      if (parts.length === 3 && parts[0] === "post" && parts[1] === postId) {
+        const reactionType = parts[2];
         if (REACTION_KEYS.includes(reactionType)) {
           counts[reactionType] = (counts[reactionType] || 0) + 1;
         }
       }
     }
+  }
 
-    const total = Object.values(counts).reduce((a, b) => a + (b || 0), 0);
-    const response = NextResponse.json({ 
-      ok: true, 
-      count: counts["diamond"] || 0, // legacy compatibility
-      counts,
-      total
-    });
-    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
-    return response;
+  const total = Object.values(counts).reduce((a, b) => a + (b || 0), 0);
+  const response = NextResponse.json({ 
+    ok: true, 
+    count: counts["diamond"] || 0, // legacy compatibility
+    counts,
+    total
+  });
+  response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+  return response;
   } catch (error) {
     console.error("❌ Unexpected error in POST /api/likes:", error);
     const response = NextResponse.json({ 
@@ -122,9 +125,9 @@ export async function GET(req: NextRequest) {
   // Fetch all reactions for this post
   const { data: allReactions, error: fetchError } = await supabase
     .from("reactions")
-    .select("kind")
+    .select("target_id")
     .eq("target_type", "post")
-    .eq("target_id", postId)
+    .like("target_id", `post:${postId}:%`)
     .is("user_id", null); // Only anonymous reactions
 
   if (fetchError) {
@@ -137,10 +140,13 @@ export async function GET(req: NextRequest) {
   
   if (allReactions) {
     for (const reaction of allReactions) {
-      // Count by kind (reaction type)
-      const reactionType = reaction.kind;
-      if (REACTION_KEYS.includes(reactionType)) {
-        counts[reactionType] = (counts[reactionType] || 0) + 1;
+      // Extract reaction type from target_id format: "post:postId:type"
+      const parts = reaction.target_id.split(":");
+      if (parts.length === 3 && parts[0] === "post" && parts[1] === postId) {
+        const reactionType = parts[2];
+        if (REACTION_KEYS.includes(reactionType)) {
+          counts[reactionType] = (counts[reactionType] || 0) + 1;
+        }
       }
     }
   }
