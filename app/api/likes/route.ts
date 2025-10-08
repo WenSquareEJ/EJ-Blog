@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabaseService";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const REACTION_KEYS = ["diamond","emerald","heart","blaze","brick","star","coin","gear"];
+const NAMESPACE_UUID = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+
+function generateDeterministicUuid(postId: string, reactionType: string): string {
+  const name = `${postId}:${reactionType}`;
+  return crypto.createHash('sha1')
+    .update(NAMESPACE_UUID + name)
+    .digest('hex')
+    .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
+}
 
 export async function POST(req: NextRequest) {
   let postId: string | undefined;
@@ -31,14 +41,15 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = getServiceClient();
   
-    // Insert anonymous reaction - encode type in target_id with prefix
-    const encodedTargetId = `${postId}:${type}`; // Format: "uuid:diamond"
+    // Create a deterministic UUID for this post+reaction combination
+    const deterministicUuid = generateDeterministicUuid(postId, type);
+      
     const { error: insertError, data: insertData } = await supabase
       .from("reactions")
       .insert({ 
-        target_type: "post", // Use allowed constraint value
-        target_id: encodedTargetId, // Encode reaction type here
-        kind: "like", // Use allowed enum value
+        target_type: "post", 
+        target_id: deterministicUuid, // Use deterministic UUID
+        kind: "like", 
         user_id: null // Anonymous
       })
       .select();
@@ -56,40 +67,25 @@ export async function POST(req: NextRequest) {
   
     console.log("✅ Successfully inserted reaction:", insertData);
 
-    // Fetch all reactions for this post and calculate counts
-    const { data: allReactions, error: fetchError } = await supabase
-      .from("reactions")
-      .select("target_id")
-      .eq("target_type", "post")
-      .like("target_id", `${postId}:%`)
-      .eq("kind", "like")
-      .is("user_id", null); // Only anonymous reactions
-
-    if (fetchError) {
-      console.error("❌ Error fetching reactions:", fetchError);
-      const response = NextResponse.json({ 
-        error: "fetch_failed", 
-        details: fetchError 
-      }, { status: 400 });
-      response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
-      return response;
-    }
-
-    // Count reactions by type
+    // Fetch reaction counts by checking for each reaction type
     const counts: Record<string, number> = {};
-    for (const key of REACTION_KEYS) counts[key] = 0;
-  
-    if (allReactions) {
-      for (const reaction of allReactions) {
-        // Extract reaction type from target_id format: "uuid:diamond", "uuid:coin", etc.
-        const targetId = reaction.target_id;
-        const parts = targetId.split(":");
-        if (parts.length === 2 && parts[0] === postId) {
-          const reactionType = parts[1];
-          if (REACTION_KEYS.includes(reactionType)) {
-            counts[reactionType] = (counts[reactionType] || 0) + 1;
-          }
-        }
+    
+    // Check each reaction type individually
+    for (const reactionType of REACTION_KEYS) {
+      const deterministicUuid = generateDeterministicUuid(postId, reactionType);
+        
+      const { count, error: countError } = await supabase
+        .from("reactions")
+        .select("*", { count: "exact", head: true })
+        .eq("target_type", "post")
+        .eq("target_id", deterministicUuid)
+        .eq("kind", "like")
+        .is("user_id", null);
+        
+      if (!countError && count !== null) {
+        counts[reactionType] = count;
+      } else {
+        counts[reactionType] = 0;
       }
     }
 
@@ -125,34 +121,25 @@ export async function GET(req: NextRequest) {
 
   const supabase = getServiceClient();
   
-  // Fetch all reactions for this post
-  const { data: allReactions, error: fetchError } = await supabase
-    .from("reactions")
-    .select("target_id")
-    .eq("target_type", "post")
-    .like("target_id", `${postId}:%`)
-    .eq("kind", "like")
-    .is("user_id", null); // Only anonymous reactions
-
-  if (fetchError) {
-    console.error("❌ Error fetching reactions:", fetchError);
-  }
-
-  // Count reactions by type
+  // Count reactions by checking for each reaction type
   const counts: Record<string, number> = {};
-  for (const key of REACTION_KEYS) counts[key] = 0;
   
-  if (allReactions) {
-    for (const reaction of allReactions) {
-      // Extract reaction type from target_id format: "uuid:diamond", "uuid:coin", etc.
-      const targetId = reaction.target_id;
-      const parts = targetId.split(":");
-      if (parts.length === 2) {
-        const reactionType = parts[1];
-        if (REACTION_KEYS.includes(reactionType)) {
-          counts[reactionType] = (counts[reactionType] || 0) + 1;
-        }
-      }
+  // Check each reaction type individually
+  for (const reactionType of REACTION_KEYS) {
+    const deterministicUuid = generateDeterministicUuid(postId, reactionType);
+      
+    const { count, error: countError } = await supabase
+      .from("reactions")
+      .select("*", { count: "exact", head: true })
+      .eq("target_type", "post")
+      .eq("target_id", deterministicUuid)
+      .eq("kind", "like")
+      .is("user_id", null);
+      
+    if (!countError && count !== null) {
+      counts[reactionType] = count;
+    } else {
+      counts[reactionType] = 0;
     }
   }
 
