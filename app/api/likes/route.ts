@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServiceClient } from "@/lib/supabaseService";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const REACTION_KEYS = ["diamond","emerald","heart","blaze","brick","star","coin","gear"];
-const memoryStore: Record<string, Record<string, number>> = {};
 
 export async function POST(req: NextRequest) {
   let postId: string | undefined;
@@ -13,20 +16,54 @@ export async function POST(req: NextRequest) {
       type = body.type;
     }
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    const response = NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
   }
   if (!postId || typeof postId !== "string" || !postId.trim()) {
-    return NextResponse.json({ error: "postId required" }, { status: 400 });
+    const response = NextResponse.json({ error: "postId required" }, { status: 400 });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
   }
-  // In-memory increment (replace with DB logic)
-  if (!memoryStore[postId]) memoryStore[postId] = {};
-  memoryStore[postId][type] = (memoryStore[postId][type] || 0) + 1;
-  // Legacy: also increment diamond for old clients
-  if (type === "diamond") {
-    memoryStore[postId]["diamond"] = memoryStore[postId]["diamond"];
+
+  const supabase = getServiceClient();
+  
+  // Insert the like into Supabase
+  const { error: insertError } = await supabase
+    .from("post_likes" as any)
+    .insert({ post_id: postId, type });
+  
+  if (insertError) {
+    console.error("Error inserting like:", insertError);
+    const response = NextResponse.json({ error: "Failed to save like" }, { status: 500 });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
   }
-  // Return both legacy and new shape
-  return NextResponse.json({ ok: true, count: memoryStore[postId]["diamond"] || 0, counts: { ...memoryStore[postId] } });
+
+  // Get updated counts for all reaction types
+  const { data: countsData } = await supabase
+    .from("post_likes" as any)
+    .select("type")
+    .eq("post_id", postId);
+
+  const counts: Record<string, number> = {};
+  for (const key of REACTION_KEYS) counts[key] = 0;
+  
+  if (countsData) {
+    for (const row of countsData) {
+      if (row.type && REACTION_KEYS.includes(row.type)) {
+        counts[row.type] = (counts[row.type] || 0) + 1;
+      }
+    }
+  }
+
+  const response = NextResponse.json({ 
+    ok: true, 
+    count: counts["diamond"] || 0, // legacy compatibility
+    counts 
+  });
+  response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+  return response;
 }
 
 export async function GET(req: NextRequest) {
@@ -34,17 +71,38 @@ export async function GET(req: NextRequest) {
   const postId = searchParams.get("postId") || "";
   const aggregate = searchParams.get("aggregate");
   if (!postId) {
-    return NextResponse.json({ error: "postId required" }, { status: 400 });
+    const response = NextResponse.json({ error: "postId required" }, { status: 400 });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
   }
-  // In-memory fetch (replace with DB logic)
-  const counts = memoryStore[postId] || {};
+
+  const supabase = getServiceClient();
+  
+  // Fetch counts from Supabase
+  const { data: countsData } = await supabase
+    .from("post_likes" as any)
+    .select("type")
+    .eq("post_id", postId);
+
+  const counts: Record<string, number> = {};
+  for (const key of REACTION_KEYS) counts[key] = 0;
+  
+  if (countsData) {
+    for (const row of countsData) {
+      if (row.type && REACTION_KEYS.includes(row.type)) {
+        counts[row.type] = (counts[row.type] || 0) + 1;
+      }
+    }
+  }
+
   if (aggregate === "byType") {
-    // Return all keys, defaulting to 0
-    const result: Record<string, number> = {};
-    for (const key of REACTION_KEYS) result[key] = counts[key] || 0;
-    return NextResponse.json({ counts: result });
+    const response = NextResponse.json({ counts });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
   } else {
     // Legacy: just return diamond count
-    return NextResponse.json({ count: counts["diamond"] || 0 });
+    const response = NextResponse.json({ count: counts["diamond"] || 0 });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
   }
 }

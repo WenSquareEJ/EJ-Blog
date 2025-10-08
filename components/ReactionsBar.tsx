@@ -30,7 +30,11 @@ export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Prop
     let ignore = false;
     async function fetchCounts() {
       try {
-        const res = await fetch(`/api/likes?postId=${encodeURIComponent(postId)}&aggregate=byType`);
+        const url = `/api/likes?postId=${encodeURIComponent(postId)}&aggregate=byType&ts=${Date.now()}`;
+        const res = await fetch(url, { 
+          cache: "no-store", 
+          headers: { "Cache-Control": "no-store" } 
+        });
         const data = await res.json();
         if (!ignore) {
           if (data?.counts && typeof data.counts === "object") {
@@ -56,7 +60,11 @@ export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Prop
     try {
       const res = await fetch("/api/likes", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store"
+        },
+        cache: "no-store",
         body: JSON.stringify({ postId, type: key }),
       });
       const data = await res.json();
