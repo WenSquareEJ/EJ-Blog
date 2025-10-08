@@ -10,10 +10,13 @@ const NAMESPACE_UUID = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
 
 function generateDeterministicUuid(postId: string, reactionType: string): string {
   const name = `${postId}:${reactionType}`;
-  return crypto.createHash('sha1')
+  // Use MD5 for deterministic UUID generation (32 hex chars -> valid UUID format)
+  const hash = crypto.createHash('md5')
     .update(NAMESPACE_UUID + name)
-    .digest('hex')
-    .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
+    .digest('hex');
+  
+  // Format as UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  return hash.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
 }
 
 export async function POST(req: NextRequest) {
