@@ -10,25 +10,33 @@ export default function BreakTheBlockFollowerLeft() {
     if (!el) return;
 
     const BRICK = 96;          // px (h-24 w-24)
-    const GAP_X = 48;          // space between main content area and brick (to the LEFT)
+    const GAP_X = 120;         // space between main content area and brick (to the LEFT)
     const BELOW = 32;          // distance below hero bottom (aligns near "Portal Rooms")
     const SAFE = 16;           // viewport padding for clamping
     
     const update = () => {
       const heroRect = el.getBoundingClientRect();
-      // Find the main content container (.max-w-5xl)
-      const mainElement = el.closest('main');
-      const mainRect = mainElement?.getBoundingClientRect() || heroRect;
       
-      let x = mainRect.left - GAP_X;
+      // Calculate position relative to content but ensure it's visible
+      // On larger screens, position relative to content; on smaller screens, use fixed position
+      const viewportWidth = window.innerWidth;
+      let x: number;
+      
+      if (viewportWidth >= 1200) {
+        // Large screens: position relative to content with more space
+        const contentSurface = el.closest('.site-content-surface') || el.closest('main');
+        const contentRect = contentSurface?.getBoundingClientRect() || heroRect;
+        x = Math.max(60, contentRect.left - 80); // Ensure minimum 60px from left
+      } else {
+        // Smaller screens: fixed position from left edge
+        x = 60;
+      }
+      
       let y = heroRect.bottom + BELOW;
 
-      // Clamp to viewport
-      const minX = SAFE + BRICK/2;
-      const maxX = window.innerWidth - SAFE - BRICK/2;
+      // Basic viewport bounds
       const minY = SAFE + BRICK/2;
       const maxY = window.innerHeight - SAFE - BRICK/2;
-      x = Math.min(Math.max(x, minX), maxX);
       y = Math.min(Math.max(y, minY), maxY);
 
       setPos({ left: Math.round(x), top: Math.round(y) });
