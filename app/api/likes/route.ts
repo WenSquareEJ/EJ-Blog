@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
   
   if (insertError) {
     console.error("Error inserting like:", insertError);
-    const response = NextResponse.json({ error: "Failed to save like" }, { status: 500 });
+    console.error("Post ID:", postId, "Type:", type);
+    const response = NextResponse.json({ error: "Failed to save like", details: insertError.message }, { status: 500 });
     response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
     return response;
   }

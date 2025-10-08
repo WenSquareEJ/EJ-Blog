@@ -73,6 +73,7 @@ export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Prop
       } else if (res.ok && typeof data.count === "number") {
         setCounts((prev) => ({ ...prev, diamond: data.count }));
       } else {
+        console.error("POST /api/likes failed:", data);
         setCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] || 1) - 1) }));
       }
     } catch {
