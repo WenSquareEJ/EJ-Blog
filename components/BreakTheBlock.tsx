@@ -36,9 +36,11 @@ const MINECRAFT_FACTS = [
 ];
 
 export default function BreakTheBlock({ 
-  blockTextureSrc = "/icons/brick.png" 
+  blockTextureSrc = "/icons/brick.png",
+  minimalChrome = false
 }: { 
-  blockTextureSrc?: string 
+  blockTextureSrc?: string;
+  minimalChrome?: boolean;
 } = {}) {
   const [hits, setHits] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -214,17 +216,21 @@ export default function BreakTheBlock({
         )}
         
         {/* Progress indicator */}
-        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-300 rounded">
-          <div 
-            className="h-full bg-red-500 rounded transition-all duration-200"
-            style={{ width: `${(hits / 10) * 100}%` }}
-          />
-        </div>
+        {!minimalChrome && (
+          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-300 rounded">
+            <div 
+              className="h-full bg-red-500 rounded transition-all duration-200"
+              style={{ width: `${(hits / 10) * 100}%` }}
+            />
+          </div>
+        )}
       </div>
       
-      <p className="text-xs italic text-mc-stone text-center max-w-48">
-        💬 Ebot whispers: What happens if you tap this block?
-      </p>
+      {!minimalChrome && (
+        <p className="text-xs italic text-mc-stone text-center max-w-48">
+          💬 Ebot whispers: What happens if you tap this block?
+        </p>
+      )}
     </div>
   );
 }

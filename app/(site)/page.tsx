@@ -5,7 +5,7 @@ import PixelBackground from "@/components/PixelBackground";
 import AvatarTile from "@/components/AvatarTile";
 import XPBar from "@/components/XPBar";
 import ParrotSprite from "@/components/ParrotSprite";
-import BreakTheBlockAnchor from "@/components/BreakTheBlockAnchor";
+import BreakTheBlockFollower from "@/components/BreakTheBlockFollower";
 import { ERIK_USER_ID } from "@/lib/erik";
 import { getUser, supabaseServer } from "@/lib/supabaseServer";
 
@@ -36,7 +36,7 @@ export default async function Page() {
   return (
     <div className="space-y-10">
       {/* Home Banner */}
-      <section className="home-banner relative overflow-hidden rounded-2xl border-[4px] border-[color:var(--mc-wood)] text-[color:var(--mc-ink)] shadow-mc">
+      <section id="hero-card" className="home-banner relative overflow-hidden rounded-2xl border-[4px] border-[color:var(--mc-wood)] text-[color:var(--mc-ink)] shadow-mc">
         <PixelBackground className="absolute inset-0 w-full h-full pointer-events-none select-none" />
         <div className="pixel-float pf-1" aria-hidden="true" />
         <div className="pixel-float pf-2" aria-hidden="true" />
@@ -67,8 +67,9 @@ export default async function Page() {
             <ParrotSprite className="w-20 sm:w-24 md:w-28" />
           </div>
         </div>
-        <BreakTheBlockAnchor />
       </section>
+
+      <BreakTheBlockFollower />
 
       {/* Portal Room grid below Hero */}
       <PortalRoom />
