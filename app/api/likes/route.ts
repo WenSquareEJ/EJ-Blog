@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
   
   console.log("Processing anonymous reaction:", { postId, type });
   
-  const supabase = getServiceClient();
+  try {
+    const supabase = getServiceClient();
   
   // Encode the reaction type in the target_id to distinguish 8 types
   // Format: "post:{postId}:{reactionType}"
@@ -48,9 +49,10 @@ export async function POST(req: NextRequest) {
   if (insertError) {
     console.error("❌ Error inserting reaction:", insertError);
     const response = NextResponse.json({ 
-      error: "Failed to save reaction", 
-      details: insertError.message 
-    }, { status: 500 });
+      error: "insert_failed", 
+      details: insertError, 
+      hint: "Check RLS and NOT NULL/constraints"
+    }, { status: 400 });
     response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
     return response;
   }
@@ -67,6 +69,12 @@ export async function POST(req: NextRequest) {
 
   if (fetchError) {
     console.error("❌ Error fetching reactions:", fetchError);
+    const response = NextResponse.json({ 
+      error: "fetch_failed", 
+      details: fetchError 
+    }, { status: 400 });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
   }
 
   // Count reactions by type
@@ -95,6 +103,15 @@ export async function POST(req: NextRequest) {
   });
   response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
   return response;
+  } catch (error) {
+    console.error("❌ Unexpected error in POST /api/likes:", error);
+    const response = NextResponse.json({ 
+      error: "Internal server error", 
+      details: error instanceof Error ? error.message : "Unknown error" 
+    }, { status: 500 });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
+  }
 }
 
 export async function GET(req: NextRequest) {
