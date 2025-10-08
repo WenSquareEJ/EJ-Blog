@@ -6,6 +6,25 @@ export const revalidate = 0;
 
 const REACTION_KEYS = ["diamond","emerald","heart","blaze","brick","star","coin","gear"];
 
+// Map our 8 types to existing reactions table kinds
+const TYPE_TO_KIND: Record<string, string> = {
+  "diamond": "like",
+  "emerald": "party", 
+  "heart": "heart",
+  "blaze": "idea",
+  "brick": "like",    // fallback to like
+  "star": "idea",     // fallback to idea  
+  "coin": "party",    // fallback to party
+  "gear": "heart"     // fallback to heart
+};
+
+const KIND_TO_TYPE: Record<string, string> = {
+  "like": "diamond",
+  "party": "emerald",
+  "heart": "heart", 
+  "idea": "star"
+};
+
 export async function POST(req: NextRequest) {
   let postId: string | undefined;
   let type: string = "diamond";
@@ -28,32 +47,56 @@ export async function POST(req: NextRequest) {
 
   const supabase = getServiceClient();
   
-  // Insert the like into Supabase
-  const { error: insertError } = await supabase
-    .from("post_likes" as any)
-    .insert({ post_id: postId, type });
+  // Insert the like into Supabase using existing reactions table
+  console.log("Attempting to insert like:", { postId, type });
+  const mappedKind = TYPE_TO_KIND[type] || "like";
+  const { error: insertError, data: insertData } = await supabase
+    .from("reactions")
+    .insert({ 
+      target_type: "post", 
+      target_id: postId, 
+      kind: mappedKind
+    })
+    .select();
   
   if (insertError) {
-    console.error("Error inserting like:", insertError);
+    console.error("❌ Error inserting like:", insertError);
     console.error("Post ID:", postId, "Type:", type);
-    const response = NextResponse.json({ error: "Failed to save like", details: insertError.message }, { status: 500 });
+    console.error("Error code:", insertError.code);
+    console.error("Error details:", insertError.details);
+    const response = NextResponse.json({ 
+      error: "Failed to save like", 
+      details: insertError.message,
+      code: insertError.code 
+    }, { status: 500 });
     response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
     return response;
   }
+  
+  console.log("✅ Successfully inserted like:", insertData);
 
   // Get updated counts for all reaction types
-  const { data: countsData } = await supabase
-    .from("post_likes" as any)
-    .select("type")
-    .eq("post_id", postId);
+  console.log("Fetching counts for post:", postId);
+  const { data: countsData, error: fetchError } = await supabase
+    .from("reactions")
+    .select("kind")
+    .eq("target_type", "post")
+    .eq("target_id", postId);
+
+  if (fetchError) {
+    console.error("❌ Error fetching counts:", fetchError);
+  } else {
+    console.log("✅ Fetched counts data:", countsData);
+  }
 
   const counts: Record<string, number> = {};
   for (const key of REACTION_KEYS) counts[key] = 0;
   
   if (countsData) {
     for (const row of countsData) {
-      if (row.type && REACTION_KEYS.includes(row.type)) {
-        counts[row.type] = (counts[row.type] || 0) + 1;
+      const mappedType = KIND_TO_TYPE[row.kind] || "diamond";
+      if (REACTION_KEYS.includes(mappedType)) {
+        counts[mappedType] = (counts[mappedType] || 0) + 1;
       }
     }
   }
@@ -79,24 +122,24 @@ export async function GET(req: NextRequest) {
 
   const supabase = getServiceClient();
   
-  // Fetch counts from Supabase
+  // Fetch counts from Supabase using existing reactions table
   const { data: countsData } = await supabase
-    .from("post_likes" as any)
-    .select("type")
-    .eq("post_id", postId);
+    .from("reactions")
+    .select("kind")
+    .eq("target_type", "post")
+    .eq("target_id", postId);
 
   const counts: Record<string, number> = {};
   for (const key of REACTION_KEYS) counts[key] = 0;
   
   if (countsData) {
     for (const row of countsData) {
-      if (row.type && REACTION_KEYS.includes(row.type)) {
-        counts[row.type] = (counts[row.type] || 0) + 1;
+      const mappedType = KIND_TO_TYPE[row.kind] || "diamond";
+      if (REACTION_KEYS.includes(mappedType)) {
+        counts[mappedType] = (counts[mappedType] || 0) + 1;
       }
     }
-  }
-
-  if (aggregate === "byType") {
+  }  if (aggregate === "byType") {
     const response = NextResponse.json({ counts });
     response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
     return response;
