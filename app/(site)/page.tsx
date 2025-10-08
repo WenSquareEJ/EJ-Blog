@@ -5,6 +5,7 @@ import PixelBackground from "@/components/PixelBackground";
 import AvatarTile from "@/components/AvatarTile";
 import XPBar from "@/components/XPBar";
 import ParrotSprite from "@/components/ParrotSprite";
+import BreakTheBlockFloating from "@/components/BreakTheBlockFloating";
 import { ERIK_USER_ID } from "@/lib/erik";
 import { getUser, supabaseServer } from "@/lib/supabaseServer";
 
@@ -79,6 +80,9 @@ export default async function Page() {
           </Link>
         </div>
       )}
+
+      {/* Floating Break the Block mini-game */}
+      <BreakTheBlockFloating />
     </div>
   );
 }
