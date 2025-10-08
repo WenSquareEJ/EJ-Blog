@@ -45,21 +45,14 @@ export default function BreakTheBlockFollowerLeft() {
 
   return (
     <div
-      className="z-50"
+      className="hidden md:block z-50"
       style={{
         position: "fixed",
         left: pos.left,
         top: pos.top,
-        transform: "translate(-50%, -50%)",
-        backgroundColor: "rgba(255, 255, 0, 0.8)",
-        border: "3px solid red",
-        padding: "10px",
-        borderRadius: "10px"
+        transform: "translate(-50%, -50%)"
       }}
     >
-      <div style={{ color: "black", fontWeight: "bold", fontSize: "12px", marginBottom: "5px" }}>
-        LEFT BRICK HERE! ({pos.left}, {pos.top})
-      </div>
       <div className="flex flex-col items-center">
         <BreakTheBlock blockTextureSrc="/icons/brick.png" minimalChrome />
         <div className="mt-1 max-w-[12rem] text-center text-[11px] text-white/85 drop-shadow-[0_1px_0_rgba(0,0,0,0.6)] break-words">
