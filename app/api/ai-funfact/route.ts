@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   const backupFacts = [
     "Creepers were created by accident while coding pigs!",
@@ -21,6 +24,7 @@ export async function GET() {
     }
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const nonce = Math.random().toString(36).slice(2, 8);
     const completion = await client.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
@@ -29,7 +33,7 @@ export async function GET() {
           content:
             "You are a fun, safe guide for kids who love Minecraft. Give one short, factual Minecraft fun fact in 1–2 sentences. Keep it cheerful and age-appropriate for kids 7-12. No scary content."
         },
-        { role: "user", content: "Give me one interesting Minecraft fun fact." }
+        { role: "user", content: `Give me one different Minecraft fun fact. seed:${nonce}` }
       ],
       max_tokens: 60,
       temperature: 0.8
@@ -39,10 +43,14 @@ export async function GET() {
       completion.choices[0]?.message?.content?.trim() ||
       backupFacts[Math.floor(Math.random() * backupFacts.length)];
 
-    return NextResponse.json({ fact });
+    const res = NextResponse.json({ fact });
+    res.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return res;
   } catch {
     const fallback =
       backupFacts[Math.floor(Math.random() * backupFacts.length)];
-    return NextResponse.json({ fact: fallback });
+    const res = NextResponse.json({ fact: fallback });
+    res.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return res;
   }
 }

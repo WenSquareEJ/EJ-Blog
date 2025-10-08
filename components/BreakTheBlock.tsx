@@ -35,15 +35,25 @@ const MINECRAFT_FACTS = [
   "Compasses always point to your world spawn point.",
 ];
 
-export default function BreakTheBlock() {
+export default function BreakTheBlock({ 
+  blockTextureSrc = "/icons/brick.png" 
+}: { 
+  blockTextureSrc?: string 
+} = {}) {
   const [hits, setHits] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [fact, setFact] = useState("");
   const [loading, setLoading] = useState(false);
   const [usedFacts, setUsedFacts] = useState<string[]>([]);
+  const [textureLoaded, setTextureLoaded] = useState(false);
 
-  // Try to load cached fact from localStorage
+  // Disable daily caching to get fresh facts each time
+  const USE_DAILY_CACHE = false;
+
+  // Try to load cached fact from localStorage (disabled for fresh facts)
   useEffect(() => {
+    if (!USE_DAILY_CACHE) return;
+    
     try {
       const cached = localStorage.getItem("btb:lastFact");
       const cachedDate = localStorage.getItem("btb:lastDate");
@@ -65,13 +75,17 @@ export default function BreakTheBlock() {
     setLoading(true);
     
     try {
-      // Try to fetch from AI endpoint
-      const response = await fetch("/api/ai-funfact");
+      // Try to fetch from AI endpoint with cache-busting
+      const response = await fetch("/api/ai-funfact?ts=" + Date.now(), {
+        cache: "no-store",
+        next: { revalidate: 0 },
+        headers: { "Cache-Control": "no-store" }
+      });
       if (response.ok) {
         const data = await response.json();
         if (data.fact) {
           setFact(data.fact);
-          cacheFact(data.fact);
+          if (USE_DAILY_CACHE) cacheFact(data.fact);
           setLoading(false);
           return;
         }
@@ -94,7 +108,7 @@ export default function BreakTheBlock() {
     
     setUsedFacts(prev => [...prev, selectedFact]);
     setFact(selectedFact);
-    cacheFact(selectedFact);
+    if (USE_DAILY_CACHE) cacheFact(selectedFact);
     setLoading(false);
   };
 
@@ -125,13 +139,23 @@ export default function BreakTheBlock() {
     setRevealed(false);
     setFact("");
     setLoading(false);
-    try {
-      localStorage.removeItem("btb:lastFact");
-      localStorage.removeItem("btb:lastDate");
-    } catch (e) {
-      // Ignore localStorage errors
+    if (USE_DAILY_CACHE) {
+      try {
+        localStorage.removeItem("btb:lastFact");
+        localStorage.removeItem("btb:lastDate");
+      } catch (e) {
+        // Ignore localStorage errors
+      }
     }
   };
+
+  // Test if texture image loads
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => setTextureLoaded(true);
+    img.onerror = () => setTextureLoaded(false);
+    img.src = blockTextureSrc;
+  }, [blockTextureSrc]);
 
   const crackIntensity = Math.min(hits, 10) / 10;
   const shakeClass = hits > 0 && !revealed ? "animate-pulse" : "";
@@ -168,18 +192,27 @@ export default function BreakTheBlock() {
         aria-label={`Hit count: ${hits} of 10`}
         aria-pressed={revealed}
         className={`
-          relative w-24 h-24 bg-gradient-to-b from-gray-400 to-gray-600 
-          border-4 border-gray-700 rounded-lg shadow-lg
+          relative w-24 h-24 border-4 border-gray-700 rounded-lg shadow-lg
           hover:scale-105 active:scale-95 transition-transform
           ${shakeClass}
+          ${!textureLoaded ? 'bg-gradient-to-b from-gray-400 to-gray-600' : ''}
         `}
         style={{
-          backgroundImage: `
-            linear-gradient(45deg, transparent 40%, rgba(0,0,0,0.1) 50%, transparent 60%),
-            ${crackIntensity > 0.3 ? 'linear-gradient(135deg, transparent 20%, rgba(0,0,0,0.2) 30%, transparent 40%),' : ''}
-            ${crackIntensity > 0.6 ? 'linear-gradient(-45deg, transparent 60%, rgba(0,0,0,0.3) 70%, transparent 80%),' : ''}
-            linear-gradient(to bottom, #9ca3af, #6b7280)
-          `,
+          backgroundImage: textureLoaded 
+            ? `
+              linear-gradient(45deg, transparent 40%, rgba(0,0,0,0.1) 50%, transparent 60%),
+              ${crackIntensity > 0.3 ? 'linear-gradient(135deg, transparent 20%, rgba(0,0,0,0.2) 30%, transparent 40%),' : ''}
+              ${crackIntensity > 0.6 ? 'linear-gradient(-45deg, transparent 60%, rgba(0,0,0,0.3) 70%, transparent 80%),' : ''}
+              url(${blockTextureSrc})
+            `
+            : `
+              linear-gradient(45deg, transparent 40%, rgba(0,0,0,0.1) 50%, transparent 60%),
+              ${crackIntensity > 0.3 ? 'linear-gradient(135deg, transparent 20%, rgba(0,0,0,0.2) 30%, transparent 40%),' : ''}
+              ${crackIntensity > 0.6 ? 'linear-gradient(-45deg, transparent 60%, rgba(0,0,0,0.3) 70%, transparent 80%),' : ''}
+              linear-gradient(to bottom, #9ca3af, #6b7280)
+            `,
+          backgroundSize: textureLoaded ? 'cover' : 'auto',
+          imageRendering: textureLoaded ? 'pixelated' : 'auto',
         }}
       >
         <div className="absolute inset-2 bg-gradient-to-br from-gray-300 to-gray-500 rounded">

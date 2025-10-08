@@ -5,8 +5,8 @@ import BreakTheBlock from "./BreakTheBlock";
 export default function BreakTheBlockFloating() {
   return (
     <div 
-      className="fixed right-4 top-1/2 -translate-y-1/2 z-30 hidden md:block"
-      style={{ right: 'max(1rem, env(safe-area-inset-right))' }}
+      className="hidden md:block fixed top-[60%] right-8 xl:right-16 -translate-y-1/2 z-30"
+      style={{ right: 'max(2rem, env(safe-area-inset-right))' }}
     >
       <BreakTheBlock />
     </div>
