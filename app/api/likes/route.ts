@@ -47,15 +47,17 @@ export async function POST(req: NextRequest) {
 
   const supabase = getServiceClient();
   
-  // Insert the like into Supabase using existing reactions table
+  // Store the original type in user_id field as a workaround (encode type as hash)
   console.log("Attempting to insert like:", { postId, type });
-  const mappedKind = TYPE_TO_KIND[type] || "like";
+  const typeHash = Buffer.from(type).toString('base64').substring(0, 8); // Short hash of type
+  
   const { error: insertError, data: insertData } = await supabase
     .from("reactions")
     .insert({ 
       target_type: "post", 
       target_id: postId, 
-      kind: mappedKind
+      kind: "like", // Always use 'like' to avoid conflicts
+      user_id: `type_${typeHash}` // Encode original type in user_id
     })
     .select();
   
@@ -79,9 +81,10 @@ export async function POST(req: NextRequest) {
   console.log("Fetching counts for post:", postId);
   const { data: countsData, error: fetchError } = await supabase
     .from("reactions")
-    .select("kind")
+    .select("user_id")
     .eq("target_type", "post")
-    .eq("target_id", postId);
+    .eq("target_id", postId)
+    .like("user_id", "type_%"); // Only get our encoded types
 
   if (fetchError) {
     console.error("❌ Error fetching counts:", fetchError);
@@ -94,9 +97,17 @@ export async function POST(req: NextRequest) {
   
   if (countsData) {
     for (const row of countsData) {
-      const mappedType = KIND_TO_TYPE[row.kind] || "diamond";
-      if (REACTION_KEYS.includes(mappedType)) {
-        counts[mappedType] = (counts[mappedType] || 0) + 1;
+      // Decode the original type from user_id field
+      if (row.user_id?.startsWith("type_")) {
+        const typeHash = row.user_id.replace("type_", "");
+        // Try to match hash back to original types
+        for (const reactType of REACTION_KEYS) {
+          const expectedHash = Buffer.from(reactType).toString('base64').substring(0, 8);
+          if (expectedHash === typeHash) {
+            counts[reactType] = (counts[reactType] || 0) + 1;
+            break;
+          }
+        }
       }
     }
   }
@@ -125,21 +136,32 @@ export async function GET(req: NextRequest) {
   // Fetch counts from Supabase using existing reactions table
   const { data: countsData } = await supabase
     .from("reactions")
-    .select("kind")
+    .select("user_id")
     .eq("target_type", "post")
-    .eq("target_id", postId);
+    .eq("target_id", postId)
+    .like("user_id", "type_%"); // Only get our encoded types
 
   const counts: Record<string, number> = {};
   for (const key of REACTION_KEYS) counts[key] = 0;
   
   if (countsData) {
     for (const row of countsData) {
-      const mappedType = KIND_TO_TYPE[row.kind] || "diamond";
-      if (REACTION_KEYS.includes(mappedType)) {
-        counts[mappedType] = (counts[mappedType] || 0) + 1;
+      // Decode the original type from user_id field
+      if (row.user_id?.startsWith("type_")) {
+        const typeHash = row.user_id.replace("type_", "");
+        // Try to match hash back to original types
+        for (const reactType of REACTION_KEYS) {
+          const expectedHash = Buffer.from(reactType).toString('base64').substring(0, 8);
+          if (expectedHash === typeHash) {
+            counts[reactType] = (counts[reactType] || 0) + 1;
+            break;
+          }
+        }
       }
     }
-  }  if (aggregate === "byType") {
+  }
+
+  if (aggregate === "byType") {
     const response = NextResponse.json({ counts });
     response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
     return response;
