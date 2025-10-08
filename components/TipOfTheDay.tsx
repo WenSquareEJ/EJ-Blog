@@ -23,12 +23,44 @@ export default function TipOfTheDay() {
   useEffect(() => {
     let alive = true;
     const date = todayLondon();
+    const cacheKey = `tip:${date}`;
+    
+    // Try to show cached tip immediately
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached && alive) {
+        setTip(cached);
+      }
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+
+    // Fetch fresh tip with cache-busting
     (async () => {
       try {
-        const res = await fetch(`/api/tips/daily?date=${date}`, { cache: "no-store" });
+        const res = await fetch(`/api/tip?ts=${Date.now()}`, {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-store" }
+        });
         const data = await res.json();
-        if (!res.ok || !data?.tip) throw new Error(data?.error || "Failed");
-        if (alive) setTip(data.tip);
+        if (!res.ok || !data?.tip) throw new Error("Failed to fetch tip");
+        
+        if (alive) {
+          setTip(data.tip);
+          // Cache the tip for today
+          try {
+            localStorage.setItem(cacheKey, data.tip);
+            // Clear old cache entries
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key?.startsWith("tip:") && key !== cacheKey) {
+                localStorage.removeItem(key);
+              }
+            }
+          } catch (e) {
+            // Ignore localStorage errors
+          }
+        }
       } catch (e: any) {
         if (alive) setErr(e?.message || "Failed");
       }
