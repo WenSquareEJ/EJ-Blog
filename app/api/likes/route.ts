@@ -25,17 +25,23 @@ export async function POST(req: NextRequest) {
     response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
     return response;
   }
-
+  
   console.log("Processing anonymous reaction:", { postId, type });
   
   const supabase = getServiceClient();
   
-  // Insert new reaction into dedicated post_likes table
+  // Encode the reaction type in the target_id to distinguish 8 types
+  // Format: "post:{postId}:{reactionType}"
+  const encodedTargetId = `post:${postId}:${type}`;
+  
+  // Insert anonymous reaction - use null for user_id (anonymous)
   const { error: insertError, data: insertData } = await supabase
-    .from("post_likes")
+    .from("reactions")
     .insert({ 
-      post_id: postId, 
-      type: type
+      target_type: "post",
+      target_id: encodedTargetId,
+      kind: "like", // Use consistent kind for all reactions
+      user_id: null // Anonymous
     })
     .select();
   
@@ -51,23 +57,32 @@ export async function POST(req: NextRequest) {
   
   console.log("✅ Successfully inserted reaction:", insertData);
 
-  // Get updated counts for all reaction types
-  const { data: countsData, error: fetchError } = await supabase
-    .from("post_likes")
-    .select("type")
-    .eq("post_id", postId);
+  // Fetch all reactions for this post and calculate counts
+  const { data: allReactions, error: fetchError } = await supabase
+    .from("reactions")
+    .select("target_id")
+    .eq("target_type", "post")
+    .like("target_id", `post:${postId}:%`)
+    .is("user_id", null); // Only anonymous reactions
 
   if (fetchError) {
-    console.error("❌ Error fetching counts:", fetchError);
+    console.error("❌ Error fetching reactions:", fetchError);
   }
 
   // Count reactions by type
   const counts: Record<string, number> = {};
   for (const key of REACTION_KEYS) counts[key] = 0;
   
-  if (countsData) {
-    for (const row of countsData) {
-      counts[row.type] = (counts[row.type] || 0) + 1;
+  if (allReactions) {
+    for (const reaction of allReactions) {
+      // Extract reaction type from target_id format: "post:postId:type"
+      const parts = reaction.target_id.split(":");
+      if (parts.length === 3 && parts[0] === "post" && parts[1] === postId) {
+        const reactionType = parts[2];
+        if (REACTION_KEYS.includes(reactionType)) {
+          counts[reactionType] = (counts[reactionType] || 0) + 1;
+        }
+      }
     }
   }
 
@@ -92,23 +107,32 @@ export async function GET(req: NextRequest) {
 
   const supabase = getServiceClient();
   
-  // Fetch counts from dedicated post_likes table
-  const { data: countsData, error: fetchError } = await supabase
-    .from("post_likes")
-    .select("type")
-    .eq("post_id", postId);
+  // Fetch all reactions for this post
+  const { data: allReactions, error: fetchError } = await supabase
+    .from("reactions")
+    .select("target_id")
+    .eq("target_type", "post")
+    .like("target_id", `post:${postId}:%`)
+    .is("user_id", null); // Only anonymous reactions
 
   if (fetchError) {
-    console.error("❌ Error fetching counts:", fetchError);
+    console.error("❌ Error fetching reactions:", fetchError);
   }
 
   // Count reactions by type
   const counts: Record<string, number> = {};
   for (const key of REACTION_KEYS) counts[key] = 0;
   
-  if (countsData) {
-    for (const row of countsData) {
-      counts[row.type] = (counts[row.type] || 0) + 1;
+  if (allReactions) {
+    for (const reaction of allReactions) {
+      // Extract reaction type from target_id format: "post:postId:type"
+      const parts = reaction.target_id.split(":");
+      if (parts.length === 3 && parts[0] === "post" && parts[1] === postId) {
+        const reactionType = parts[2];
+        if (REACTION_KEYS.includes(reactionType)) {
+          counts[reactionType] = (counts[reactionType] || 0) + 1;
+        }
+      }
     }
   }
 
