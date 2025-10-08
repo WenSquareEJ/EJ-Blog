@@ -65,7 +65,7 @@ export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Prop
   async function handleReact(key: ReactionKey) {
     if (!postId || pending) return;
     setPending(key);
-    setCounts((prev) => ({ ...prev, [key]: (prev[key] || 0) + 1 })); // optimistic
+    // No optimistic update - wait for API response since it now toggles
     try {
       const res = await fetch("/api/likes", {
         method: "POST",
@@ -84,10 +84,11 @@ export default function ReactionsBar({ postId, choices = DEFAULT_CHOICES }: Prop
         setCounts((prev) => fillMissingReactions({ ...prev, diamond: data.count }));
       } else {
         console.error("❌ POST /api/likes failed:", data);
-        setCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] || 1) - 1) }));
+        // Don't modify counts on error - keep current state
       }
-    } catch {
-      setCounts((prev) => ({ ...prev, [key]: Math.max(0, (prev[key] || 1) - 1) }));
+    } catch (error) {
+      console.error("❌ Request failed:", error);
+      // Don't modify counts on error - keep current state
     } finally {
       setPending(null);
     }
