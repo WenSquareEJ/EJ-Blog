@@ -49,29 +49,7 @@ export default function BreakTheBlock({
   const [usedFacts, setUsedFacts] = useState<string[]>([]);
   const [textureLoaded, setTextureLoaded] = useState(false);
 
-  // Disable daily caching to get fresh facts each time
-  const USE_DAILY_CACHE = false;
-
-  // Try to load cached fact from localStorage (disabled for fresh facts)
-  useEffect(() => {
-    if (!USE_DAILY_CACHE) return;
-    
-    try {
-      const cached = localStorage.getItem("btb:lastFact");
-      const cachedDate = localStorage.getItem("btb:lastDate");
-      if (cached && cachedDate) {
-        const today = new Date().toISOString().split("T")[0];
-        if (cachedDate === today && cached) {
-          setFact(cached);
-          setRevealed(true);
-          setHits(10);
-          return;
-        }
-      }
-    } catch (e) {
-      // Ignore localStorage errors
-    }
-  }, []);
+  // Always fetch fresh AI facts - no caching
 
   const getFact = async () => {
     setLoading(true);
@@ -87,7 +65,7 @@ export default function BreakTheBlock({
         const data = await response.json();
         if (data.fact) {
           setFact(data.fact);
-          if (USE_DAILY_CACHE) cacheFact(data.fact);
+          // No caching - always fetch fresh AI content
           setLoading(false);
           return;
         }
@@ -110,19 +88,11 @@ export default function BreakTheBlock({
     
     setUsedFacts(prev => [...prev, selectedFact]);
     setFact(selectedFact);
-    if (USE_DAILY_CACHE) cacheFact(selectedFact);
+    // No caching - always fresh content
     setLoading(false);
   };
 
-  const cacheFact = (factText: string) => {
-    try {
-      const today = new Date().toISOString().split("T")[0];
-      localStorage.setItem("btb:lastFact", factText);
-      localStorage.setItem("btb:lastDate", today);
-    } catch (e) {
-      // Ignore localStorage errors
-    }
-  };
+
 
   const handleClick = async () => {
     if (revealed) return;
@@ -141,14 +111,7 @@ export default function BreakTheBlock({
     setRevealed(false);
     setFact("");
     setLoading(false);
-    if (USE_DAILY_CACHE) {
-      try {
-        localStorage.removeItem("btb:lastFact");
-        localStorage.removeItem("btb:lastDate");
-      } catch (e) {
-        // Ignore localStorage errors
-      }
-    }
+    // No cache cleanup needed - always fetch fresh
   };
 
   // Test if texture image loads

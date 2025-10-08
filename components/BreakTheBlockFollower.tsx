@@ -9,15 +9,27 @@ export default function BreakTheBlockFollower() {
     const el = document.getElementById("hero-card");
     if (!el) return;
 
-    const GAP_X = 24;      // horizontal gap outside the hero border
-    const OFFSET_Y = 0.60; // vertical factor (60% down from hero top, near the parrot)
+    const BRICK_W = 96;           // matches h-24 w-24
+    const GAP_X = 24;             // horizontal gap from hero border
+    const OFFSET_Y = 0.64;        // ~parrot height area
+    const SAFE = 16;              // viewport padding
     
     const update = () => {
       const r = el.getBoundingClientRect();
-      setPos({
-        left: Math.round(r.right + GAP_X),
-        top:  Math.round(r.top + r.height * OFFSET_Y),
-      });
+      let x = r.right + GAP_X;
+      let y = r.top + r.height * OFFSET_Y;
+
+      // Right edge clamp so brick is fully visible:
+      const maxX = window.innerWidth - SAFE - BRICK_W / 2;
+      const minX = SAFE + BRICK_W / 2;
+      x = Math.min(Math.max(x, minX), maxX);
+
+      // Vertical clamp:
+      const maxY = window.innerHeight - SAFE - BRICK_W / 2;
+      const minY = SAFE + BRICK_W / 2;
+      y = Math.min(Math.max(y, minY), maxY);
+
+      setPos({ left: Math.round(x), top: Math.round(y) });
     };
 
     update();
@@ -45,7 +57,12 @@ export default function BreakTheBlockFollower() {
         transform: "translate(-50%, -50%)" // centers the 96x96 brick around the point
       }}
     >
-      <BreakTheBlock blockTextureSrc="/icons/brick.png" minimalChrome />
+      <div className="flex flex-col items-center">
+        <BreakTheBlock blockTextureSrc="/icons/brick.png" minimalChrome />
+        <div className="hidden md:block text-[11px] text-mc-ink/70 mt-1 text-center select-none">
+          💬 Ebot whispers: What happens if you tap this block?
+        </div>
+      </div>
     </div>
   );
 }
