@@ -46,29 +46,73 @@ export async function POST(req: NextRequest) {
   
     // Create a deterministic UUID for this post+reaction combination
     const deterministicUuid = generateDeterministicUuid(postId, type);
-      
-    const { error: insertError, data: insertData } = await supabase
+    
+    // First, check if this reaction already exists
+    const { data: existingReaction, error: checkError } = await supabase
       .from("reactions")
-      .insert({ 
-        target_type: "post", 
-        target_id: deterministicUuid, // Use deterministic UUID
-        kind: "like", 
-        user_id: null // Anonymous
-      })
-      .select();
-  
-    if (insertError) {
-      console.error("❌ Error inserting reaction:", insertError);
+      .select("id")
+      .eq("target_type", "post")
+      .eq("target_id", deterministicUuid)
+      .eq("kind", "like")
+      .is("user_id", null)
+      .maybeSingle();
+      
+    if (checkError) {
+      console.error("❌ Error checking existing reaction:", checkError);
       const response = NextResponse.json({ 
-        error: "insert_failed", 
-        details: insertError, 
-        hint: "Check RLS and NOT NULL/constraints"
+        error: "check_failed", 
+        details: checkError 
       }, { status: 400 });
       response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
       return response;
     }
-  
-    console.log("✅ Successfully inserted reaction:", insertData);
+    
+    if (existingReaction) {
+      // Reaction exists, delete it (toggle off)
+      const { error: deleteError } = await supabase
+        .from("reactions")
+        .delete()
+        .eq("target_type", "post")
+        .eq("target_id", deterministicUuid)
+        .eq("kind", "like")
+        .is("user_id", null);
+        
+      if (deleteError) {
+        console.error("❌ Error deleting reaction:", deleteError);
+        const response = NextResponse.json({ 
+          error: "delete_failed", 
+          details: deleteError 
+        }, { status: 400 });
+        response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+        return response;
+      }
+      
+      console.log("✅ Successfully deleted reaction (toggle off)");
+    } else {
+      // Reaction doesn't exist, create it (toggle on)
+      const { error: insertError, data: insertData } = await supabase
+        .from("reactions")
+        .insert({ 
+          target_type: "post", 
+          target_id: deterministicUuid,
+          kind: "like", 
+          user_id: null // Anonymous
+        })
+        .select();
+    
+      if (insertError) {
+        console.error("❌ Error inserting reaction:", insertError);
+        const response = NextResponse.json({ 
+          error: "insert_failed", 
+          details: insertError, 
+          hint: "Check RLS and NOT NULL/constraints"
+        }, { status: 400 });
+        response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+        return response;
+      }
+    
+      console.log("✅ Successfully inserted reaction (toggle on):", insertData);
+    }
 
     // Fetch reaction counts by checking for each reaction type
     const counts: Record<string, number> = {};
