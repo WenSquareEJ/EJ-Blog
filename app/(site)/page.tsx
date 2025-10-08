@@ -5,7 +5,7 @@ import PixelBackground from "@/components/PixelBackground";
 import AvatarTile from "@/components/AvatarTile";
 import XPBar from "@/components/XPBar";
 import ParrotSprite from "@/components/ParrotSprite";
-import BreakTheBlockFollower from "@/components/BreakTheBlockFollower";
+import BreakTheBlockAtXP from "@/components/BreakTheBlockAtXP";
 import { ERIK_USER_ID } from "@/lib/erik";
 import { getUser, supabaseServer } from "@/lib/supabaseServer";
 
@@ -49,13 +49,14 @@ export default async function Page() {
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:gap-10 p-6">
           <div className="flex flex-col items-center gap-4 md:flex-row md:gap-6">
             <AvatarTile username="Erik" avatarUrl={avatarUrl} />
-            <div className="flex-1 space-y-2">
+            <div className="flex-1 space-y-2 relative">
               <h1 className="font-mc text-2xl text-[#f4d68e] drop-shadow-[1px_1px_0_#5a3d1a]">
                 EJ Blocks & Bots
               </h1>
               <div className="max-w-lg">
                 <XPBar />
               </div>
+              <BreakTheBlockAtXP />
             </div>
           </div>
         </div>
@@ -68,8 +69,6 @@ export default async function Page() {
           </div>
         </div>
       </section>
-
-      <BreakTheBlockFollower />
 
       {/* Portal Room grid below Hero */}
       <PortalRoom />
