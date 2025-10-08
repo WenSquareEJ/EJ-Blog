@@ -5,7 +5,7 @@ import AskEbot from "@/components/AskEbot";
 import NavBar from "@/components/navbar";
 import ToastViewport from "@/components/Toast";
 import HomeBackground from "@/components/HomeBackground";
-import BreakTheBlockFollowerLeft from "@/components/BreakTheBlockFollowerLeft";
+import ConditionalBreakTheBlock from "@/components/ConditionalBreakTheBlock";
 
 // --- force this layout to run on every request (no caching) ---
 export const dynamic = "force-dynamic";
@@ -55,8 +55,8 @@ export default async function SiteLayout({
 
         <AskEbot />
         
-        {/* Break-the-Block positioned outside main container */}
-        <BreakTheBlockFollowerLeft />
+        {/* Break-the-Block positioned outside main container - only on homepage */}
+        <ConditionalBreakTheBlock />
       </body>
     </html>
   );
