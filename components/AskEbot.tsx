@@ -40,10 +40,13 @@ export default function AskEbot() {
         <img 
           src="/ebot.png" 
           alt="Ebot" 
-          width={24} 
-          height={24}
-          className="block"
-          style={{ imageRendering: 'pixelated' }}
+          width={32} 
+          height={32}
+          className="block rounded"
+          style={{ 
+            imageRendering: 'pixelated',
+            mixBlendMode: 'multiply'
+          }}
         />
         Ask Ebot
       </button>
