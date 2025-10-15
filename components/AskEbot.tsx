@@ -30,13 +30,21 @@ export default function AskEbot() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Open Ask Ebot"
-        className="fixed bottom-2 right-2 z-[9999] btn-mc rounded-full px-4 py-2 text-sm font-mc"
+        className="fixed bottom-2 right-2 z-[9999] btn-mc rounded-full px-4 py-2 text-sm font-mc flex items-center gap-1.5"
         style={{
           right: "max(0.5rem, env(safe-area-inset-right))",
           bottom: "max(0.5rem, env(safe-area-inset-bottom))",
         }}
       >
-        💬 Ask Ebot
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img 
+          src="/ebot.png" 
+          alt="Ebot" 
+          width={16} 
+          height={16}
+          style={{ imageRendering: 'pixelated' }}
+        />
+        Ask Ebot
       </button>
     )
   }
